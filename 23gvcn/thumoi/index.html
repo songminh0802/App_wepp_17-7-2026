@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Quản lý Giấy mời</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome cho Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Thư viện React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Babel để biên dịch JSX trực tiếp trên trình duyệt -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Các thư viện xử lý File & Ảnh (XLSX, html2canvas) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Thư viện Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
+        
+        @media print {
+            @page { size: auto; margin: 0; }
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white; }
+            .print\:hidden { display: none !important; }
+            .print\:bg-white { background: white !important; }
+            .print\:shadow-none { box-shadow: none !important; }
+            .print\:p-0 { padding: 0 !important; }
+            .print\:max-w-none { max-width: none !important; }
+            .print\:mx-0 { margin: 0 !important; }
+            .print\:overflow-visible { overflow: visible !important; }
+            .print\:page-break-after-always { page-break-after: always; break-after: page; }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Vùng chứa ứng dụng React -->
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- COMPONENT RENDER ICON ---
+        const Icon = ({ name, className = "" }) => <i className={`fa-solid fa-${name} ${className}`}></i>;
+
+        // --- THIẾT LẬP FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+        
+        // Khởi tạo Firebase nếu chưa có
+        if (!window.firebase.apps.length) {
+            window.firebase.initializeApp(firebaseConfig);
+        }
+        const db = window.firebase.firestore();
+
+        // --- MOCK DATA & CONSTANTS ---
+        const THEMES = [
+            { id: 'navy', name: 'Navy - Gold Luxury', bg: 'bg-slate-900', text: 'text-amber-50', border: 'border-amber-400', accent: 'text-amber-400', pattern: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"), linear-gradient(135deg, #0f172a 0%, #1e293b 100%)` },
+            { id: 'white', name: 'White Elegant', bg: 'bg-white', text: 'text-slate-800', border: 'border-slate-300', accent: 'text-amber-600', pattern: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%2394a3b8' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"), linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)` },
+            { id: 'burgundy', name: 'Burgundy Ceremony', bg: 'bg-red-950', text: 'text-amber-50', border: 'border-amber-400', accent: 'text-amber-400', pattern: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2.5L22.5 16 25 13.5V0h2v13.5L29.5 16 32 18.5V20h8v2h-8v1.5L29.5 26 27 28.5V40h-2V28.5L22.5 26 20 23.5V22H0v-2h20v.5z' fill='%23fcd34d' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E"), radial-gradient(circle at 50% 0%, #7f1d1d 0%, #450a0a 100%)` },
+            { id: 'pastel', name: 'Pastel Modern', bg: 'bg-blue-50', text: 'text-slate-800', border: 'border-blue-300', accent: 'text-blue-600', pattern: `url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.05'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E"), linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)` }
+        ];
+
+        const INITIAL_STUDENTS = [
+            { id: 1, name: 'Nguyễn Văn A', class: '10A1', parent: 'Nguyễn Văn B', phone: '0901234567', status: 'sent', confirmed: true, photo: null },
+            { id: 2, name: 'Trần Thị C', class: '10A1', parent: 'Trần Văn D', phone: '0987654321', status: 'sent', confirmed: false, photo: null },
+            { id: 3, name: 'Lê Hoàng E', class: '10A1', parent: 'Lê Văn F', phone: '0912345678', status: 'pending', confirmed: false, photo: null },
+        ];
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('school');
+            
+            const [schoolInfo, setSchoolInfo] = useState({
+                name: 'TRƯỜNG THCS Tân Bình',
+                address: 'Khu phố Cổng Xanh, phường Vĩnh Tân, TP Hồ Chí Minh',
+                year: '2025 - 2026',
+                className: '10A1',
+                teacher: 'Nguyễn Văn Cường',
+                phone: '0788 095 095',
+                logo: null
+            });
+
+            const [students, setStudents] = useState(INITIAL_STUDENTS);
+            const [meetingInfo, setMeetingInfo] = useState({
+                date: '2025-09-15',
+                time: '08:00',
+                location: 'Phòng học lớp 10A1, Tòa nhà A',
+                type: 'Họp đầu năm học',
+                notes: 'Quý phụ huynh vui lòng mang theo giấy bút để ghi chép các thông tin quan trọng về phương pháp học tập mới.'
+            });
+
+            const [design, setDesign] = useState({ theme: 'navy', size: 'A5', showPhoto: true });
+            const [signature, setSignature] = useState(null);
+            
+            const [selectedToPrint, setSelectedToPrint] = useState([]);
+            const [isDownloading, setIsDownloading] = useState(false);
+            const [isProcessingExcel, setIsProcessingExcel] = useState(false);
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [previewFullscreenId, setPreviewFullscreenId] = useState(null);
+
+            const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
+            const showToast = (message, type = 'info') => {
+                setToast({ show: true, message, type });
+                setTimeout(() => setToast({ show: false, message: '', type: 'info' }), 4000);
+            };
+
+            // Tải dữ liệu từ Firestore khi mở trang web
+            useEffect(() => {
+                const loadData = async () => {
+                    try {
+                        const docRef = db.collection('thumoiph').doc('dulieu_chung');
+                        const doc = await docRef.get();
+                        if (doc.exists) {
+                            const data = doc.data();
+                            if (data.schoolInfo) setSchoolInfo(data.schoolInfo);
+                            if (data.students) setStudents(data.students);
+                            if (data.meetingInfo) setMeetingInfo(data.meetingInfo);
+                            if (data.design) setDesign(data.design);
+                            if (data.signature) setSignature(data.signature);
+                            showToast("Đã đồng bộ dữ liệu từ Đám mây!", "success");
+                        }
+                    } catch (error) {
+                        console.error("Lỗi tải Cloud:", error);
+                        showToast("Có lỗi khi kết nối tới Đám mây.", "error");
+                    }
+                };
+                loadData();
+            }, []);
+
+            // Lưu toàn bộ dữ liệu lên Firestore
+            const saveToCloud = async () => {
+                setIsSyncing(true);
+                try {
+                    await db.collection('thumoiph').doc('dulieu_chung').set({
+                        schoolInfo,
+                        students,
+                        meetingInfo,
+                        design,
+                        signature
+                    });
+                    showToast("Đã lưu dữ liệu thành công lên Cloud!", "success");
+                } catch (error) {
+                    console.error("Lỗi lưu Cloud:", error);
+                    showToast("Không thể lưu dữ liệu (Kiểm tra quyền Firebase).", "error");
+                }
+                setIsSyncing(false);
+            };
+
+            useEffect(() => {
+                setSelectedToPrint(students.map(s => s.id));
+            }, [students.length]); 
+
+            const downloadExcelTemplate = () => {
+                try {
+                    const wsData = [
+                        { "STT": 1, "Họ và tên HS": "Nguyễn Văn A", "Lớp": "10A1", "Họ và tên Phụ huynh": "Nguyễn Văn B", "Số điện thoại": "0901234567" },
+                        { "STT": 2, "Họ và tên HS": "Trần Thị C", "Lớp": "10A1", "Họ và tên Phụ huynh": "Trần Văn D", "Số điện thoại": "0987654321" }
+                    ];
+                    const ws = XLSX.utils.json_to_sheet(wsData);
+                    const wscols = [{wch:5}, {wch:25}, {wch:10}, {wch:25}, {wch:15}];
+                    ws['!cols'] = wscols;
+
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Danh_Sach_Phu_Huynh");
+                    XLSX.writeFile(wb, "Mau_Danh_Sach_Phu_Huynh.xlsx");
+                } catch (error) {
+                    showToast("Lỗi khi tải file mẫu. Vui lòng kiểm tra lại.", "error");
+                }
+            };
+
+            const exportToExcel = () => {
+                try {
+                    const wsData = students.map((s, i) => ({
+                        "STT": i + 1,
+                        "Họ và tên HS": s.name,
+                        "Lớp": s.class,
+                        "Họ và tên Phụ huynh": s.parent,
+                        "Số điện thoại": s.phone,
+                        "Xác nhận tham gia": s.confirmed ? "Đã xác nhận" : "Chưa"
+                    }));
+                    
+                    const ws = XLSX.utils.json_to_sheet(wsData);
+                    const wscols = [{wch:5}, {wch:25}, {wch:10}, {wch:25}, {wch:15}, {wch:20}];
+                    ws['!cols'] = wscols;
+
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Danh_Sach_Hoc_Sinh");
+                    XLSX.writeFile(wb, "Danh_Sach_Hoc_Sinh_Export.xlsx");
+                } catch (error) {
+                    showToast("Lỗi khi xuất file Excel.", "error");
+                }
+            };
+
+            const handleExcelUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                setIsProcessingExcel(true);
+                try {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        try {
+                            const data = new Uint8Array(evt.target.result);
+                            const wb = XLSX.read(data, { type: 'array' });
+                            const wsname = wb.SheetNames[0];
+                            const ws = wb.Sheets[wsname];
+                            const rawData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                            
+                            if (rawData.length === 0) {
+                                showToast("File trống hoặc không đúng định dạng.", "error");
+                                setIsProcessingExcel(false); return;
+                            }
+
+                            const jsonData = rawData.map(row => {
+                                const cleanRow = {};
+                                for(let key in row) cleanRow[key.replace(/^\uFEFF/, '').trim()] = row[key];
+                                return cleanRow;
+                            });
+
+                            const newStudents = jsonData.map((row, index) => {
+                                const getVal = (keys) => {
+                                    for (let k of keys) if (row[k] !== undefined && row[k] !== '') return String(row[k]).trim();
+                                    return '';
+                                };
+                                return {
+                                    id: Date.now() + index,
+                                    name: getVal(["Họ và tên HS", "Họ Tên HS", "Học sinh", "Họ và tên", "Name"]),
+                                    class: getVal(["Lớp", "Class"]) || schoolInfo.className || '',
+                                    parent: getVal(["Họ và tên Phụ huynh", "Phụ huynh", "Họ tên phụ huynh", "Parent"]),
+                                    phone: getVal(["Số điện thoại", "SĐT", "Điện thoại", "Phone"]),
+                                    status: 'pending', confirmed: false, photo: null
+                                };
+                            }).filter(s => s.name);
+
+                            if (newStudents.length === 0) {
+                                showToast("Không tìm thấy dữ liệu hợp lệ.", "error");
+                                setIsProcessingExcel(false); return;
+                            }
+
+                            setStudents(newStudents);
+                            showToast(`Đã tải lên thành công danh sách ${newStudents.length} học sinh!`, "success");
+                        } catch (err) {
+                            showToast("Lỗi xử lý dữ liệu.", "error");
+                        }
+                        setIsProcessingExcel(false);
+                    };
+                    reader.readAsArrayBuffer(file);
+                } catch (error) {
+                    showToast("Đã có lỗi khi đọc file.", "error");
+                    setIsProcessingExcel(false);
+                }
+                e.target.value = null; 
+            };
+
+            const handleBulkPhotoUpload = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+                
+                const normalizeString = (str) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, '') : "";
+
+                let newStudents = [...students];
+                let matchCount = 0;
+
+                for (let file of files) {
+                    const rawFileName = file.name.substring(0, file.name.lastIndexOf('.'));
+                    const normalizedFileName = normalizeString(rawFileName);
+
+                    const studentIndex = newStudents.findIndex(s => {
+                        const normalizedStudentName = normalizeString(s.name);
+                        return normalizedFileName === normalizedStudentName || normalizedFileName.includes(normalizedStudentName) || normalizedStudentName.includes(normalizedFileName);
+                    });
+
+                    if (studentIndex !== -1) {
+                        const base64 = await new Promise(resolve => {
+                            const reader = new FileReader();
+                            reader.onload = ev => resolve(ev.target.result);
+                            reader.readAsDataURL(file);
+                        });
+                        newStudents[studentIndex] = { ...newStudents[studentIndex], photo: base64 };
+                        matchCount++;
+                    }
+                }
+                setStudents(newStudents);
+                showToast(`Đã tự động ghép thành công ${matchCount} ảnh.`, "success");
+                e.target.value = null;
+            };
+
+            const handleStudentPhotoUpload = (e, id) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setStudents(students.map(s => s.id === id ? { ...s, photo: reader.result } : s));
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const downloadSingleImage = async (studentId, studentName, elementIdPrefix = 'invitation-') => {
+                try {
+                    const element = document.getElementById(`${elementIdPrefix}${studentId}`);
+                    if (!element) return;
+
+                    const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: null });
+                    const image = canvas.toDataURL("image/png");
+                    const link = document.createElement('a');
+                    link.href = image;
+                    link.download = `GiayMoi_${studentName.replace(/\s+/g, '_')}.png`;
+                    link.click();
+                } catch (error) {
+                    console.error("Lỗi khi tạo ảnh:", error);
+                }
+            };
+
+            const downloadAsImage = async (studentId, studentName) => {
+                setIsDownloading(true);
+                try { await downloadSingleImage(studentId, studentName); } 
+                catch (e) { showToast("Đã có lỗi xảy ra khi tạo ảnh.", "error"); } 
+                finally { setIsDownloading(false); }
+            };
+
+            const downloadSelectedImages = async () => {
+                if (selectedToPrint.length === 0) return showToast("Vui lòng chọn ít nhất 1 thư mời để tải!", "error");
+                setIsDownloading(true);
+                try {
+                    for (const id of selectedToPrint) {
+                        const student = students.find(s => s.id === id);
+                        if (student) {
+                            await downloadSingleImage(id, student.name);
+                            await new Promise(r => setTimeout(r, 400));
+                        }
+                    }
+                } catch (error) {
+                    showToast("Đã có lỗi xảy ra khi tải ảnh hàng loạt.", "error");
+                } finally {
+                    setIsDownloading(false);
+                }
+            };
+
+            const processSignatureImage = (dataUrl) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width; canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        const data = imageData.data;
+
+                        for (let i = 0; i < data.length; i += 4) {
+                            const r = data[i], g = data[i + 1], b = data[i + 2];
+                            const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                            data[i] = 0; data[i + 1] = 0; data[i + 2] = 0;
+                            let alpha = 255 - luma;
+                            if (alpha < 40) alpha = 0; 
+                            else alpha = Math.min(255, alpha * 1.5);
+                            data[i + 3] = alpha;
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.src = dataUrl;
+                });
+            };
+
+            const handleSignatureUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                        const processedSignature = await processSignatureImage(reader.result);
+                        setSignature(processedSignature);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const handleImageUpload = (e, setter) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setter(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const printInvitations = () => {
+                if (selectedToPrint.length === 0) return showToast("Vui lòng chọn ít nhất 1 thư mời để in!", "error");
+                window.print();
+            };
+
+            const renderSidebarItem = (id, iconName, label) => (
+                <button
+                    onClick={() => setActiveTab(id)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        activeTab === id ? 'bg-amber-500 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }`}
+                >
+                    <Icon name={iconName} className="text-lg w-5 text-center" />
+                    <span className="font-medium text-sm">{label}</span>
+                </button>
+            );
+
+            const theme = THEMES.find(t => t.id === design.theme) || THEMES[0];
+
+            const renderInvitationCard = (student, idx, isModal = false) => {
+                const isDarkTheme = theme.id === 'navy' || theme.id === 'burgundy';
+                const isA4 = design.size === 'A4';
+                const elementId = isModal ? `invitation-modal-${student.id}` : `invitation-${student.id}`;
+
+                return (
+                    <div id={elementId} className={`relative overflow-hidden bg-white shadow-2xl print:shadow-none mx-auto ${isA4 ? 'w-[210mm] min-h-[297mm]' : 'w-[210mm] min-h-[148mm]'} print:page-break-after-always ${theme.bg} ${theme.text}`}
+                        style={{ background: theme.pattern, boxSizing: 'border-box', WebkitFontSmoothing: 'antialiased', textRendering: 'optimizeLegibility', fontFamily: '"Times New Roman", Times, serif' }}>
+                        
+                        <div className={`absolute top-6 left-6 ${isA4 ? 'w-16 h-16' : 'w-10 h-10'} border-t-[3px] border-l-[3px] ${theme.border} opacity-60 rounded-tl-lg`}></div>
+                        <div className={`absolute top-6 right-6 ${isA4 ? 'w-16 h-16' : 'w-10 h-10'} border-t-[3px] border-r-[3px] ${theme.border} opacity-60 rounded-tr-lg`}></div>
+                        <div className={`absolute bottom-6 left-6 ${isA4 ? 'w-16 h-16' : 'w-10 h-10'} border-b-[3px] border-l-[3px] ${theme.border} opacity-60 rounded-bl-lg`}></div>
+                        <div className={`absolute bottom-6 right-6 ${isA4 ? 'w-16 h-16' : 'w-10 h-10'} border-b-[3px] border-r-[3px] ${theme.border} opacity-60 rounded-br-lg`}></div>
+                        <div className={`absolute inset-4 border border-current opacity-10 pointer-events-none`}></div>
+                        <div className={`absolute inset-5 border border-current opacity-[0.05] pointer-events-none`}></div>
+
+                        <div className={`relative z-10 h-full flex flex-col justify-between ${isA4 ? 'p-16' : 'py-7 px-10'}`}>
+                            {isA4 ? (
+                                <div className="text-center mb-8">
+                                    <h4 className="text-[13px] font-bold uppercase tracking-wider mb-1">Cộng hòa xã hội chủ nghĩa Việt Nam</h4>
+                                    <h5 className="text-[14px] font-bold mb-4 border-b border-current inline-block pb-1">Độc lập - Tự do - Hạnh phúc</h5>
+                                    <div className="flex flex-col items-center justify-center mt-6">
+                                        {schoolInfo.logo && <img src={schoolInfo.logo} alt="Logo" className="h-20 object-contain mb-4 mix-blend-multiply" />}
+                                        <h2 className="text-[16px] font-bold uppercase tracking-widest">{schoolInfo.name}</h2>
+                                        <p className="text-[13px] mt-1 opacity-90">Năm học: {schoolInfo.year} • Lớp: {schoolInfo.className}</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="text-center w-5/12 flex flex-col items-center">
+                                        {schoolInfo.logo && <img src={schoolInfo.logo} alt="Logo" className="h-10 object-contain mb-1 mix-blend-multiply" />}
+                                        <h2 className="text-[11px] font-bold uppercase tracking-widest">{schoolInfo.name}</h2>
+                                        <div className="h-[1px] w-2/3 bg-current opacity-40 my-1"></div>
+                                        <p className="text-[10px] opacity-90">Năm học: {schoolInfo.year} • LỚP: {schoolInfo.className}</p>
+                                    </div>
+                                    <div className="text-center w-6/12 pt-1">
+                                        <h4 className="text-[11px] font-bold uppercase tracking-wider mb-1">Cộng hòa xã hội chủ nghĩa Việt Nam</h4>
+                                        <h5 className="text-[12px] font-bold border-b border-current inline-block pb-1">Độc lập - Tự do - Hạnh phúc</h5>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className={`text-center ${isA4 ? 'my-12' : 'my-4'}`}>
+                                <h1 className={`${isA4 ? 'text-6xl' : 'text-5xl'} tracking-[0.1em] uppercase ${theme.accent} drop-shadow-lg`} style={{ fontFamily: '"Playfair Display", "Times New Roman", serif', fontWeight: 900 }}>
+                                    Giấy Mời
+                                </h1>
+                            </div>
+
+                            <div className={`flex-1 ${isA4 ? 'text-[18px] space-y-8' : 'text-[15px] space-y-3'} leading-relaxed max-w-2xl mx-auto w-full`}>
+                                <p className={`italic text-center ${isA4 ? 'text-xl' : 'text-base'}`}>Trân trọng kính mời:</p>
+                                <div className={`text-center bg-current/5 ${isA4 ? 'p-8' : 'py-3 px-5'} rounded-2xl border border-current/10 shadow-sm backdrop-blur-sm`}>
+                                    <p className={`${isA4 ? 'text-base mb-2' : 'text-sm mb-1'} uppercase tracking-wider opacity-90 font-medium`}>Ông (Bà)</p>
+                                    <h3 className={`${isA4 ? 'text-4xl' : 'text-2xl'} font-extrabold uppercase tracking-wide ${isA4 ? 'mb-3' : 'mb-1'} ${theme.accent} drop-shadow-md`}>{student.parent}</h3>
+                                    <p className={`${isA4 ? 'text-xl' : 'text-base'} font-medium`}>Phụ huynh em: <span className="font-bold text-lg">{student.name}</span></p>
+                                </div>
+                                <div className={`${isA4 ? 'text-center mt-10 space-y-4' : 'flex items-center justify-between mt-4'}`}>
+                                    <div className={`${isA4 ? '' : 'flex-1 pr-6'}`}>
+                                        <p className={`${isA4 ? 'text-xl mb-4' : 'text-base mb-2'} font-medium`}>Tới tham dự buổi <span className={`font-bold uppercase ${theme.accent}`}>{meetingInfo.type}</span>.</p>
+                                        <div className={`grid grid-cols-1 gap-2 ${isA4 ? 'my-8 text-left w-80 mx-auto bg-current/5 p-6 rounded-xl border border-current/10' : 'text-left w-full bg-current/5 p-3 rounded-lg border border-current/10'}`}>
+                                            <div className="flex items-start"><span className={`font-bold ${isA4 ? 'w-28' : 'w-24'} flex-shrink-0`}>Thời gian:</span><span className="font-semibold">{meetingInfo.time} - {new Date(meetingInfo.date).toLocaleDateString('vi-VN')}</span></div>
+                                            <div className="flex items-start"><span className={`font-bold ${isA4 ? 'w-28' : 'w-24'} flex-shrink-0`}>Địa điểm:</span><span className="font-semibold">{meetingInfo.location}</span></div>
+                                        </div>
+                                    </div>
+                                    {design.showPhoto && student.photo && (
+                                        <div className={`flex justify-center ${isA4 ? 'mt-8' : 'flex-shrink-0'}`}>
+                                            <div className={`${isA4 ? 'w-32 h-32 border-4' : 'w-24 h-24 border-[3px]'} rounded-full p-1.5 ${theme.border} shadow-2xl bg-white/30 backdrop-blur-md`}>
+                                                <img src={student.photo} alt={student.name} className="w-full h-full object-cover rounded-full shadow-inner" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className={`${isA4 ? 'mt-12' : 'mt-4'} text-center w-full max-w-2xl mx-auto`}>
+                                <div className={`flex ${isA4 ? 'flex-col items-end' : 'justify-between items-end'}`}>
+                                    <div className={`${isA4 ? 'w-full mb-12' : 'w-7/12 text-left pr-4 mb-2'}`}>
+                                        <p className={`${isA4 ? 'text-lg' : 'text-sm'} italic font-medium opacity-90`}>Rất mong sự hiện diện của Quý phụ huynh để buổi họp đạt kết quả tốt đẹp.</p>
+                                        {meetingInfo.notes && !isA4 && <p className="text-[11px] italic mt-1.5 opacity-80 font-medium">* Lời nhắn: {meetingInfo.notes}</p>}
+                                    </div>
+                                    <div className={`text-center ${isA4 ? 'w-64 pr-8' : 'w-5/12'}`}>
+                                        <p className={`${isA4 ? 'font-bold mb-2 text-lg' : 'font-bold text-sm mb-1'}`}>Giáo viên chủ nhiệm</p>
+                                        <div className={`${isA4 ? 'h-32' : 'h-16'} flex items-center justify-center relative w-full`}>
+                                            {signature ? <img src={signature} alt="Signature" className={`max-h-[160%] max-w-[160%] object-contain scale-125 ${isA4 ? '-translate-y-4' : '-translate-y-2'} absolute z-0 pointer-events-none`} style={{ filter: isDarkTheme ? 'invert(1) drop-shadow(0 0 1px rgba(255,255,255,0.5))' : 'none' }} /> : <span className="text-[10px] italic opacity-30 z-10">(Chữ ký)</span>}
+                                        </div>
+                                        <p className={`font-bold relative z-10 uppercase ${isA4 ? 'text-xl mt-2' : 'text-sm mt-1'}`}>{schoolInfo.teacher}</p>
+                                    </div>
+                                </div>
+                                {meetingInfo.notes && isA4 && <p className="text-base font-medium italic text-center mt-6 opacity-80">* {meetingInfo.notes}</p>}
+                            </div>
+                            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 text-[10px] opacity-30 print:hidden font-medium">Bản in {idx + 1} / {students.length}</div>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex font-sans text-slate-800">
+                    <div className="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-10 print:hidden h-screen sticky top-0">
+                        <div className="p-6 border-b border-slate-800 flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/30">
+                                <Icon name="school" className="text-white text-lg" />
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-sm tracking-wider uppercase text-amber-500">EduInvite</h1>
+                                <p className="text-xs text-slate-400">Premium HTML Version</p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 mt-2 px-2">Thiết lập</div>
+                            {renderSidebarItem('school', 'school', 'Thông tin Trường')}
+                            {renderSidebarItem('students', 'users', 'Danh sách Phụ huynh')}
+                            {renderSidebarItem('meeting', 'calendar', 'Nội dung Cuộc họp')}
+                            
+                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 mt-6 px-2">Thiết kế</div>
+                            {renderSidebarItem('design', 'palette', 'Mẫu Giấy mời')}
+                            {renderSidebarItem('signature', 'pen-nib', 'Chữ ký Giáo viên')}
+                            
+                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 mt-6 px-2">Xuất bản</div>
+                            {renderSidebarItem('preview', 'file-lines', 'Xem & Tải Giấy mời')}
+                            {renderSidebarItem('stats', 'chart-pie', 'Thống kê & Lịch sử')}
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 print:bg-white print:overflow-visible h-screen relative">
+                        <header className="bg-white shadow-sm px-8 py-4 flex justify-between items-center print:hidden z-0">
+                            <h2 className="text-xl font-bold text-slate-800 flex items-center">
+                                <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm mr-3 font-semibold border border-amber-200">
+                                    {schoolInfo.className || 'Chưa chọn lớp'}
+                                </span> Quản lý Giấy mời
+                            </h2>
+                            <div className="flex gap-3">
+                                <button onClick={saveToCloud} disabled={isSyncing} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-md flex items-center disabled:opacity-50">
+                                    <Icon name={isSyncing ? "spinner fa-spin" : "cloud-arrow-up"} className="mr-2" /> {isSyncing ? 'Đang lưu...' : 'Lưu Cloud'}
+                                </button>
+                                <button onClick={() => setActiveTab('preview')} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition shadow-md flex items-center">
+                                    <Icon name="file-lines" className="mr-2" /> Xem bản in
+                                </button>
+                            </div>
+                        </header>
+
+                        <main className="flex-1 overflow-y-auto p-8 print:p-0 print:overflow-visible custom-scrollbar">
+                            <div className="max-w-6xl mx-auto print:max-w-none print:mx-0">
+                                
+                                {activeTab === 'school' && (
+                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fadeIn">
+                                        <div className="mb-8"><h3 className="text-2xl font-bold text-slate-900">Thông tin Trường học</h3></div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-5">
+                                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Tên trường</label><input type="text" value={schoolInfo.name} onChange={e => setSchoolInfo({...schoolInfo, name: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" /></div>
+                                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Địa chỉ</label><input type="text" value={schoolInfo.address} onChange={e => setSchoolInfo({...schoolInfo, address: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" /></div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div><label className="block text-sm font-semibold text-slate-700 mb-1">Năm học</label><input type="text" value={schoolInfo.year} onChange={e => setSchoolInfo({...schoolInfo, year: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" /></div>
+                                                    <div><label className="block text-sm font-semibold text-slate-700 mb-1">Tên lớp</label><input type="text" value={schoolInfo.className} onChange={e => setSchoolInfo({...schoolInfo, className: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" /></div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-5">
+                                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Giáo viên chủ nhiệm</label><input type="text" value={schoolInfo.teacher} onChange={e => setSchoolInfo({...schoolInfo, teacher: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" /></div>
+                                                <div><label className="block text-sm font-semibold text-slate-700 mb-1">Số điện thoại</label><input type="text" value={schoolInfo.phone} onChange={e => setSchoolInfo({...schoolInfo, phone: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none" /></div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Logo trường</label>
+                                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 transition cursor-pointer relative group">
+                                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, val => setSchoolInfo({...schoolInfo, logo: val}))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                                        {schoolInfo.logo ? (
+                                                            <div className="flex flex-col items-center"><img src={schoolInfo.logo} className="h-20 object-contain mb-2" /><span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded">Đổi logo</span></div>
+                                                        ) : (
+                                                            <div className="flex flex-col items-center"><Icon name="upload" className="text-2xl text-slate-400 mb-2" /><span className="text-sm text-slate-500">Tải lên logo</span></div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'students' && (
+                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fadeIn">
+                                        <div className="flex flex-col xl:flex-row justify-between mb-8 gap-6 border-b border-slate-100 pb-8">
+                                            <div><h3 className="text-2xl font-bold text-slate-900">Danh sách Học sinh</h3></div>
+                                            <div className="flex flex-wrap items-center gap-3">
+                                                <button onClick={downloadExcelTemplate} className="px-4 py-2.5 border border-slate-200 text-slate-700 bg-white rounded-xl text-sm font-semibold hover:bg-slate-50 flex items-center">
+                                                    <Icon name="file-excel" className="mr-2 text-green-600"/> Mẫu Excel
+                                                </button>
+                                                <label className="px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 flex items-center cursor-pointer">
+                                                    {isProcessingExcel ? "Đang xử lý..." : <><Icon name="upload" className="mr-2"/> Up Excel</>}
+                                                    <input type="file" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleExcelUpload} disabled={isProcessingExcel} />
+                                                </label>
+                                                <button onClick={exportToExcel} className="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 flex items-center">
+                                                    <Icon name="download" className="mr-2"/> Xuất Excel
+                                                </button>
+                                                <label className="px-4 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 flex items-center cursor-pointer">
+                                                    <Icon name="images" className="mr-2"/> Auto-Match Ảnh
+                                                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleBulkPhotoUpload} />
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                                            <table className="w-full text-left text-sm whitespace-nowrap">
+                                                <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                                                    <tr><th className="px-4 py-4 w-16 text-center">STT</th><th className="px-4 py-4 w-24 text-center">Ảnh</th><th className="px-4 py-4">Họ và tên HS</th><th className="px-4 py-4">Lớp</th><th className="px-4 py-4">Phụ huynh</th><th className="px-4 py-4">SĐT</th></tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {students.map((student, index) => (
+                                                        <tr key={student.id} className="hover:bg-slate-50 group">
+                                                            <td className="px-4 py-3 text-center">{index + 1}</td>
+                                                            <td className="px-4 py-3">
+                                                                <div className="relative w-10 h-10 mx-auto rounded-full border-2 border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center cursor-pointer">
+                                                                    {student.photo ? <img src={student.photo} className="w-full h-full object-cover" /> : <Icon name="image" className="text-slate-400" />}
+                                                                    <input type="file" accept="image/*" onChange={(e) => handleStudentPhotoUpload(e, student.id)} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-4 py-3 font-semibold">{student.name}</td><td className="px-4 py-3">{student.class || schoolInfo.className}</td><td className="px-4 py-3">{student.parent}</td><td className="px-4 py-3">{student.phone}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'meeting' && (
+                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fadeIn max-w-3xl mx-auto">
+                                        <div className="mb-8 text-center"><h3 className="text-2xl font-bold text-slate-900">Nội dung Cuộc họp</h3></div>
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div><label className="block text-sm font-semibold mb-1">Ngày họp</label><input type="date" value={meetingInfo.date} onChange={e => setMeetingInfo({...meetingInfo, date: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border rounded-lg" /></div>
+                                                <div><label className="block text-sm font-semibold mb-1">Giờ bắt đầu</label><input type="time" value={meetingInfo.time} onChange={e => setMeetingInfo({...meetingInfo, time: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border rounded-lg" /></div>
+                                            </div>
+                                            <div><label className="block text-sm font-semibold mb-1">Địa điểm</label><input type="text" value={meetingInfo.location} onChange={e => setMeetingInfo({...meetingInfo, location: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border rounded-lg" /></div>
+                                            <div><label className="block text-sm font-semibold mb-1">Tính chất</label><input type="text" value={meetingInfo.type} onChange={e => setMeetingInfo({...meetingInfo, type: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border rounded-lg" /></div>
+                                            <div><label className="block text-sm font-semibold mb-1">Lời nhắn</label><textarea value={meetingInfo.notes} onChange={e => setMeetingInfo({...meetingInfo, notes: e.target.value})} rows="4" className="w-full px-4 py-2.5 bg-slate-50 border rounded-lg"></textarea></div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'design' && (
+                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fadeIn">
+                                        <div className="mb-8 text-center"><h3 className="text-2xl font-bold">Thiết kế Giấy mời</h3></div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                            <div className="space-y-8">
+                                                <div>
+                                                    <h4 className="text-lg font-bold mb-4">1. Chọn Phông nền</h4>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        {THEMES.map((t) => (
+                                                            <div key={t.id} onClick={() => setDesign({...design, theme: t.id})} className={`cursor-pointer rounded-xl border-2 transition-all ${design.theme === t.id ? 'border-amber-500 ring-4 ring-amber-500/20' : 'border-transparent'}`}>
+                                                                <div className={`h-24 ${t.bg} border-b ${t.border}`}></div>
+                                                                <div className="bg-slate-50 p-3 text-center text-sm font-semibold">{t.name}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-lg font-bold mb-4">2. Cấu hình In</h4>
+                                                    <div className="space-y-4">
+                                                        <div className="flex justify-between p-4 bg-slate-50 rounded-xl border">
+                                                            <span className="font-semibold">Khổ giấy</span>
+                                                            <div>
+                                                                <button onClick={() => setDesign({...design, size: 'A4'})} className={`px-4 py-1.5 rounded-md text-sm mr-2 ${design.size === 'A4' ? 'bg-slate-800 text-white' : 'bg-white'}`}>A4 Dọc</button>
+                                                                <button onClick={() => setDesign({...design, size: 'A5'})} className={`px-4 py-1.5 rounded-md text-sm ${design.size === 'A5' ? 'bg-slate-800 text-white' : 'bg-white'}`}>A5 Ngang</button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex justify-between p-4 bg-slate-50 rounded-xl border">
+                                                            <span className="font-semibold">Hiển thị ảnh Học sinh</span>
+                                                            <input type="checkbox" checked={design.showPhoto} onChange={(e) => setDesign({...design, showPhoto: e.target.checked})} className="w-6 h-6" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-slate-100 p-6 rounded-2xl border flex items-center justify-center">
+                                                <div className={`relative shadow-2xl transition-all ${theme.bg} ${theme.border} border-4 ${design.size === 'A4' ? 'w-[70%] aspect-[1/1.414]' : 'w-full aspect-[1.414/1]'} p-6 rounded-sm flex flex-col justify-center items-center`}>
+                                                    <div className={`text-2xl font-bold uppercase ${theme.accent}`}>BẢN XEM TRƯỚC</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'signature' && (
+                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fadeIn max-w-2xl mx-auto text-center">
+                                        <h3 className="text-2xl font-bold mb-6">Chữ ký Điện tử</h3>
+                                        <div className="border-2 border-dashed border-slate-300 rounded-2xl p-10 relative cursor-pointer hover:bg-slate-50">
+                                            <input type="file" accept="image/*" onChange={handleSignatureUpload} className="absolute inset-0 w-full h-full opacity-0 z-10" />
+                                            {signature ? <img src={signature} className="h-32 mx-auto drop-shadow-md" /> : <div><Icon name="upload" className="text-4xl text-amber-500 mb-4"/><p>Tải ảnh chữ ký (AI sẽ tự lọc nền trắng)</p></div>}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'preview' && (
+                                    <div className="animate-fadeIn">
+                                        <div className="mb-6 flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-200 print:hidden">
+                                            <div>
+                                                <h3 className="text-xl font-bold">Xem trước & Xuất bản</h3>
+                                                <div className="mt-4 flex items-center">
+                                                    <input type="checkbox" checked={selectedToPrint.length === students.length && students.length > 0} onChange={(e) => setSelectedToPrint(e.target.checked ? students.map(s => s.id) : [])} className="w-5 h-5 mr-2" /> Chọn tất cả ({selectedToPrint.length}/{students.length})
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-3">
+                                                <button onClick={downloadSelectedImages} disabled={selectedToPrint.length === 0 || isDownloading} className="px-6 py-3 bg-slate-800 text-white rounded-xl text-sm font-bold disabled:opacity-50"><Icon name="download" className="mr-2"/> {isDownloading ? "Đang xử lý..." : "Tải ảnh"}</button>
+                                                <button onClick={printInvitations} disabled={selectedToPrint.length === 0} className="px-6 py-3 bg-amber-500 text-white rounded-xl text-sm font-bold disabled:opacity-50"><Icon name="print" className="mr-2"/> In bản cứng</button>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-200 p-8 rounded-2xl print:p-0 print:bg-transparent flex flex-col items-center space-y-16">
+                                            {students.map((student, idx) => {
+                                                const isSelected = selectedToPrint.includes(student.id);
+                                                return (
+                                                    <div key={student.id} className={`relative group transition-all duration-300 ${isSelected ? '' : 'opacity-40 grayscale-[0.5] print:hidden'}`}>
+                                                        <div className={`absolute top-4 left-4 z-20 cursor-pointer print:hidden flex items-center justify-center w-8 h-8 rounded-lg border-2 ${isSelected ? 'bg-amber-500 border-amber-500 text-white' : 'bg-white border-slate-300'}`} onClick={() => setSelectedToPrint(prev => prev.includes(student.id) ? prev.filter(id => id !== student.id) : [...prev, student.id])}>
+                                                            {isSelected && <Icon name="check" />}
+                                                        </div>
+                                                        {renderInvitationCard(student, idx)}
+                                                        <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center print:hidden z-10 pointer-events-none">
+                                                            <div className="flex space-x-4 pointer-events-auto">
+                                                                <button onClick={(e) => { e.stopPropagation(); setPreviewFullscreenId(student.id); }} className="px-6 py-3 bg-white text-slate-900 rounded-xl font-bold"><Icon name="expand" className="mr-2"/> Xem Lớn</button>
+                                                                <button onClick={(e) => { e.stopPropagation(); downloadAsImage(student.id, student.name); }} className="px-6 py-3 bg-amber-500 text-white rounded-xl font-bold" disabled={isDownloading}><Icon name="download" className="mr-2"/> Tải Ảnh</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </main>
+
+                        {previewFullscreenId && (() => {
+                            const student = students.find(s => s.id === previewFullscreenId);
+                            if (!student) return null;
+                            return (
+                                <div className="fixed inset-0 z-[100] bg-slate-900/95 flex flex-col print:hidden animate-fadeIn">
+                                    <div className="h-20 px-10 flex items-center justify-between border-b border-white/10 shadow-lg">
+                                        <h3 className="text-white font-bold text-xl"><Icon name="expand" className="mr-3 text-amber-500"/> Phụ huynh: {student.parent}</h3>
+                                        <div className="flex space-x-5">
+                                            <button onClick={() => downloadAsImage(student.id, student.name)} className="px-4 py-2 bg-amber-500 text-white rounded-lg font-bold"><Icon name="download" className="mr-2"/> Tải ảnh</button>
+                                            <button onClick={() => setPreviewFullscreenId(null)} className="p-2 text-white hover:text-red-500"><Icon name="xmark" className="text-2xl" /></button>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-auto custom-scrollbar flex items-start justify-center p-12">
+                                        <div className="transform origin-top hover:scale-[1.02] transition-transform">{renderInvitationCard(student, 0, true)}</div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        {toast.show && (
+                            <div className={`fixed bottom-8 right-8 z-[200] px-6 py-4 rounded-xl shadow-2xl flex items-center text-white animate-fadeIn ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-600'}`}>
+                                <Icon name={toast.type === 'error' ? 'circle-xmark' : 'circle-check'} className="text-xl mr-3" />
+                                <span className="font-semibold text-sm">{toast.message}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Khởi chạy App
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

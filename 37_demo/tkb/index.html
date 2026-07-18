@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thời Khóa Biểu Cá Nhân</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Tùy chỉnh thanh cuộn */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
+        
+        .sticky-col { position: sticky; left: 0; z-index: 10; background: white; }
+        .sticky-col-2 { position: sticky; left: 60px; z-index: 10; background: white; }
+        
+        /* Hiệu ứng loading */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-indigo-600 text-white shadow-md py-4 px-6 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-calendar-days text-2xl"></i>
+            <h1 class="text-xl font-bold tracking-wide">Quản Lý Thời Khóa Biểu</h1>
+        </div>
+        <div class="text-sm bg-indigo-500 py-1 px-3 rounded-full flex items-center gap-2">
+            <i class="fa-solid fa-robot"></i> Powered by Gemini
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-6 max-w-7xl w-full mx-auto">
+        
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6 mb-6 flex flex-col gap-4">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                <div class="flex flex-col md:flex-row gap-4 items-start md:items-center w-full">
+                    <div class="flex flex-col w-full md:w-auto">
+                        <label for="startDate" class="text-sm font-semibold text-slate-600 mb-1">Ngày bắt đầu Tuần 1:</label>
+                        <input type="date" id="startDate" class="border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all cursor-pointer" onchange="updateStartDate(this.value)">
+                    </div>
+
+                    <div class="flex flex-col w-full md:w-auto md:ml-4">
+                        <label for="weekSelect" class="text-sm font-semibold text-slate-600 mb-1">Tuần giảng dạy:</label>
+                        <select id="weekSelect" class="border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none transition-all cursor-pointer font-medium text-indigo-700 bg-indigo-50" onchange="changeWeek(this.value)">
+                            </select>
+                    </div>
+
+                    <div class="flex flex-col w-full md:w-auto md:ml-4">
+                        <label class="text-sm font-semibold text-slate-600 mb-1">Tổng số tiết tuần này:</label>
+                        <div class="border border-indigo-200 rounded-lg px-4 py-2 bg-indigo-50 text-indigo-700 font-bold text-center flex items-center justify-center gap-2 transition-all" title="Đã loại trừ các tiết Chào cờ">
+                            <i class="fa-solid fa-calculator"></i> <span id="totalPeriods" class="text-lg">0</span> tiết
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 w-full md:w-auto justify-end mt-2 md:mt-0 flex-wrap">
+                    <!-- Nút Mở Google Sheet mới thêm -->
+                    <a href="https://docs.google.com/spreadsheets/d/1m8DdgYc7KBdV4-5kCrRHaC8wgDDGJo4qr91YF5qDQys/edit" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
+                        <i class="fa-solid fa-file-excel"></i> Mở Google Sheet
+                    </a>
+                    <button onclick="fetchData()" id="btnSync" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> Tải lại
+                    </button>
+                    <button onclick="saveData()" id="btnSave" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Lưu lên Cloud
+                    </button>
+                </div>
+            </div>
+
+            <div class="w-full pt-4 mt-2 border-t border-slate-200 flex flex-col md:flex-row gap-6">
+                <div class="flex-grow w-full md:w-1/2">
+                    <h3 class="text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square text-orange-500"></i> Ghi chú tuần này:
+                    </h3>
+                    <input type="text" id="weekNote" oninput="updateWeekNote(this.value)" class="w-full p-2.5 text-sm border border-orange-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all bg-orange-50 text-slate-800 font-medium placeholder:text-orange-300" placeholder="Ví dụ: Nghỉ 2 tiết, có Lễ 20/11...">
+                </div>
+
+                <div id="classStatsContainer" class="w-full md:w-1/2 hidden flex-col">
+                    <h3 class="text-sm font-semibold text-slate-600 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-indigo-500"></i> Phân bổ tiết theo lớp:
+                    </h3>
+                    <div id="classStatsList" class="flex flex-wrap gap-2">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[800px]">
+                    <thead>
+                        <tr class="bg-indigo-50 border-b border-indigo-100 text-indigo-900">
+                            <th class="py-3 px-4 font-bold text-center w-16 sticky-col border-r border-indigo-100">Buổi</th>
+                            <th class="py-3 px-2 font-bold text-center w-16 sticky-col-2 border-r border-indigo-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Tiết</th>
+                            <th class="py-3 px-4 font-bold text-center w-1/6 border-r border-indigo-100">Thứ 2 <br><span id="date-T2" class="text-xs font-normal text-indigo-600">--/--</span></th>
+                            <th class="py-3 px-4 font-bold text-center w-1/6 border-r border-indigo-100">Thứ 3 <br><span id="date-T3" class="text-xs font-normal text-indigo-600">--/--</span></th>
+                            <th class="py-3 px-4 font-bold text-center w-1/6 border-r border-indigo-100">Thứ 4 <br><span id="date-T4" class="text-xs font-normal text-indigo-600">--/--</span></th>
+                            <th class="py-3 px-4 font-bold text-center w-1/6 border-r border-indigo-100">Thứ 5 <br><span id="date-T5" class="text-xs font-normal text-indigo-600">--/--</span></th>
+                            <th class="py-3 px-4 font-bold text-center w-1/6 border-r border-indigo-100">Thứ 6 <br><span id="date-T6" class="text-xs font-normal text-indigo-600">--/--</span></th>
+                            <th class="py-3 px-4 font-bold text-center w-1/6">Thứ 7 <br><span id="date-T7" class="text-xs font-normal text-indigo-600">--/--</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-6 mt-auto text-center text-slate-500 text-sm font-medium border-t border-slate-200">
+        <p>&copy; 2026 - Phát triển bởi <span class="text-indigo-600 font-bold">Thầy Nguyễn Cường dạy Toán</span></p>
+    </footer>
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex-col justify-center items-center">
+        <div class="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center gap-3">
+            <div class="loader"></div>
+            <p id="loadingText" class="font-medium text-slate-700">Đang xử lý...</p>
+        </div>
+    </div>
+    
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 z-50 bg-green-500 text-white px-5 py-3 rounded-lg shadow-lg font-medium flex flex-col items-start gap-1">
+        <div class="flex items-center gap-3 w-full">
+            <i class="fa-solid fa-circle-check" id="toastIcon"></i> <span id="toastMsg" class="font-bold">Thành công!</span>
+        </div>
+        <p id="toastSubMsg" class="text-xs text-white/90 font-normal hidden w-full break-words max-w-xs"></p>
+    </div>
+
+    <script>
+        // ==========================================
+        // KHAI BÁO URL GOOGLE APPS SCRIPT Ở ĐÂY
+        // ==========================================
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwiRNmoIElw3Cy2Z01SW65q5QGvAEzh9V3iN45r50tMCwB9M63zwGWMWMmdTRRVs4pxZA/exec";
+        
+        // Cấu trúc dữ liệu mặc định
+        const TOTAL_WEEKS = 38;
+        const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        
+        let scheduleData = {
+            startDate: '',
+            weeks: Array.from({length: TOTAL_WEEKS}, () => ({
+                note: '', // Trường dữ liệu mới để lưu Ghi chú
+                days: {
+                    T2: Array(10).fill(''), T3: Array(10).fill(''), T4: Array(10).fill(''),
+                    T5: Array(10).fill(''), T6: Array(10).fill(''), T7: Array(10).fill('')
+                }
+            }))
+        };
+        
+        let currentWeekIndex = 0;
+
+        // Bảng màu động cho các lớp
+        const classColors = [
+            { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200', badgeBg: 'bg-blue-500' },
+            { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200', badgeBg: 'bg-green-500' },
+            { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200', badgeBg: 'bg-purple-500' },
+            { bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-200', badgeBg: 'bg-amber-500' },
+            { bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-200', badgeBg: 'bg-pink-500' },
+            { bg: 'bg-cyan-100', text: 'text-cyan-800', border: 'border-cyan-200', badgeBg: 'bg-cyan-500' },
+            { bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-200', badgeBg: 'bg-rose-500' },
+            { bg: 'bg-lime-100', text: 'text-lime-800', border: 'border-lime-200', badgeBg: 'bg-lime-500' }
+        ];
+        let classColorMap = {}; // Lưu trữ ánh xạ Lớp -> Màu
+        let colorIndex = 0;
+
+        // Các class mặc định của ô Textarea
+        const baseTextareaClasses = "w-full h-14 p-2 text-sm border border-transparent rounded-md focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 focus:bg-white resize-none outline-none transition-all";
+
+        // Khởi tạo giao diện
+        function init() {
+            // Tạo options cho select tuần
+            const select = document.getElementById('weekSelect');
+            for (let i = 1; i <= TOTAL_WEEKS; i++) {
+                const opt = document.createElement('option');
+                opt.value = i - 1;
+                opt.text = `Tuần ${i}`;
+                select.appendChild(opt);
+            }
+            
+            buildTableStructure();
+            fetchData();
+        }
+
+        // Tạo khung HTML cho bảng
+        function buildTableStructure() {
+            const tbody = document.getElementById('tableBody');
+            let html = '';
+            
+            for (let p = 0; p < 10; p++) {
+                let isSáng = p < 5;
+                let tiết = isSáng ? p + 1 : p - 4;
+                let isBorderBottom = (p === 4 || p === 9) ? 'border-b-2 border-b-slate-300' : 'border-b border-slate-200';
+                let bgRow = isSáng ? 'bg-white' : 'bg-slate-50';
+
+                html += `<tr class="${bgRow} hover:bg-indigo-50/50 transition-colors ${isBorderBottom}">`;
+                
+                // Cột Buổi (gộp 5 dòng)
+                if (p === 0) {
+                    html += `<td rowspan="5" class="p-2 font-bold text-center text-orange-600 bg-orange-50/50 sticky-col border-r border-slate-200 align-middle">SÁNG</td>`;
+                } else if (p === 5) {
+                    html += `<td rowspan="5" class="p-2 font-bold text-center text-blue-600 bg-blue-50/50 sticky-col border-r border-slate-200 align-middle border-t-2 border-t-slate-300">CHIỀU</td>`;
+                }
+
+                // Cột Tiết
+                let topBorderClass = (p === 5) ? "border-t-2 border-t-slate-300" : "";
+                html += `<td class="p-2 font-semibold text-center text-slate-600 sticky-col-2 border-r border-slate-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] ${topBorderClass} bg-inherit">Tiết ${tiết}</td>`;
+
+                // Cột T2 - T7
+                DAYS.forEach(day => {
+                    html += `
+                    <td class="p-1.5 border-r border-slate-200 ${topBorderClass}">
+                        <textarea 
+                            id="cell-${day}-${p}"
+                            oninput="updateCellData('${day}', ${p}, this)"
+                            class="${baseTextareaClasses} bg-transparent"
+                            placeholder="..."></textarea>
+                    </td>`;
+                });
+                
+                html += `</tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Hàm hỗ trợ bóc tách Tên lớp
+        function getClassName(cellValue) {
+            if (!cellValue || cellValue.trim() === '') return null;
+            if (cellValue.toLowerCase().includes('chào cờ')) return null; // Bỏ qua chào cờ
+            
+            let className = cellValue.split('-')[0].trim();
+            if (className.length > 15) {
+                className = cellValue.split(' ')[0].trim();
+            }
+            return className || null;
+        }
+
+        // Đẩy dữ liệu từ State ra UI
+        function renderTable() {
+            const weekData = scheduleData.weeks[currentWeekIndex].days;
+            DAYS.forEach(day => {
+                for (let p = 0; p < 10; p++) {
+                    const cellElement = document.getElementById(`cell-${day}-${p}`);
+                    const cellValue = weekData[day][p] || '';
+                    cellElement.value = cellValue;
+                    applyCellColor(cellElement, cellValue); // Áp dụng màu sắc lớp
+                }
+            });
+            
+            // Render Ghi chú
+            document.getElementById('weekNote').value = scheduleData.weeks[currentWeekIndex].note || '';
+
+            renderDates();
+            calculateTotalPeriods(); // Cập nhật tổng số tiết và bóc tách khi render lại bảng
+        }
+
+        // Cập nhật Ghi chú vào State
+        function updateWeekNote(val) {
+            scheduleData.weeks[currentWeekIndex].note = val;
+        }
+
+        // Hàm hỗ trợ: Tô màu ô theo lớp hoặc Chào cờ
+        function applyCellColor(element, value) {
+            // Xóa toàn bộ class màu cũ, khôi phục base classes
+            element.className = baseTextareaClasses;
+
+            if (!value || value.trim() === '') {
+                element.classList.add('bg-transparent');
+                return;
+            }
+
+            // Xử lý tiết Chào cờ (Màu đỏ)
+            if (value.toLowerCase().includes('chào cờ')) {
+                element.classList.add('bg-red-100', 'text-red-700', 'font-bold');
+                return;
+            }
+
+            // Xử lý tiết học của Lớp (Màu ngẫu nhiên theo Lớp)
+            const className = getClassName(value);
+            if (className) {
+                // Nếu lớp này chưa có màu, cấp phát 1 màu mới
+                if (!classColorMap[className]) {
+                    classColorMap[className] = classColors[colorIndex % classColors.length];
+                    colorIndex++;
+                }
+                
+                const color = classColorMap[className];
+                element.classList.add(color.bg, color.text, 'font-semibold');
+            } else {
+                element.classList.add('bg-transparent'); // Nếu không có format chuẩn
+            }
+        }
+
+        // Hàm tính toán tổng số tiết và thống kê theo lớp
+        function calculateTotalPeriods() {
+            const weekData = scheduleData.weeks[currentWeekIndex].days;
+            let total = 0;
+            let classStats = {}; // Đối tượng lưu trữ số tiết của từng lớp
+
+            DAYS.forEach(day => {
+                for (let p = 0; p < 10; p++) {
+                    let cellValue = weekData[day][p];
+                    
+                    if (cellValue && cellValue.trim() !== '') {
+                        
+                        // BỎ QUA TIẾT "CHÀO CỜ" KHỎI THỐNG KÊ (Không phân biệt hoa thường)
+                        if (cellValue.toLowerCase().includes('chào cờ')) {
+                            continue;
+                        }
+
+                        total++; // Tăng tổng số tiết
+                        
+                        const className = getClassName(cellValue);
+                        // Nếu bóc tách thành công một chuỗi có nghĩa
+                        if (className) {
+                            classStats[className] = (classStats[className] || 0) + 1;
+                        }
+                    }
+                }
+            });
+            
+            // Cập nhật số tổng
+            document.getElementById('totalPeriods').innerText = total;
+
+            // Hiển thị phần thống kê chi tiết theo lớp
+            const statsContainer = document.getElementById('classStatsContainer');
+            const statsList = document.getElementById('classStatsList');
+            statsList.innerHTML = ''; // Làm sạch danh sách cũ
+
+            if (Object.keys(classStats).length > 0) {
+                statsContainer.classList.remove('hidden'); // Hiển thị khu vực
+                statsContainer.classList.add('flex');
+                
+                // Sắp xếp tên lớp theo thứ tự AlphaBê và tạo giao diện
+                Object.keys(classStats).sort().forEach(cls => {
+                    const count = classStats[cls];
+                    // Lấy lại màu đã cấp phát cho lớp này (hoặc màu mặc định nếu lỗi)
+                    const color = classColorMap[cls] || classColors[0];
+                    
+                    const badge = document.createElement('div');
+                    // Áp dụng màu đồng bộ với ô textarea
+                    badge.className = `${color.bg} ${color.text} px-3 py-1.5 rounded-lg text-sm font-medium border ${color.border} shadow-sm flex items-center gap-2`;
+                    badge.innerHTML = `<span class="${color.badgeBg} text-white px-2 py-0.5 rounded text-xs font-bold">${cls}</span> ${count} tiết`;
+                    statsList.appendChild(badge);
+                });
+            } else {
+                statsContainer.classList.add('hidden'); // Ẩn nếu không có dữ liệu
+                statsContainer.classList.remove('flex');
+            }
+        }
+
+        // Lưu thay đổi ô vào State
+        function updateCellData(day, periodIndex, element) {
+            const value = element.value;
+            scheduleData.weeks[currentWeekIndex].days[day][periodIndex] = value;
+            
+            applyCellColor(element, value); // Đổi màu sắc trực tiếp khi gõ
+            calculateTotalPeriods(); // Cập nhật tổng số tiết và bóc tách ngay khi gõ
+        }
+
+        // Thay đổi ngày bắt đầu
+        function updateStartDate(val) {
+            scheduleData.startDate = val;
+            renderDates();
+        }
+
+        // Thay đổi tuần
+        function changeWeek(val) {
+            currentWeekIndex = parseInt(val);
+            renderTable();
+        }
+
+        // Tính và hiển thị ngày tháng trên Header
+        function renderDates() {
+            if (!scheduleData.startDate) {
+                DAYS.forEach(day => document.getElementById(`date-${day}`).innerText = '--/--');
+                return;
+            }
+
+            // Xử lý timezone fix
+            const startStr = scheduleData.startDate + 'T00:00:00';
+            const startDate = new Date(startStr);
+            
+            // Tính ngày Thứ 2 của tuần hiện tại
+            startDate.setDate(startDate.getDate() + (currentWeekIndex * 7));
+
+            DAYS.forEach((day, index) => {
+                const dayDate = new Date(startDate);
+                dayDate.setDate(dayDate.getDate() + index);
+                
+                const dd = String(dayDate.getDate()).padStart(2, '0');
+                const mm = String(dayDate.getMonth() + 1).padStart(2, '0');
+                document.getElementById(`date-${day}`).innerText = `${dd}/${mm}`;
+            });
+        }
+
+        // API: Tải dữ liệu
+        function fetchData() {
+            showLoading('Đang tải dữ liệu từ Google Sheet...');
+            
+            const fetchUrl = GAS_URL + "?t=" + new Date().getTime();
+            
+            fetch(fetchUrl, {
+                method: 'GET',
+                redirect: 'follow' // Bắt buộc để theo dõi chuyển hướng của Google
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.weeks) {
+                        scheduleData = data;
+                        document.getElementById('startDate').value = data.startDate || '';
+                        document.getElementById('weekSelect').value = 0;
+                        currentWeekIndex = 0;
+                        renderTable();
+                        showToast('Tải dữ liệu thành công!');
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi Fetch Data:", err);
+                    showToast('Có lỗi thực thi bên Google Apps Script!', 'error', 'Mở Lịch sử thực thi (Executions) trên GAS để xem chi tiết lỗi. Có thể do sai SPREADSHEET_ID hoặc chưa cấp quyền cho script.');
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+
+        // API: Lưu dữ liệu
+        function saveData() {
+            showLoading('Đang lưu lên Google Sheet...');
+            
+            fetch(GAS_URL, {
+                method: 'POST',
+                redirect: 'follow', // Bắt buộc để theo dõi chuyển hướng của Google
+                body: JSON.stringify(scheduleData),
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8' 
+                }
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.success) {
+                    showToast('Đã lưu thành công!');
+                } else {
+                    showToast('Lỗi từ Server', 'error', res.message);
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi Save Data:", err);
+                showToast('Lưu thất bại. Lỗi kết nối!', 'error', 'Lưu thất bại. Vui lòng kiểm tra lại đường truyền hoặc cài đặt kịch bản GAS.');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+
+        // Tiện ích UI (Loading, Toast)
+        function showLoading(text) {
+            document.getElementById('loadingText').innerText = text;
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            document.getElementById('loadingOverlay').classList.add('flex');
+        }
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('loadingOverlay').classList.remove('flex');
+        }
+        
+        let toastTimeout;
+        function showToast(msg, type = 'success', subMsg = '') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const subMsgEl = document.getElementById('toastSubMsg');
+            
+            document.getElementById('toastMsg').innerText = msg;
+            
+            if (subMsg) {
+                subMsgEl.innerText = subMsg;
+                subMsgEl.classList.remove('hidden');
+            } else {
+                subMsgEl.classList.add('hidden');
+            }
+            
+            toast.classList.remove('bg-green-500', 'bg-red-500');
+            icon.className = '';
+            
+            if (type === 'success') {
+                toast.classList.add('bg-green-500');
+                icon.classList.add('fa-solid', 'fa-circle-check');
+            } else {
+                toast.classList.add('bg-red-500');
+                icon.classList.add('fa-solid', 'fa-triangle-exclamation');
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, (type === 'error' ? 8000 : 3000)); // Hiện lâu hơn nếu là lỗi
+        }
+
+        // Khởi động
+        window.onload = init;
+    </script>
+</body>
+</html>

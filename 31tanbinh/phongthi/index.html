@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Biển Phòng Thi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Google Fonts cho Biển Phòng Thi -->
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=League+Spartan:wght@800;900&family=Montserrat:wght@900&family=Oswald:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --fs-room: 150pt; 
+            --font-room: 'Anton', sans-serif; 
+            --ws-room: normal; /* Biến điều khiển xuống dòng, mặc định là normal (cho phép xuống dòng) */
+            --lh-room: 1.1; /* Biến điều khiển giãn dòng */
+        }
+
+        body {
+            background-color: #f3f4f6;
+        }
+
+        #print-area {
+            display: none;
+            width: 100%;
+            background: #e5e7eb;
+        }
+
+        /* Khung trang in A4 Nằm ngang (Landscape) */
+        .print-page {
+            width: 29.7cm;
+            height: 21cm;
+            background: white;
+            box-sizing: border-box;
+            page-break-after: always;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.8cm; 
+        }
+
+        body.preview-mode .print-page {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        body.pdf-exporting { background-color: white !important; }
+        body.pdf-exporting #app-ui,
+        body.pdf-exporting .preview-controls,
+        body.pdf-exporting #toast-container { display: none !important; }
+        body.pdf-exporting #print-area {
+            display: block !important;
+            background: white !important;
+            width: 29.7cm !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        body.pdf-exporting #badges-container {
+            display: block !important; 
+            gap: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+        body.pdf-exporting .print-page {
+            box-shadow: none !important;
+            margin: 0 !important; 
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+
+        /* === THIẾT KẾ BIỂN PHÒNG THI === */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .room-sign-outer {
+            width: 100%;
+            height: 100%;
+            border: 5px solid #111;
+            border-radius: 14px;
+            padding: 4px; 
+            box-sizing: border-box;
+            background: white;
+            position: relative;
+        }
+
+        .room-sign-inner {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #111;
+            border-radius: 10px; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 2cm;
+        }
+
+        .decorative-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 85%;
+            margin: 30px 0; 
+        }
+
+        .line-bar {
+            flex: 1;
+            height: 0;
+            border-top: 2px solid #111; 
+        }
+
+        .diamond-group {
+            display: flex;
+            align-items: center;
+            margin: 0 15px;
+            gap: 12px; 
+        }
+
+        .diamond {
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-color: #111;
+            background: transparent;
+            transform: rotate(45deg);
+        }
+        .diamond-lg { border-width: 12px; } 
+        .diamond-sm { border-width: 6px; }  
+
+        .room-text-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 0 1cm;
+        }
+
+        .room-text {
+            font-size: var(--fs-room);
+            font-family: var(--font-room);
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #111;
+            text-align: center;
+            line-height: var(--lh-room); /* Quản lý giãn dòng bằng biến CSS */
+            /* Quản lý xuống dòng bằng biến CSS */
+            white-space: var(--ws-room);
+            word-break: break-word; /* Tự ngắt từ nếu từ quá dài */
+            letter-spacing: 2px; 
+        }
+
+        @media print {
+            body { background-color: white; margin: 0; }
+            #app-ui, .preview-controls, #toast-container { display: none !important; }
+            #print-area { display: block !important; padding: 0 !important; }
+            
+            #badges-container {
+                display: block !important; 
+                gap: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+
+            .print-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                page-break-after: always;
+                page-break-inside: avoid;
+                width: 29.7cm !important;
+                height: 21cm !important;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 0; 
+            }
+        }
+
+        body.preview-mode #app-ui { display: none; }
+        body.preview-mode #print-area { display: block; min-height: 100vh; }
+        .preview-controls { position: fixed; top: 20px; right: 20px; display: none; z-index: 50; }
+        body.preview-mode .preview-controls { display: flex; align-items: flex-start; gap: 15px; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 100; }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col min-h-screen">
+
+    <div id="app-ui" class="flex-1 flex flex-col">
+        <header class="bg-blue-900 text-white p-4 shadow-md flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="ph ph-door text-3xl"></i>
+                Hệ Thống Quản Lý Biển Phòng Thi
+            </h1>
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="previewBlankBadges()" class="bg-purple-600 text-white px-4 py-2 rounded font-semibold hover:bg-purple-700 transition flex items-center gap-2 shadow-sm border border-purple-800">
+                    <i class="ph ph-file-dashed"></i> <span>Biển Trống</span>
+                </button>
+                <button onclick="togglePreview()" class="bg-white text-blue-900 px-4 py-2 rounded font-semibold hover:bg-gray-100 transition flex items-center gap-2">
+                    <i class="ph ph-eye"></i> <span id="preview-text">Xem Dạng In</span>
+                </button>
+                <button onclick="exportPDF()" class="bg-red-600 text-white px-4 py-2 rounded font-semibold hover:bg-red-700 transition flex items-center gap-2">
+                    <i class="ph ph-file-pdf"></i> <span id="pdf-text">Xuất PDF</span>
+                </button>
+                <button onclick="triggerPrint()" class="bg-yellow-500 text-blue-900 px-4 py-2 rounded font-bold hover:bg-yellow-400 transition flex items-center gap-2">
+                    <i class="ph ph-printer"></i> <span id="print-text">In Tất Cả</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="bg-white p-6 rounded-lg shadow-md h-fit border border-gray-200">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2 text-gray-800" id="form-title">Thêm Biển Phòng Mới</h2>
+                
+                <form id="badge-form" class="space-y-4">
+                    <input type="hidden" id="badge-id">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên Phòng</label>
+                        <input type="text" id="tenPhong" required placeholder="VD: PHÒNG 01" 
+                               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 uppercase font-bold text-lg">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Thứ tự sắp xếp</label>
+                        <input type="number" id="thuTu" required placeholder="1, 2, 3..." min="1"
+                               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    
+                    <div class="flex gap-2 pt-2">
+                        <button type="submit" id="btn-submit" class="flex-1 bg-blue-700 text-white py-2 rounded font-semibold hover:bg-blue-800 transition shadow-sm">
+                            Thêm Biển
+                        </button>
+                        <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden flex-1 bg-gray-500 text-white py-2 rounded font-semibold hover:bg-gray-600 transition shadow-sm">
+                            Hủy
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6 border-t pt-4">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2"><i class="ph ph-file-xls text-xl text-green-600"></i> Thêm Hàng Loạt</h3>
+                    
+                    <div class="flex gap-2 mt-3">
+                        <button type="button" onclick="downloadSampleFile()" class="flex-1 bg-blue-50 text-blue-800 py-2 rounded font-semibold hover:bg-blue-100 transition flex justify-center items-center gap-2 border border-blue-300">
+                            <i class="ph ph-download-simple text-lg"></i> Tải File Mẫu
+                        </button>
+                        
+                        <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="hidden">
+                        <button type="button" onclick="document.getElementById('file-upload').click()" class="flex-1 bg-green-600 text-white py-2 rounded font-semibold hover:bg-green-700 transition flex justify-center items-center gap-2 shadow-sm border border-green-700">
+                            <i class="ph ph-upload-simple text-lg"></i> Nhập Dữ Liệu
+                        </button>
+                    </div>
+                </div>
+
+                <div id="main-settings-container" class="mt-6 border-t pt-4">
+                    <div id="settings-panel" class="bg-gray-50 p-4 rounded-md border border-gray-200 text-sm shadow-inner transition-all">
+                        <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2"><i class="ph ph-sliders-horizontal text-lg"></i> Căn Chỉnh Hiển Thị</h3>
+                        
+                        <div class="mb-3">
+                            <div class="flex justify-between text-gray-700 mb-1"><span>Kiểu chữ Tên Phòng</span></div>
+                            <select id="inp-font" class="w-full border border-gray-300 rounded p-1.5 text-sm text-gray-800 focus:ring-blue-600 outline-none font-medium">
+                                <option value="'Anton', sans-serif">Anton (Rất đậm, chắc, dễ đọc)</option>
+                                <option value="'Montserrat', sans-serif">Montserrat Black (Hiện đại, dễ đọc)</option>
+                                <option value="'Archivo Black', sans-serif">Archivo Black (Nghiêm túc, chắc chắn)</option>
+                                <option value="'League Spartan', sans-serif">League Spartan (Mạnh mẽ, cân đối)</option>
+                                <option value="'Bebas Neue', sans-serif">Bebas Neue (Cao, gọn, hiện đại)</option>
+                                <option value="'Oswald', sans-serif">Oswald Bold (Hẹp, gọn gàng)</option>
+                                <option value="'Arial Black', Impact, sans-serif">Arial Black (Cơ bản)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-gray-700 mb-1"><span>Cỡ chữ Tên Phòng (Max)</span><span id="lbl-fs" class="font-bold">150pt</span></div>
+                            <input type="range" id="inp-fs" min="80" max="250" value="150" class="w-full accent-blue-700">
+                        </div>
+
+                        <!-- CÔNG TẮC XUỐNG DÒNG -->
+                        <div class="flex justify-between items-center text-gray-700 mt-4 pt-3 border-t border-gray-200">
+                            <span class="font-medium">Cho phép rớt xuống dòng</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="inp-wrap" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- GIÃN DÒNG -->
+                        <div class="mt-3">
+                            <div class="flex justify-between text-gray-700 mb-1"><span>Giãn dòng chữ</span><span id="lbl-lh" class="font-bold">1.1</span></div>
+                            <input type="range" id="inp-lh" min="0.8" max="2.0" step="0.05" value="1.1" class="w-full accent-blue-700">
+                        </div>
+
+                        <p class="text-[11px] text-gray-500 mt-3 italic">* Khi "Xem Dạng In", bạn có thể tùy chỉnh các cài đặt này để xem mẫu ưng ý nhất.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md border border-gray-200 flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h2 class="text-xl font-bold text-gray-800">Danh Sách Biển Phòng (Đã lưu)</h2>
+                    <span id="total-count" class="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-bold border border-blue-200">0 biển</span>
+                </div>
+                
+                <div class="flex-1 overflow-x-auto overflow-y-auto relative min-h-[400px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-100 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="p-3 border-b w-12 text-center">
+                                    <input type="checkbox" id="select-all" class="w-4 h-4 cursor-pointer accent-blue-700" onclick="toggleSelectAll()">
+                                </th>
+                                <th class="p-3 border-b w-24 text-center">Thứ Tự</th>
+                                <th class="p-3 border-b">Tên Phòng</th>
+                                <th class="p-3 border-b text-center w-32">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <tr><td colspan="4" class="text-center p-8 text-gray-500">Đang tải dữ liệu từ Firestore...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center py-4 text-gray-500 text-sm font-medium border-t bg-white mt-auto">
+            Thiết kế bởi Thầy Nguyễn Cường dạy Toán
+        </footer>
+    </div>
+
+    <!-- GIAO DIỆN IN -->
+    <div id="print-area">
+        <div id="badges-container" class="flex flex-col items-center gap-8 py-8 bg-gray-300">
+            <!-- Render tại đây -->
+        </div>
+    </div>
+
+    <div class="preview-controls">
+        <div id="preview-settings-container" class="w-72 hidden md:block"></div>
+        <div class="flex flex-col gap-2 shadow-2xl">
+            <button onclick="exportPDF()" class="bg-red-600 text-white px-6 py-3 rounded shadow-lg font-bold hover:bg-red-700 transition flex items-center justify-center gap-2 text-lg border-2 border-red-800 w-48">
+                <i class="ph ph-file-pdf"></i> <span id="pdf-text-float">XUẤT PDF</span>
+            </button>
+            <button onclick="triggerPrint()" class="bg-yellow-500 text-blue-900 px-6 py-3 rounded shadow-lg font-bold hover:bg-yellow-400 transition flex items-center justify-center gap-2 text-lg border-2 border-yellow-600 w-48">
+                <i class="ph ph-printer"></i> <span id="preview-text-float">IN NGAY</span>
+            </button>
+            <button onclick="togglePreview()" class="bg-gray-700 text-white px-6 py-3 rounded shadow-lg font-bold hover:bg-gray-800 transition flex items-center justify-center gap-2 text-lg border-2 border-gray-900 w-48">
+                <i class="ph ph-x"></i> THOÁT
+            </button>
+        </div>
+    </div>
+
+    <div id="toast-container" class="flex flex-col gap-2"></div>
+
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 class="text-lg font-bold mb-2">Xác nhận xóa</h3>
+            <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa biển phòng này không? Thao tác không thể hoàn tác.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-gray-800 font-medium">Hủy</button>
+                <button id="confirm-btn" class="px-4 py-2 bg-red-600 rounded hover:bg-red-700 text-white font-bold shadow-sm">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch } 
+            from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const colRef = collection(db, "inphong thi");
+
+        let badges = [];
+        let isEditing = false;
+        let deleteTargetId = null;
+        let selectedIds = new Set();
+        window.isBlankMode = false;
+
+        const form = document.getElementById('badge-form');
+        const inputId = document.getElementById('badge-id');
+        const inputTenPhong = document.getElementById('tenPhong');
+        const inputThuTu = document.getElementById('thuTu');
+        const btnSubmit = document.getElementById('btn-submit');
+        const btnCancel = document.getElementById('btn-cancel');
+        const formTitle = document.getElementById('form-title');
+        const tableBody = document.getElementById('table-body');
+        const badgesContainer = document.getElementById('badges-container');
+        const totalCount = document.getElementById('total-count');
+
+        window.applySettings = () => {
+            const fs = document.getElementById('inp-fs').value;
+            const font = document.getElementById('inp-font').value;
+            const isWrap = document.getElementById('inp-wrap').checked;
+            const lh = document.getElementById('inp-lh').value;
+            
+            document.documentElement.style.setProperty('--fs-room', `${fs}pt`);
+            document.documentElement.style.setProperty('--font-room', font);
+            document.documentElement.style.setProperty('--ws-room', isWrap ? 'normal' : 'nowrap');
+            document.documentElement.style.setProperty('--lh-room', lh);
+            
+            document.getElementById('lbl-fs').innerText = `${fs}pt`;
+            document.getElementById('lbl-lh').innerText = lh;
+            
+            autoResizeText();
+        };
+
+        ['inp-fs', 'inp-font', 'inp-wrap', 'inp-lh'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', window.applySettings);
+                el.addEventListener('change', window.applySettings);
+            }
+        });
+
+        window.toggleSelectAll = () => {
+            const selectAllCb = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.badge-select');
+            
+            if (selectAllCb.checked) {
+                badges.forEach(b => selectedIds.add(b.id));
+                checkboxes.forEach(cb => cb.checked = true);
+            } else {
+                selectedIds.clear();
+                checkboxes.forEach(cb => cb.checked = false);
+            }
+            updateButtonTexts();
+            if (!window.isBlankMode) renderBadgesForPrint();
+        };
+
+        window.handleSelect = (cb, id) => {
+            if (cb.checked) {
+                selectedIds.add(id);
+            } else {
+                selectedIds.delete(id);
+            }
+            
+            const selectAllCb = document.getElementById('select-all');
+            if (selectAllCb) {
+                selectAllCb.checked = (selectedIds.size === badges.length && badges.length > 0);
+            }
+            
+            updateButtonTexts();
+            if (!window.isBlankMode) renderBadgesForPrint();
+        };
+
+        function updateButtonTexts() {
+            const count = selectedIds.size;
+            const previewText = document.getElementById('preview-text');
+            const pdfText = document.getElementById('pdf-text');
+            const printText = document.getElementById('print-text');
+            const previewTextFloat = document.getElementById('preview-text-float');
+            const pdfTextFloat = document.getElementById('pdf-text-float');
+
+            if (count > 0) {
+                if (previewText) previewText.innerText = `Xem Dạng In (${count})`;
+                if (pdfText) pdfText.innerText = `Xuất PDF (${count})`;
+                if (printText) printText.innerText = `In Đã Chọn (${count})`;
+                if (previewTextFloat) previewTextFloat.innerText = `IN ĐÃ CHỌN (${count})`;
+                if (pdfTextFloat) pdfTextFloat.innerText = `XUẤT PDF (${count})`;
+            } else {
+                if (previewText) previewText.innerText = `Xem Dạng In`;
+                if (pdfText) pdfText.innerText = `Xuất PDF`;
+                if (printText) printText.innerText = `In Tất Cả`;
+                if (previewTextFloat) previewTextFloat.innerText = `IN TẤT CẢ`;
+                if (pdfTextFloat) pdfTextFloat.innerText = `XUẤT PDF`;
+            }
+        }
+
+        const q = query(colRef, orderBy("thuTu", "asc"));
+        
+        onSnapshot(q, (snapshot) => {
+            badges = [];
+            snapshot.forEach((doc) => {
+                badges.push({ id: doc.id, ...doc.data() });
+            });
+
+            const currentBadgeIds = new Set(badges.map(b => b.id));
+            for (let id of selectedIds) {
+                if (!currentBadgeIds.has(id)) {
+                    selectedIds.delete(id);
+                }
+            }
+
+            updateUI();
+        }, (error) => {
+            console.error("Lỗi:", error);
+            showToast("Lỗi kết nối CSDL Firestore.", "error");
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                tenPhong: inputTenPhong.value.trim().toUpperCase(),
+                thuTu: Number(inputThuTu.value)
+            };
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Đang xử lý...';
+
+            try {
+                if (isEditing && inputId.value) {
+                    const docRef = doc(db, "inphong thi", inputId.value);
+                    await updateDoc(docRef, data);
+                    showToast("Cập nhật thành công!", "success");
+                    window.resetForm();
+                } else {
+                    await addDoc(colRef, data);
+                    showToast("Thêm biển mới thành công!", "success");
+                    
+                    let nextThuTu = data.thuTu + 1;
+                    window.resetForm();
+                    inputThuTu.value = nextThuTu; 
+                }
+            } catch (error) {
+                console.error("Lỗi:", error);
+                showToast("Lỗi: " + error.message, "error");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = isEditing ? 'Cập Nhật' : 'Thêm Biển';
+            }
+        });
+
+        const fileInput = document.getElementById('file-upload');
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showToast("Đang đọc file...", "success");
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (jsonData.length < 2) throw new Error("File không có dữ liệu.");
+
+                    const batch = writeBatch(db);
+                    let count = 0;
+                    let currentMax = badges.length > 0 ? Math.max(...badges.map(b => b.thuTu)) : 0;
+
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length === 0 || !row[0]) continue;
+
+                        const tenPhong = (row[0] || "").toString().trim().toUpperCase();
+                        const thuTu = Number(row[1]) ? Number(row[1]) : (currentMax + count + 1);
+
+                        if (!tenPhong) continue;
+
+                        const newDocRef = doc(colRef);
+                        batch.set(newDocRef, { tenPhong, thuTu });
+                        count++;
+                    }
+
+                    if (count > 0) {
+                        await batch.commit();
+                        showToast(`Đã thêm thành công ${count} phòng từ file!`, "success");
+                        inputThuTu.value = currentMax + count + 1;
+                    } else {
+                        showToast("Không tìm thấy dữ liệu hợp lệ.", "error");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast("Lỗi đọc file: " + err.message, "error");
+                } finally {
+                    fileInput.value = ""; 
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function updateUI() {
+            renderTable();
+            if (!window.isBlankMode) {
+                renderBadgesForPrint();
+            }
+            totalCount.innerText = `${badges.length} biển`;
+            updateButtonTexts();
+            
+            const selectAllCb = document.getElementById('select-all');
+            if (selectAllCb) {
+                selectAllCb.checked = (selectedIds.size === badges.length && badges.length > 0);
+            }
+
+            if (!isEditing && !inputThuTu.value && badges.length > 0) {
+                const maxThuTu = Math.max(...badges.map(b => b.thuTu));
+                inputThuTu.value = maxThuTu + 1;
+            } else if (!isEditing && !inputThuTu.value) {
+                inputThuTu.value = 1;
+            }
+        }
+
+        function renderTable() {
+            if (badges.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-gray-500 bg-gray-50">Chưa có dữ liệu. Vui lòng thêm mới.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            badges.forEach((badge) => {
+                const isChecked = selectedIds.has(badge.id) ? 'checked' : '';
+                html += `
+                    <tr class="border-b hover:bg-blue-50 transition">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" class="badge-select w-4 h-4 cursor-pointer accent-blue-700" value="${badge.id}" 
+                                   ${isChecked} onchange="handleSelect(this, '${badge.id}')">
+                        </td>
+                        <td class="p-3 font-semibold text-center">${badge.thuTu}</td>
+                        <td class="p-3 font-bold text-lg text-gray-900">${badge.tenPhong}</td>
+                        <td class="p-3 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="startEdit('${badge.id}')" class="text-blue-700 hover:text-blue-900 bg-blue-100 p-1.5 rounded transition" title="Sửa">
+                                    <i class="ph ph-pencil-simple text-lg"></i>
+                                </button>
+                                <button onclick="confirmDelete('${badge.id}')" class="text-red-600 hover:text-red-800 bg-red-100 p-1.5 rounded transition" title="Xóa">
+                                    <i class="ph ph-trash text-lg"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
+        }
+
+        function generateSignHTML(text) {
+            return `
+                <div class="print-page">
+                    <div class="room-sign-outer">
+                        <div class="room-sign-inner">
+                            <div class="decorative-line">
+                                <div class="line-bar"></div>
+                                <div class="diamond-group">
+                                    <div class="diamond diamond-sm"></div>
+                                    <div class="diamond diamond-lg"></div>
+                                    <div class="diamond diamond-sm"></div>
+                                </div>
+                                <div class="line-bar"></div>
+                            </div>
+                            
+                            <div class="room-text-container">
+                                <div class="room-text">${text}</div>
+                            </div>
+
+                            <div class="decorative-line">
+                                <div class="line-bar"></div>
+                                <div class="diamond-group">
+                                    <div class="diamond diamond-sm"></div>
+                                    <div class="diamond diamond-lg"></div>
+                                    <div class="diamond diamond-sm"></div>
+                                </div>
+                                <div class="line-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBadgesForPrint() {
+            const badgesToPrint = selectedIds.size > 0 ? badges.filter(b => selectedIds.has(b.id)) : badges;
+
+            if (badgesToPrint.length === 0) {
+                badgesContainer.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            // Mỗi trang 1 biển
+            badgesToPrint.forEach((badge) => {
+                html += generateSignHTML(badge.tenPhong);
+            });
+            
+            badgesContainer.innerHTML = html;
+            setTimeout(autoResizeText, 100);
+        }
+
+        window.previewBlankBadges = () => {
+            window.isBlankMode = true;
+            document.body.classList.add('preview-mode');
+            
+            const settingsPanel = document.getElementById('settings-panel');
+            document.getElementById('preview-settings-container').appendChild(settingsPanel);
+            
+            badgesContainer.innerHTML = generateSignHTML("PHÒNG...");
+            
+            const previewTextFloat = document.getElementById('preview-text-float');
+            const pdfTextFloat = document.getElementById('pdf-text-float');
+            if(previewTextFloat) previewTextFloat.innerText = `IN 1 BẢN TRỐNG`;
+            if(pdfTextFloat) pdfTextFloat.innerText = `XUẤT PDF TRỐNG`;
+            
+            setTimeout(autoResizeText, 50);
+        };
+
+        function autoResizeText() {
+            const containers = document.querySelectorAll('.room-text-container');
+            let maxFs = 150; 
+            const inpFs = document.getElementById('inp-fs');
+            if (inpFs) maxFs = parseInt(inpFs.value);
+
+            containers.forEach(container => {
+                const textEl = container.querySelector('.room-text');
+                let fontSize = maxFs; 
+                textEl.style.fontSize = fontSize + 'pt';
+
+                // Kiểm tra ĐỒNG THỜI cả chiều rộng và chiều cao (để khi xuống dòng bị tràn dọc thì chữ sẽ tự thu nhỏ)
+                while ((textEl.scrollWidth > container.clientWidth || textEl.scrollHeight > container.clientHeight) && fontSize > 20) {
+                    fontSize -= 2;
+                    textEl.style.fontSize = fontSize + 'pt';
+                }
+            });
+        }
+
+        window.addEventListener('resize', autoResizeText);
+        window.applySettings();
+
+        window.downloadSampleFile = () => {
+            const data = [
+                ["Tên Phòng", "Thứ Tự"],
+                ["PHÒNG 01", 1],
+                ["PHÒNG 02", 2],
+                ["PHÒNG CHỜ DÀNH CHO GIÁO VIÊN", 3]
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [{ wch: 30 }, { wch: 10 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "DanhSachPhong");
+            XLSX.writeFile(wb, "File_Mau_In_Phong.xlsx");
+            showToast("Đã tải file Excel mẫu!", "success");
+        };
+
+        window.startEdit = (id) => {
+            const badge = badges.find(b => b.id === id);
+            if (!badge) return;
+
+            isEditing = true;
+            inputId.value = badge.id;
+            inputTenPhong.value = badge.tenPhong;
+            inputThuTu.value = badge.thuTu;
+
+            formTitle.innerText = "Cập Nhật Biển Phòng";
+            btnSubmit.innerText = "Cập Nhật";
+            btnSubmit.classList.replace('bg-blue-700', 'bg-green-600');
+            btnSubmit.classList.replace('hover:bg-blue-800', 'hover:bg-green-700');
+            btnCancel.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.resetForm = () => {
+            isEditing = false;
+            inputId.value = '';
+            inputTenPhong.value = '';
+            
+            formTitle.innerText = "Thêm Biển Phòng Mới";
+            btnSubmit.innerText = "Thêm Biển";
+            btnSubmit.classList.replace('bg-green-600', 'bg-blue-700');
+            btnSubmit.classList.replace('hover:bg-green-700', 'hover:bg-blue-800');
+            btnCancel.classList.add('hidden');
+        };
+
+        window.confirmDelete = (id) => {
+            deleteTargetId = id;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        };
+
+        window.closeConfirmModal = () => {
+            deleteTargetId = null;
+            document.getElementById('confirm-modal').classList.add('hidden');
+        };
+
+        document.getElementById('confirm-btn').addEventListener('click', async () => {
+            if (!deleteTargetId) return;
+            try {
+                const docRef = doc(db, "inphong thi", deleteTargetId);
+                await deleteDoc(docRef);
+                showToast("Đã xóa!", "success");
+            } catch (error) {
+                console.error("Lỗi xóa:", error);
+                showToast("Không thể xóa: " + error.message, "error");
+            } finally {
+                window.closeConfirmModal();
+            }
+        });
+
+        window.togglePreview = () => {
+            const isPreview = document.body.classList.toggle('preview-mode');
+            const settingsPanel = document.getElementById('settings-panel');
+            
+            if(isPreview){
+                window.isBlankMode = false; 
+                document.getElementById('preview-settings-container').appendChild(settingsPanel);
+                renderBadgesForPrint();
+                updateButtonTexts();
+                setTimeout(autoResizeText, 50);
+            } else {
+                window.isBlankMode = false;
+                document.getElementById('main-settings-container').appendChild(settingsPanel);
+                renderBadgesForPrint();
+            }
+        };
+
+        window.triggerPrint = () => {
+            autoResizeText();
+            setTimeout(() => {
+                window.print();
+            }, 300); 
+        };
+
+        window.exportPDF = () => {
+            if (badges.length === 0 && !window.isBlankMode) {
+                showToast("Chưa có dữ liệu để xuất PDF!", "error");
+                return;
+            }
+
+            const wasPreview = document.body.classList.contains('preview-mode');
+            window.scrollTo(0, 0);
+            document.body.classList.add('pdf-exporting');
+            autoResizeText();
+            showToast("Đang tạo file PDF (Nằm ngang), vui lòng đợi...", "success");
+
+            setTimeout(() => {
+                const element = document.getElementById('print-area');
+                
+                const opt = {
+                    margin:       0,
+                    filename:     window.isBlankMode ? 'BienPhong_Trong.pdf' : 'DanhSach_BienPhong.pdf',
+                    image:        { type: 'jpeg', quality: 1 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        scrollX: 0, 
+                        scrollY: 0
+                    },
+                    jsPDF:        { unit: 'cm', format: 'a4', orientation: 'landscape' },
+                    pagebreak:    { mode: ['css', 'legacy'] }
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    showToast("Đã xuất PDF thành công!", "success");
+                    document.body.classList.remove('pdf-exporting');
+                    
+                    if (!wasPreview) {
+                        document.body.classList.remove('preview-mode');
+                        window.isBlankMode = false;
+                    }
+                }).catch(err => {
+                    document.body.classList.remove('pdf-exporting');
+                    showToast("Lỗi khi xuất PDF", "error");
+                    console.error("Lỗi:", err);
+                });
+            }, 800); 
+        };
+
+        function showToast(message, type = "success") {
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            const icon = type === 'success' ? 'ph-check-circle' : 'ph-warning-circle';
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-10 opacity-0 font-medium`;
+            toast.innerHTML = `<i class="ph ${icon} text-xl"></i> <span>${message}</span>`;
+            
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            });
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

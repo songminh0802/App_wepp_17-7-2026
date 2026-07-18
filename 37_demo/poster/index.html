@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phần Mềm Thiết Kế Poster Vinh Danh - Pro Edition</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;700;900&family=Lora:ital,wght@0,400;0,700;1,400&family=Great+Vibes&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Fabric.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1e3a8a; /* navy */
+            --gold: #d4af37;
+            --bg-color: #f3f4f6;
+        }
+        body { background-color: var(--bg-color); font-family: 'Montserrat', sans-serif; overflow: hidden; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn.active { border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: bold; }
+
+        #workspace {
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-color: #f9fafb;
+            position: relative;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas-container {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            margin: auto;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            display: none;
+            position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1); width: 40px; height: 40px; border-radius: 50%;
+            border-left-color: var(--primary); animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        input, textarea, select {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;
+            margin-top: 0.25rem; margin-bottom: 1rem; font-size: 0.875rem;
+        }
+        label { font-size: 0.875rem; font-weight: 600; color: #374151; }
+    </style>
+</head>
+<body class="flex h-screen w-screen antialiased text-gray-800">
+
+    <!-- Loading Overlay -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <p class="mt-4 font-semibold text-gray-600" id="loader-text">Đang xử lý...</p>
+    </div>
+
+    <!-- LEFT PANEL: CONTROLS -->
+    <aside class="w-[350px] bg-white h-full shadow-xl flex flex-col z-10 flex-shrink-0">
+        <div class="p-4 bg-blue-900 text-white flex justify-between items-center">
+            <h1 class="text-lg font-bold"><i class="fa-solid fa-award mr-2"></i>EduPoster Pro</h1>
+            <button id="btn-save-template" class="text-xs bg-blue-800 hover:bg-blue-700 px-2 py-1 rounded" title="Lưu Template (JSON)"><i class="fa-solid fa-download"></i></button>
+            <input type="file" id="file-load-template" accept=".json" class="hidden">
+            <button onclick="document.getElementById('file-load-template').click()" class="text-xs bg-blue-800 hover:bg-blue-700 px-2 py-1 rounded ml-1" title="Tải Template (JSON)"><i class="fa-solid fa-upload"></i></button>
+        </div>
+
+        <!-- Tabs Header -->
+        <div class="flex border-b text-sm">
+            <button class="tab-btn active flex-1 py-3 text-center" onclick="openTab('tab-info')">Thông tin</button>
+            <button class="tab-btn flex-1 py-3 text-center" onclick="openTab('tab-images')">Hình ảnh</button>
+            <button class="tab-btn flex-1 py-3 text-center" onclick="openTab('tab-style')">Cài đặt</button>
+        </div>
+
+        <!-- Tabs Content -->
+        <div class="flex-1 overflow-y-auto p-4">
+            
+            <!-- TAB 1: THÔNG TIN -->
+            <div id="tab-info" class="tab-content active">
+                <label>Họ tên giáo viên</label>
+                <input type="text" id="inp-name" value="NGUYỄN THỊ HƯƠNG" oninput="updateText('teacherName', this.value)">
+
+                <label>Chức vụ</label>
+                <input type="text" id="inp-role" value="Giáo viên Ngữ Văn" oninput="updateText('roleUnit', this.value + ' - ' + document.getElementById('inp-unit').value)">
+
+                <label>Đơn vị công tác</label>
+                <input type="text" id="inp-unit" value="Trường THCS Tân Bình" oninput="updateText('roleUnit', document.getElementById('inp-role').value + ' - ' + this.value)">
+
+                <label>Thành tích nổi bật</label>
+                <textarea id="inp-achievement" rows="2" oninput="updateText('achievement', this.value)">BẰNG KHEN CỦA THỦ TƯỚNG CHÍNH PHỦ</textarea>
+
+                <label>Giai đoạn</label>
+                <input type="text" id="inp-period" value="Giai đoạn: 2020 - 2025" oninput="updateText('period', this.value)">
+
+                <label>Nội dung ghi nhận</label>
+                <textarea id="inp-desc" rows="4" oninput="updateText('description', this.value)">Ghi nhận những đóng góp xuất sắc trong công tác giáo dục và đào tạo, tận tâm với nghề, là tấm gương sáng cho học sinh noi theo.</textarea>
+
+                <label>Slogan (Dưới cùng)</label>
+                <input type="text" id="inp-slogan" value="Niềm tự hào của Trường THCS Tân Bình" oninput="updateText('slogan', this.value)">
+                
+                <button onclick="document.getElementById('btn-ai-layout').click()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded mt-2 transition-colors">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Tự động dàn trang
+                </button>
+            </div>
+
+            <!-- TAB 2: HÌNH ẢNH -->
+            <div id="tab-images" class="tab-content">
+                <div class="mb-4">
+                    <label>Ảnh chân dung (Nên dùng PNG tách nền)</label>
+                    <input type="file" id="inp-img-teacher" accept="image/*" class="text-sm">
+                    <div class="text-xs text-gray-500 mb-2">Mẹo: Bạn có thể tự kéo thả ảnh trên khung phải để điều chỉnh.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label>Ảnh trường học (Nền)</label>
+                    <input type="file" id="inp-img-school" accept="image/*">
+                </div>
+
+                <div class="mb-4">
+                    <label>Logo đơn vị</label>
+                    <input type="file" id="inp-img-logo" accept="image/*">
+                </div>
+
+                <div class="p-3 bg-blue-50 rounded border border-blue-100 text-sm">
+                    <strong><i class="fa-solid fa-circle-info text-blue-500"></i> Hướng dẫn:</strong>
+                    <ul class="list-disc pl-4 mt-1 text-gray-600">
+                        <li>Click vào đối tượng trên ảnh để di chuyển, phóng to, thu nhỏ.</li>
+                        <li>Sử dụng phím Delete/Backspace để xóa đối tượng đang chọn.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TAB 3: STYLE & SIZE -->
+            <div id="tab-style" class="tab-content">
+                <label>Tỷ lệ khung hình</label>
+                <select id="inp-size" onchange="changeCanvasSize()">
+                    <option value="4:5">4:5 (1080 x 1350) - Post Facebook</option>
+                    <option value="3:4">3:4 (1200 x 1600) - In ấn/Bảng tin</option>
+                </select>
+
+                <label>Bảng màu nền</label>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button class="color-theme p-2 rounded text-white text-xs font-bold bg-blue-900 border-2 border-transparent hover:border-yellow-400" onclick="applyTheme('navy')">Xanh Navy</button>
+                    <button class="color-theme p-2 rounded text-black text-xs font-bold bg-yellow-100 border-2 border-transparent hover:border-blue-600" onclick="applyTheme('gold')">Vàng Kim</button>
+                    <button class="color-theme p-2 rounded text-white text-xs font-bold bg-red-800 border-2 border-transparent hover:border-yellow-400" onclick="applyTheme('red')">Đỏ Truyền Thống</button>
+                    <button class="color-theme p-2 rounded text-white text-xs font-bold bg-teal-800 border-2 border-transparent hover:border-yellow-400" onclick="applyTheme('teal')">Teal Hiện Đại</button>
+                </div>
+
+                <label>Nội dung Header</label>
+                <input type="text" id="inp-header" value="Chúc Mừng" oninput="updateText('headerText', this.value)">
+                
+                <hr class="my-4">
+                
+                <label>Công cụ nhanh cho phần tử đang chọn</label>
+                <div class="flex gap-2">
+                    <button onclick="bringForward()" class="bg-gray-200 p-2 rounded flex-1 hover:bg-gray-300 text-sm"><i class="fa-solid fa-arrow-up mr-1"></i>Lên trên</button>
+                    <button onclick="sendBackward()" class="bg-gray-200 p-2 rounded flex-1 hover:bg-gray-300 text-sm"><i class="fa-solid fa-arrow-down mr-1"></i>Xuống dưới</button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT PANEL: WORKSPACE -->
+    <main class="flex-1 flex flex-col h-full bg-gray-100 relative">
+        <!-- Top Toolbar -->
+        <div class="bg-white h-14 border-b flex items-center justify-between px-4 shadow-sm z-10 flex-shrink-0">
+            <div class="flex space-x-2">
+                <button onclick="undo()" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Hoàn tác (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+                <button onclick="redo()" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Làm lại (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+                <div class="w-px h-6 bg-gray-300 mx-2 self-center"></div>
+                <button onclick="zoomIn()" class="p-2 text-gray-600 hover:bg-gray-100 rounded" title="Phóng to"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                <button onclick="zoomOut()" class="p-2 text-gray-600 hover:bg-gray-100 rounded" title="Thu nhỏ"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                <button onclick="fitToScreen()" class="p-2 text-gray-600 hover:bg-gray-100 rounded" title="Vừa màn hình"><i class="fa-solid fa-expand"></i></button>
+            </div>
+
+            <div class="flex space-x-2">
+                <button id="btn-ai-layout" class="bg-purple-100 text-purple-700 hover:bg-purple-200 font-semibold py-1.5 px-3 rounded flex items-center transition-colors text-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Dàn trang AI
+                </button>
+                
+                <!-- Export Dropdown -->
+                <div class="relative inline-block text-left group">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-4 rounded flex items-center transition-colors text-sm">
+                        <i class="fa-solid fa-download mr-2"></i>Xuất file
+                    </button>
+                    <div class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block z-50">
+                        <div class="py-1">
+                            <button onclick="exportCanvas('png')" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fa-solid fa-image mr-2"></i>Tải ảnh PNG (HQ)</button>
+                            <button onclick="exportCanvas('jpeg')" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fa-solid fa-file-image mr-2"></i>Tải ảnh JPG</button>
+                            <button onclick="exportCanvas('pdf')" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fa-solid fa-file-pdf mr-2 text-red-500"></i>Tải bản in PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div id="workspace" class="flex-1 w-full p-8">
+            <!-- Canvas is injected here by Fabric -->
+            <canvas id="posterCanvas"></canvas>
+        </div>
+    </main>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        // --- CẤU HÌNH CƠ BẢN ---
+        let canvas;
+        const SIZES = {
+            '4:5': { width: 1080, height: 1350 },
+            '3:4': { width: 1200, height: 1600 }
+        };
+        let currentSize = SIZES['4:5'];
+        
+        // Bảng màu
+        const THEMES = {
+            navy: { bg: ['#0f172a', '#1e3a8a'], textMain: '#ffffff', textGold: '#fde047', accent: '#d4af37' },
+            gold: { bg: ['#fef08a', '#d97706'], textMain: '#1e3a8a', textGold: '#ffffff', accent: '#78350f' },
+            red:  { bg: ['#7f1d1d', '#b91c1c'], textMain: '#ffffff', textGold: '#fde047', accent: '#fca5a5' },
+            teal: { bg: ['#134e4a', '#0f766e'], textMain: '#ffffff', textGold: '#fef08a', accent: '#5eead4' }
+        };
+        let currentTheme = THEMES.navy;
+
+        // Quản lý History (Undo/Redo)
+        let history = [];
+        let historyIndex = -1;
+        let isHistoryAction = false;
+        const maxHistory = 20;
+
+        // --- KHỞI TẠO ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            showLoader("Đang tải phông chữ và tài nguyên...");
+            // Đợi font load xong để canvas không bị lỗi font fallback
+            await document.fonts.ready;
+            
+            initCanvas();
+            await buildInitialPoster();
+            setupEvents();
+            fitToScreen();
+            saveState(); // Lưu trạng thái ban đầu
+            hideLoader();
+        });
+
+        // Chuyển tab UI
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- FABRIC.JS LOGIC ---
+        function initCanvas() {
+            canvas = new fabric.Canvas('posterCanvas', {
+                width: currentSize.width,
+                height: currentSize.height,
+                backgroundColor: currentTheme.bg[0],
+                preserveObjectStacking: true // Giữ nguyên thứ tự z-index khi chọn object
+            });
+
+            // Tùy chỉnh control kéo thả
+            fabric.Object.prototype.set({
+                transparentCorners: false,
+                cornerColor: '#3b82f6',
+                cornerStrokeColor: '#ffffff',
+                borderColor: '#3b82f6',
+                cornerSize: 12,
+                padding: 5,
+                cornerStyle: 'circle'
+            });
+
+            // Lưu trạng thái khi có thay đổi
+            canvas.on('object:modified', saveState);
+            canvas.on('object:added', (e) => { if(!e.target.excludeFromExport) saveState(); }); // Bỏ qua object rác
+            canvas.on('object:removed', saveState);
+
+            // Xóa object bằng phím
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    // Không xóa nếu đang focus vào input
+                    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+                    const activeObjects = canvas.getActiveObjects();
+                    if (activeObjects.length) {
+                        canvas.discardActiveObject();
+                        activeObjects.forEach(obj => canvas.remove(obj));
+                    }
+                }
+                
+                // Phím tắt Undo/Redo
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'z') { e.preventDefault(); undo(); }
+                    if (e.key === 'y') { e.preventDefault(); redo(); }
+                }
+            });
+        }
+
+        // Cập nhật text từ Panel input
+        function updateText(customId, newText) {
+            const objs = canvas.getObjects();
+            const target = objs.find(o => o.customId === customId);
+            if (target) {
+                target.set('text', newText.toUpperCase() === target.text ? newText.toUpperCase() : newText);
+                canvas.renderAll();
+                if(!isHistoryAction) {
+                    clearTimeout(window.textUpdateTimeout);
+                    window.textUpdateTimeout = setTimeout(saveState, 500); // Debounce save
+                }
+            }
+        }
+
+        // Đổi tỷ lệ canvas
+        function changeCanvasSize() {
+            const sizeVal = document.getElementById('inp-size').value;
+            currentSize = SIZES[sizeVal];
+            canvas.setWidth(currentSize.width);
+            canvas.setHeight(currentSize.height);
+            
+            // Render lại background gradient
+            applyThemeBackground();
+            
+            // Tự động dàn lại trang để khớp size mới
+            autoLayout();
+            fitToScreen();
+            saveState();
+        }
+
+        // Đổi màu nền
+        function applyTheme(themeKey) {
+            currentTheme = THEMES[themeKey];
+            applyThemeBackground();
+            
+            // Đổi màu các text liên quan
+            canvas.getObjects().forEach(obj => {
+                if(obj.customId === 'headerText') obj.set('fill', currentTheme.textGold);
+                if(obj.customId === 'teacherName') obj.set('fill', currentTheme.textMain);
+                if(obj.customId === 'roleUnit') obj.set('fill', currentTheme.textMain);
+                if(obj.customId === 'description') obj.set('fill', currentTheme.textMain);
+                if(obj.customId === 'slogan') obj.set('fill', currentTheme.textGold);
+            });
+            canvas.renderAll();
+            saveState();
+        }
+
+        function applyThemeBackground() {
+            const grad = new fabric.Gradient({
+                type: 'linear',
+                coords: { x1: 0, y1: 0, x2: 0, y2: canvas.height },
+                colorStops: [
+                    { offset: 0, color: currentTheme.bg[0] },
+                    { offset: 1, color: currentTheme.bg[1] }
+                ]
+            });
+            canvas.setBackgroundColor(grad, canvas.renderAll.bind(canvas));
+        }
+
+        // --- XÂY DỰNG POSTER MẶC ĐỊNH ---
+        async function buildInitialPoster() {
+            canvas.clear();
+            applyThemeBackground();
+
+            const cw = canvas.width;
+            const ch = canvas.height;
+
+            // 1. Viền trang trí
+            const border = new fabric.Rect({
+                left: 40, top: 40, width: cw - 80, height: ch - 80,
+                fill: 'transparent', stroke: currentTheme.accent, strokeWidth: 4,
+                selectable: false, evented: false
+            });
+            const borderInner = new fabric.Rect({
+                left: 50, top: 50, width: cw - 100, height: ch - 100,
+                fill: 'transparent', stroke: currentTheme.accent, strokeWidth: 1,
+                selectable: false, evented: false
+            });
+            canvas.add(border, borderInner);
+
+            // 2. Chữ "Chúc Mừng"
+            const header = new fabric.Text("Chúc Mừng", {
+                fontFamily: 'Dancing Script', fontSize: 110, fill: currentTheme.textGold,
+                left: cw / 2, top: 100, originX: 'center', customId: 'headerText',
+                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 10, offsetX: 2, offsetY: 2 })
+            });
+            canvas.add(header);
+
+            // 3. Tên giáo viên
+            const name = new fabric.Text(document.getElementById('inp-name').value.toUpperCase(), {
+                fontFamily: 'Montserrat', fontWeight: 900, fontSize: 75, fill: currentTheme.textMain,
+                left: cw / 2, top: 240, originX: 'center', customId: 'teacherName',
+                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 8, offsetX: 0, offsetY: 4 })
+            });
+            canvas.add(name);
+
+            // 4. Chức vụ
+            const roleText = document.getElementById('inp-role').value + ' - ' + document.getElementById('inp-unit').value;
+            const role = new fabric.Text(roleText.toUpperCase(), {
+                fontFamily: 'Montserrat', fontWeight: 700, fontSize: 26, fill: currentTheme.textMain,
+                left: cw / 2, top: 340, originX: 'center', customId: 'roleUnit', charSpacing: 100
+            });
+            canvas.add(role);
+
+            // 5. Khối Thành tích (Group)
+            // Tạo một khung bo góc đep thay vì polygon phức tạp
+            const badgeBg = new fabric.Rect({
+                width: 700, height: 100, rx: 50, ry: 50, fill: currentTheme.accent,
+                originX: 'center', originY: 'center',
+                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 10, offsetY: 5 })
+            });
+            const badgeInner = new fabric.Rect({
+                width: 680, height: 80, rx: 40, ry: 40, fill: 'transparent',
+                stroke: '#fff', strokeWidth: 2, originX: 'center', originY: 'center'
+            });
+            const badgeText = new fabric.Text(document.getElementById('inp-achievement').value.toUpperCase(), {
+                fontFamily: 'Montserrat', fontWeight: 900, fontSize: 32, fill: '#800000', // Đỏ đậm cho nổi trên nền vàng
+                originX: 'center', originY: 'center', textAlign: 'center', customId: 'achievementText' // child id
+            });
+            
+            const badgeGroup = new fabric.Group([badgeBg, badgeInner, badgeText], {
+                left: cw / 2, top: 440, originX: 'center', customId: 'achievementGroup'
+            });
+            // Override text update function later for this group
+            canvas.add(badgeGroup);
+
+            // 6. Ảnh trường học (Mockup bằng hình vuông nếu chưa up)
+            const schoolPlaceholder = new fabric.Rect({
+                width: cw * 0.7, height: 400, fill: '#cbd5e1', rx: 15, ry: 15,
+                left: cw / 2, top: 560, originX: 'center',
+                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 20, offsetY: 10 }),
+                customId: 'schoolImg'
+            });
+            canvas.add(schoolPlaceholder);
+
+            // 7. Ảnh chân dung (Mockup)
+            const teacherPlaceholder = new fabric.Circle({
+                radius: 200, fill: '#94a3b8', stroke: '#ffffff', strokeWidth: 10,
+                left: cw / 2 + 150, top: 600, originX: 'center',
+                shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.4)', blur: 15, offsetY: 10 }),
+                customId: 'teacherImg'
+            });
+            canvas.add(teacherPlaceholder);
+
+            // 8. Giai đoạn
+            const period = new fabric.Text(document.getElementById('inp-period').value, {
+                fontFamily: 'Montserrat', fontWeight: 700, fontSize: 24, fill: currentTheme.textGold,
+                left: cw / 2, top: 1000, originX: 'center', customId: 'period'
+            });
+            canvas.add(period);
+
+            // 9. Lời ghi nhận
+            const desc = new fabric.Textbox(document.getElementById('inp-desc').value, {
+                fontFamily: 'Lora', fontStyle: 'italic', fontSize: 28, fill: currentTheme.textMain,
+                left: cw / 2, top: 1050, originX: 'center', width: 800, textAlign: 'center',
+                lineHeight: 1.5, customId: 'description'
+            });
+            canvas.add(desc);
+
+            // 10. Slogan
+            const slogan = new fabric.Text(document.getElementById('inp-slogan').value, {
+                fontFamily: 'Montserrat', fontWeight: 400, fontSize: 22, fill: currentTheme.textGold,
+                left: cw / 2, top: ch - 90, originX: 'center', customId: 'slogan', charSpacing: 50
+            });
+            canvas.add(slogan);
+
+            // Vẽ các trang trí phụ (Ngôi sao)
+            drawStars();
+            
+            canvas.renderAll();
+        }
+
+        // Vẽ các ngôi sao trang trí
+        function drawStars() {
+            const cw = canvas.width;
+            const ch = canvas.height;
+            const starPath = "M 10 0 L 13 7 L 20 7 L 14 11 L 16 18 L 10 14 L 4 18 L 6 11 L 0 7 L 7 7 Z";
+            const positions = [
+                {x: 100, y: 150, s: 2}, {x: cw - 120, y: 180, s: 1.5},
+                {x: 150, y: ch - 200, s: 1.2}, {x: cw - 150, y: ch - 150, s: 1.8}
+            ];
+
+            positions.forEach(pos => {
+                const star = new fabric.Path(starPath, {
+                    fill: currentTheme.textGold, opacity: 0.8,
+                    left: pos.x, top: pos.y, scaleX: pos.s, scaleY: pos.s,
+                    customId: 'decoration', selectable: false, evented: false
+                });
+                canvas.add(star);
+            });
+        }
+
+        // Ghi đè hàm updateText đặc biệt cho Group Thành tích
+        const originalUpdateText = updateText;
+        updateText = function(customId, newText) {
+            if (customId === 'achievement') {
+                const group = canvas.getObjects().find(o => o.customId === 'achievementGroup');
+                if (group) {
+                    const textObj = group.getObjects().find(o => o.customId === 'achievementText');
+                    if (textObj) {
+                        textObj.set('text', newText.toUpperCase());
+                        group.addWithUpdate(); // Recalculate group bounds
+                        canvas.renderAll();
+                        if(!isHistoryAction) {
+                            clearTimeout(window.textUpdateTimeout);
+                            window.textUpdateTimeout = setTimeout(saveState, 500);
+                        }
+                    }
+                }
+            } else {
+                originalUpdateText(customId, newText);
+            }
+        };
+
+        // --- XỬ LÝ ẢNH UPLOAD ---
+        function setupEvents() {
+            // Upload ảnh chân dung
+            document.getElementById('inp-img-teacher').addEventListener('change', function(e) {
+                handleImageUpload(e, 'teacherImg', (img) => {
+                    // Xóa placeholder cũ
+                    const oldObj = canvas.getObjects().find(o => o.customId === 'teacherImg');
+                    if(oldObj) canvas.remove(oldObj);
+
+                    // Scale ảnh vừa phải
+                    img.scaleToHeight(500);
+                    img.set({
+                        left: canvas.width / 2 + 100, top: 500,
+                        customId: 'teacherImg',
+                        shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.5)', blur: 15, offsetX: -5, offsetY: 10 })
+                    });
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                    canvas.bringToFront(img); // Đảm bảo đè lên background
+                });
+            });
+
+            // Upload ảnh nền trường
+            document.getElementById('inp-img-school').addEventListener('change', function(e) {
+                handleImageUpload(e, 'schoolImg', (img) => {
+                    const oldObj = canvas.getObjects().find(o => o.customId === 'schoolImg');
+                    if(oldObj) canvas.remove(oldObj);
+
+                    img.scaleToWidth(canvas.width * 0.8);
+                    
+                    // Thêm mask bo góc cho ảnh trường
+                    const rect = new fabric.Rect({
+                        width: img.width, height: img.height, rx: 20, ry: 20,
+                        absolutePositioned: true
+                    });
+                    img.set({
+                        clipPath: rect,
+                        left: canvas.width / 2, top: 550, originX: 'center',
+                        customId: 'schoolImg'
+                    });
+                    
+                    canvas.add(img);
+                    canvas.sendToBack(img);
+                    
+                    // Giữ viền và nền ở dưới cùng
+                    const bgElements = canvas.getObjects().filter(o => !o.selectable);
+                    bgElements.forEach(el => canvas.sendToBack(el));
+                });
+            });
+
+            // Upload logo
+            document.getElementById('inp-img-logo').addEventListener('change', function(e) {
+                handleImageUpload(e, 'logoImg', (img) => {
+                    img.scaleToWidth(150);
+                    img.set({ left: 100, top: 100, customId: 'logoImg' });
+                    canvas.add(img);
+                    canvas.setActiveObject(img);
+                });
+            });
+
+            // Lưu & Tải Template JSON
+            document.getElementById('btn-save-template').addEventListener('click', () => {
+                const json = canvas.toJSON(['customId']); // Lưu kèm customId
+                const blob = new Blob([JSON.stringify(json)], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = "poster_template.json";
+                a.click();
+            });
+
+            document.getElementById('file-load-template').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                showLoader("Đang tải template...");
+                const reader = new FileReader();
+                reader.onload = (f) => {
+                    canvas.loadFromJSON(f.target.result, () => {
+                        canvas.renderAll();
+                        saveState();
+                        // Đồng bộ lại UI input (tùy chọn, hơi phức tạp, bỏ qua để giữ hiệu suất)
+                        hideLoader();
+                    });
+                };
+                reader.readAsText(file);
+            });
+
+            // Tự động dàn trang AI Layout Event
+            document.getElementById('btn-ai-layout').addEventListener('click', () => {
+                showLoader("AI đang tính toán bố cục...");
+                setTimeout(() => {
+                    autoLayout();
+                    hideLoader();
+                }, 300);
+            });
+        }
+
+        function handleImageUpload(e, idType, callback) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(f) {
+                fabric.Image.fromURL(f.target.result, function(img) {
+                    callback(img);
+                    canvas.renderAll();
+                    saveState();
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- TÍNH NĂNG TỰ ĐỘNG DÀN TRANG (AI LAYOUT RULE-BASED) ---
+        function autoLayout() {
+            const cw = canvas.width;
+            let currentY = 100; // Starting Top padding
+
+            // Helper function to move and center object
+            const placeObj = (id, yPadding, center = true) => {
+                const obj = canvas.getObjects().find(o => o.customId === id);
+                if (!obj) return currentY;
+                
+                // Set coords
+                if (center) obj.set('left', cw / 2);
+                obj.set('top', currentY);
+                obj.setCoords(); // Update bounding box
+                
+                return currentY + obj.getBoundingRect().height + yPadding;
+            };
+
+            // Trục dọc từ trên xuống
+            currentY = placeObj('headerText', 40);
+            currentY = placeObj('teacherName', 30);
+            currentY = placeObj('roleUnit', 60);
+            currentY = placeObj('achievementGroup', 80);
+
+            // Xử lý ảnh (phức tạp hơn)
+            const schoolImg = canvas.getObjects().find(o => o.customId === 'schoolImg');
+            const teacherImg = canvas.getObjects().find(o => o.customId === 'teacherImg');
+            
+            if (schoolImg) {
+                schoolImg.set({ left: cw / 2, top: currentY });
+                schoolImg.setCoords();
+            }
+            
+            if (teacherImg) {
+                // Đặt giáo viên lệch phải một chút so với giữa
+                teacherImg.set({ left: cw / 2 + (cw*0.15), top: currentY - 50 });
+                teacherImg.setCoords();
+            }
+
+            // Tính toán Y sau khi chèn ảnh (lấy max height)
+            let maxImgY = currentY + 300; // default space if no img
+            if(schoolImg) maxImgY = Math.max(maxImgY, schoolImg.getBoundingRect().top + schoolImg.getBoundingRect().height);
+            if(teacherImg) maxImgY = Math.max(maxImgY, teacherImg.getBoundingRect().top + teacherImg.getBoundingRect().height);
+            
+            currentY = maxImgY + 60;
+
+            currentY = placeObj('period', 30);
+            currentY = placeObj('description', 40);
+            
+            // Footer Slogan - Force to bottom
+            const slogan = canvas.getObjects().find(o => o.customId === 'slogan');
+            if (slogan) {
+                slogan.set({ left: cw / 2, top: canvas.height - 90 });
+                slogan.setCoords();
+            }
+
+            // Đảm bảo logo ở góc trên trái
+            const logo = canvas.getObjects().find(o => o.customId === 'logoImg');
+            if (logo) {
+                logo.set({ left: 100, top: 100 });
+                logo.setCoords();
+            }
+
+            canvas.renderAll();
+            saveState();
+        }
+
+        // --- CÔNG CỤ XỬ LÝ ĐỐI TƯỢNG (LAYER) ---
+        function bringForward() {
+            const active = canvas.getActiveObject();
+            if(active) { canvas.bringForward(active); saveState(); }
+        }
+        function sendBackward() {
+            const active = canvas.getActiveObject();
+            // Ngăn không cho đẩy xuống dưới viền và nền
+            if(active) { canvas.sendBackwards(active); saveState(); }
+        }
+
+        // --- ZOOM & PAN (Môi trường hiển thị) ---
+        let currentZoom = 1;
+        function setWrapperZoom(zoomLevel) {
+            const container = document.querySelector('.canvas-container');
+            container.style.transform = `scale(${zoomLevel})`;
+            container.style.transformOrigin = 'center center';
+            currentZoom = zoomLevel;
+        }
+
+        function zoomIn() { setWrapperZoom(currentZoom + 0.1); }
+        function zoomOut() { setWrapperZoom(Math.max(0.1, currentZoom - 0.1)); }
+        
+        function fitToScreen() {
+            const workspace = document.getElementById('workspace');
+            // Tính toán tỷ lệ vừa với khung workspace (có padding)
+            const padding = 60;
+            const scaleX = (workspace.clientWidth - padding) / canvas.width;
+            const scaleY = (workspace.clientHeight - padding) / canvas.height;
+            const scale = Math.min(scaleX, scaleY, 1); // Không zoom lớn hơn 100% gốc
+            setWrapperZoom(scale);
+        }
+
+        // Bắt sự kiện resize window để tự động fit
+        window.addEventListener('resize', () => {
+            clearTimeout(window.resizeTimeout);
+            window.resizeTimeout = setTimeout(fitToScreen, 200);
+        });
+
+        // --- LỊCH SỬ (UNDO / REDO) ---
+        function saveState() {
+            if (isHistoryAction) return;
+            // Xóa tương lai nếu đang ở giữa lịch sử và tạo thay đổi mới
+            if (historyIndex < history.length - 1) {
+                history = history.slice(0, historyIndex + 1);
+            }
+            history.push(JSON.stringify(canvas.toJSON(['customId'])));
+            if (history.length > maxHistory) history.shift();
+            else historyIndex++;
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                isHistoryAction = true;
+                historyIndex--;
+                canvas.loadFromJSON(history[historyIndex], () => {
+                    canvas.renderAll();
+                    isHistoryAction = false;
+                });
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                isHistoryAction = true;
+                historyIndex++;
+                canvas.loadFromJSON(history[historyIndex], () => {
+                    canvas.renderAll();
+                    isHistoryAction = false;
+                });
+            }
+        }
+
+        // --- XUẤT FILE (EXPORT) ---
+        function exportCanvas(format) {
+            showLoader("Đang kết xuất file chất lượng cao...");
+            
+            // Xóa chọn trước khi xuất để không dính viền control
+            canvas.discardActiveObject();
+            canvas.renderAll();
+
+            setTimeout(() => {
+                const multiplier = format === 'pdf' ? 2 : 3; // Render sắc nét: scale nội dung lên x3
+                
+                const dataURL = canvas.toDataURL({
+                    format: format === 'jpeg' ? 'jpeg' : 'png',
+                    quality: 1,
+                    multiplier: multiplier 
+                });
+
+                if (format === 'pdf') {
+                    // Cấu hình jsPDF
+                    const { jsPDF } = window.jspdf;
+                    // Chuyển pixel sang mm. A4: 210 x 297mm. Ta xuất theo tỷ lệ canvas.
+                    const isPortrait = canvas.height > canvas.width;
+                    const pdf = new jsPDF({
+                        orientation: isPortrait ? 'p' : 'l',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                    });
+                    pdf.addImage(dataURL, 'PNG', 0, 0, canvas.width, canvas.height);
+                    pdf.save('Poster_VinhDanh.pdf');
+                } else {
+                    // Xuất ảnh thường
+                    const link = document.createElement('a');
+                    link.download = `Poster_VinhDanh.${format}`;
+                    link.href = dataURL;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                hideLoader();
+            }, 500); // Đợi UI cập nhật loader
+        }
+
+        // --- UI UTILS ---
+        function showLoader(text) {
+            document.getElementById('loader-text').innerText = text;
+            document.getElementById('loader').style.display = 'flex';
+        }
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+
+    </script>
+</body>
+</html>

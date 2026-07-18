@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cập Nhật Địa Chỉ Nơi Ở ✨</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Thư viện SheetJS để xuất file Excel (.xlsx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Cấu hình Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                        script: ['Dancing Script', 'cursive'],
+                    },
+                    colors: {
+                        primary: '#3B82F6', /* Chuyển sang tone xanh lam */
+                        secondary: '#06B6D4'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Tùy chỉnh thêm CSS để hiệu ứng mượt mà hơn */
+        body {
+            background-color: #eff6ff; /* Nền xanh nhạt */
+            background-image: radial-gradient(#bfdbfe 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Hiệu ứng rung nhẹ cho nút Ghi nhận */
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .like-animate {
+            animation: heartBeat 0.3s ease-in-out;
+        }
+
+        /* Toast Message */
+        #toast {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-gray-800 antialiased selection:bg-blue-300 selection:text-white">
+
+    <!-- Hamburger Button -->
+    <button id="menuBtn" class="fixed top-5 left-5 z-[45] p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg text-blue-600 hover:bg-blue-50 active:scale-95 transition-all">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-[50] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
+
+    <!-- Sidebar Menu -->
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white z-[55] transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50 to-white">
+            <h2 class="text-xl font-extrabold text-blue-600 flex items-center gap-2">
+                <span>⚙️</span> Tùy chọn
+            </h2>
+            <button id="closeMenuBtn" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors active:scale-95">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-4 flex flex-col gap-2 flex-grow">
+            <button id="menuLoginBtn" class="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-600 rounded-xl font-bold transition-all active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                <span>Đăng nhập Quản trị</span>
+            </button>
+            <button id="menuDownloadBtn" class="w-full flex items-center gap-3 px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800 rounded-xl font-bold transition-all active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>Tải danh sách (Excel)</span>
+            </button>
+        </div>
+        <div class="p-6 border-t border-gray-100 text-center text-sm text-gray-400 font-semibold">
+            Hệ thống Cập nhật Địa chỉ
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-white border-2 border-green-400 text-green-600 px-6 py-3 rounded-full shadow-lg font-bold flex items-center gap-2">
+        <span>🎉</span> Đã cập nhật thông tin thành công!
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl scale-95 transition-transform duration-300" id="adminModalContent">
+            <div class="text-center mb-6">
+                <div class="inline-block bg-blue-100 text-blue-500 p-3 rounded-full mb-3">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-gray-800">Quản trị viên</h2>
+            </div>
+            <input type="password" id="adminPassInput" class="w-full px-5 py-3 text-lg rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none mb-6 transition-all" placeholder="Nhập mật khẩu..." autocomplete="off">
+            <div class="flex gap-3">
+                <button id="adminCloseBtn" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 active:scale-95 transition-all">Đóng</button>
+                <button id="adminLoginBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl hover:from-blue-600 hover:to-cyan-600 active:scale-95 transition-all shadow-md">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Delete Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 z-[70] hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl scale-95 transition-transform duration-300" id="confirmModalContent">
+            <div class="text-center mb-6">
+                <div class="inline-block bg-red-100 text-red-500 p-3 rounded-full mb-3">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-gray-800">Xác nhận xóa?</h2>
+                <p class="text-gray-600 mt-2">Bạn có chắc chắn muốn xóa thông tin địa chỉ này vĩnh viễn không?</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="cancelDeleteBtn" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 active:scale-95 transition-all">Hủy</button>
+                <button id="confirmDeleteBtn" class="flex-1 px-4 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 active:scale-95 transition-all shadow-md">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Missing Students Modal -->
+    <div id="missingModal" class="fixed inset-0 bg-black/60 z-[75] hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full mx-4 shadow-2xl scale-95 transition-transform duration-300 flex flex-col max-h-[80vh]" id="missingModalContent">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
+                <h2 class="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+                    <span class="text-2xl">📋</span> Danh sách chưa nộp
+                </h2>
+                <button id="closeMissingBtn" class="text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-2 transition-colors active:scale-95">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="overflow-y-auto flex-grow pr-2">
+                <ul id="missingListContainer" class="space-y-2">
+                    <!-- Danh sách chưa nộp sẽ render ở đây -->
+                </ul>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-100 text-right flex justify-between items-center">
+                <span class="text-sm text-gray-500 font-semibold italic">Hãy nhắc nhở các bạn nhé!</span>
+                <span class="text-base font-extrabold text-orange-500 bg-orange-50 px-3 py-1.5 rounded-lg" id="missingCountText">Tổng: 0 học sinh</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header & Form Section -->
+    <main class="flex-grow container mx-auto px-4 py-12 max-w-5xl">
+        
+        <div class="max-w-2xl mx-auto text-center mb-12">
+            <h1 id="mainTitle" class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-4 pb-2">
+                Cập nhật địa chỉ nơi ở 🏠
+            </h1>
+            <p id="subTitle" class="text-lg text-gray-600 mb-8 font-semibold">
+                Vui lòng cung cấp chính xác Họ tên và Địa chỉ nơi ở hiện tại để nhà trường điều chỉnh và cập nhật lên hệ thống nhé! 📝
+            </p>
+
+            <!-- Form -->
+            <form id="addressForm" class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative bg-white rounded-2xl shadow-xl p-3 flex flex-col gap-3">
+                    <!-- Tên Học Sinh -->
+                    <select 
+                        id="studentNameInput" 
+                        class="w-full px-6 py-4 text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-shadow bg-gray-50 border border-gray-200 text-gray-700 cursor-pointer"
+                        required
+                    >
+                        <option value="" disabled selected>--- Chọn họ và tên học sinh ---</option>
+                        <option value="Nguyễn Thị Minh Ánh">01) Nguyễn Thị Minh Ánh</option>
+                        <option value="Trần Kim Ánh">02) Trần Kim Ánh</option>
+                        <option value="Trương Gia Bảo">04) Trương Gia Bảo</option>
+                        <option value="Nguyễn Đức Công">05) Nguyễn Đức Công</option>
+                        <option value="Phạm Tuấn Dũng">06) Phạm Tuấn Dũng</option>
+                        <option value="Phạm Thanh Hiển">07) Phạm Thanh Hiển</option>
+                        <option value="Nguyễn Văn Hùng">08) Nguyễn Văn Hùng</option>
+                        <option value="Võ Quang Huy">09) Võ Quang Huy</option>
+                        <option value="Nguyễn Trọng Khang">10) Nguyễn Trọng Khang</option>
+                        <option value="Lê Đăng Khôi">11) Lê Đăng Khôi</option>
+                        <option value="Phạm Tuấn Kiệt">12) Phạm Tuấn Kiệt</option>
+                        <option value="Trần Anh Kiệt">13) Trần Anh Kiệt</option>
+                        <option value="Thượng Lê Bích Lam">14) Thượng Lê Bích Lam</option>
+                        <option value="Nguyễn Ngọc Linh">15) Nguyễn Ngọc Linh</option>
+                        <option value="Nguyễn Trường Linh">16) Nguyễn Trường Linh</option>
+                        <option value="Đoàn Văn Long">17) Đoàn Văn Long</option>
+                        <option value="Nguyễn Minh Lộc">18) Nguyễn Minh Lộc</option>
+                        <option value="Nguyễn Bảo Ngọc">19) Nguyễn Bảo Ngọc</option>
+                        <option value="Huỳnh Yến Nhi">20) Huỳnh Yến Nhi</option>
+                        <option value="Nguyễn Ngọc Bảo Nhi">21) Nguyễn Ngọc Bảo Nhi</option>
+                        <option value="Ngô Tiến Phát">22) Ngô Tiến Phát</option>
+                        <option value="Nguyễn Minh Phước">23) Nguyễn Minh Phước</option>
+                        <option value="Phạm Thị Huyền Sinh">24) Phạm Thị Huyền Sinh</option>
+                        <option value="Nguyễn Tấn Tài">25) Nguyễn Tấn Tài</option>
+                        <option value="Lý Thu Thảo">26) Lý Thu Thảo</option>
+                        <option value="Đoàn Phan Bảo Thi">27) Đoàn Phan Bảo Thi</option>
+                        <option value="Huỳnh Vũ Anh Thư">28) Huỳnh Vũ Anh Thư</option>
+                        <option value="Nguyễn Thị Mỹ Trâm">29) Nguyễn Thị Mỹ Trâm</option>
+                        <option value="Trần Ngọc Bảo Trân">30) Trần Ngọc Bảo Trân</option>
+                        <option value="Từ Thái Trân">31) Từ Thái Trân</option>
+                        <option value="Lương Huỳnh Minh Trí">32) Lương Huỳnh Minh Trí</option>
+                        <option value="Nguyễn Thị Phương Trinh">33) Nguyễn Thị Phương Trinh</option>
+                        <option value="Nguyễn Xuân Trọng">34) Nguyễn Xuân Trọng</option>
+                        <option value="Võ Thị Thanh Trúc">35) Võ Thị Thanh Trúc</option>
+                        <option value="Phương Hoàng Anh Tú">36) Phương Hoàng Anh Tú</option>
+                        <option value="Đoàn Huỳnh Thanh Tuấn">37) Đoàn Huỳnh Thanh Tuấn</option>
+                        <option value="Ngô Thị Ngọc Tuyền">38) Ngô Thị Ngọc Tuyền</option>
+                        <option value="Trần Đại Vinh">39) Trần Đại Vinh</option>
+                        <option value="Nguyễn Bảo Vy">40) Nguyễn Bảo Vy</option>
+                    </select>
+                    <!-- Địa Chỉ và Nút Submit -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input 
+                            type="text" 
+                            id="addressInput" 
+                            placeholder="Địa chỉ nơi ở mới (VD:Khu phố Nhà Đỏ, Phường Vĩnh Tân, TP. Hồ Chí Minh)" 
+                            class="w-full px-6 py-4 text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-shadow bg-gray-50 border border-gray-200 placeholder-gray-400"
+                            required
+                            autocomplete="off"
+                        >
+                        <button 
+                            type="submit" 
+                            id="submitBtn"
+                            class="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold py-4 px-8 rounded-xl shadow-md transform transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2"
+                        >
+                            <span>Cập nhật</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        </button>
+                        <button 
+                            type="button" 
+                            id="cancelEditBtn"
+                            class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 px-6 rounded-xl shadow-md transform transition-all active:scale-95 whitespace-nowrap"
+                        >
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center justify-center gap-4 mb-8">
+            <div class="h-px bg-gray-300 w-1/4"></div>
+            <span class="text-gray-400 font-bold tracking-widest uppercase text-sm">Danh sách cập nhật</span>
+            <div class="h-px bg-gray-300 w-1/4"></div>
+        </div>
+
+        <!-- Thống kê Section -->
+        <div id="statsContainer" class="mb-8 hidden">
+            <div class="bg-white rounded-2xl shadow-sm p-5 border border-blue-100 max-w-2xl mx-auto">
+                <h3 class="text-lg font-bold text-gray-700 mb-4 flex items-center justify-center gap-2">
+                    <span>📊</span> Tiến độ cập nhật
+                </h3>
+                <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+                    <div class="bg-blue-50 rounded-xl p-3 flex flex-col justify-center items-center">
+                        <div class="text-2xl sm:text-3xl font-extrabold text-blue-600" id="statTotal">0</div>
+                        <div class="text-xs sm:text-sm text-gray-500 font-bold uppercase mt-1">Tổng số</div>
+                    </div>
+                    <div class="bg-green-50 rounded-xl p-3 flex flex-col justify-center items-center">
+                        <div class="text-2xl sm:text-3xl font-extrabold text-green-600" id="statSubmitted">0</div>
+                        <div class="text-xs sm:text-sm text-gray-500 font-bold uppercase mt-1">Đã nộp</div>
+                    </div>
+                    <button id="viewMissingBtn" class="bg-orange-50 hover:bg-orange-100 rounded-xl p-3 flex flex-col justify-center items-center transition-colors active:scale-95 shadow-sm border border-transparent hover:border-orange-200" title="Bấm để xem danh sách">
+                        <div class="text-2xl sm:text-3xl font-extrabold text-orange-500" id="statRemaining">0</div>
+                        <div class="text-xs sm:text-sm text-gray-500 font-bold uppercase mt-1">Chưa nộp</div>
+                        <span class="text-[10px] text-orange-400 font-semibold mt-1 flex items-center gap-1">
+                            Xem chi tiết <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </span>
+                    </button>
+                </div>
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-100 rounded-full h-3.5 overflow-hidden">
+                    <div id="statProgressBar" class="bg-gradient-to-r from-blue-500 to-green-400 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="text-center text-gray-500 font-bold text-xl py-10 animate-pulse">
+            Đang tải dữ liệu... ⏳
+        </div>
+
+        <!-- Cards Grid Container -->
+        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden">
+            <!-- Thẻ địa chỉ sẽ được JS render vào đây -->
+        </div>
+
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="mt-auto py-6 text-center">
+        <p class="font-script text-3xl text-gray-600 hover:text-blue-500 transition-colors duration-300 flex items-center justify-center gap-2">
+            © 2026 Designed with 😍 thầy Nguyễn Cường
+            <span id="adminTrigger" class="cursor-pointer opacity-20 hover:opacity-100 transition-opacity text-xl font-sans" title="Khu vực Quản trị">🔒</span>
+        </p>
+    </footer>
+
+    <!-- Firebase SDK (Modular v9) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            serverTimestamp, 
+            doc, 
+            updateDoc, 
+            increment,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // 1. Khởi tạo cấu hình Firebase bắt buộc
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // CẬP NHẬT: Tên collection mới theo yêu cầu
+        const collectionName = "dieuchinh"; 
+
+        // Danh sách màu pastel để ramdom cho thẻ Card (Đã điều chỉnh sang tone xanh/trung tính)
+        const pastelColors = [
+            'bg-blue-100', 'bg-cyan-100', 'bg-sky-100', 
+            'bg-indigo-100', 'bg-teal-100', 'bg-emerald-100',
+            'bg-green-100', 'bg-slate-100', 'bg-gray-100'
+        ];
+
+        // Danh sách Emoji
+        const emojis = ['📍', '🏠', '🏘️', '🏡', '🗺️', '🛵', '🚲', '📌'];
+
+        // Các biến DOM
+        const form = document.getElementById('addressForm');
+        const nameInput = document.getElementById('studentNameInput');
+        const addressInput = document.getElementById('addressInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const container = document.getElementById('cardsContainer');
+        const loading = document.getElementById('loading');
+        const toast = document.getElementById('toast');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        // Các biến DOM cho Thống kê & Modal Danh sách chưa nộp
+        const statsContainer = document.getElementById('statsContainer');
+        const statTotal = document.getElementById('statTotal');
+        const statSubmitted = document.getElementById('statSubmitted');
+        const statRemaining = document.getElementById('statRemaining');
+        const statProgressBar = document.getElementById('statProgressBar');
+        const viewMissingBtn = document.getElementById('viewMissingBtn');
+        
+        const missingModal = document.getElementById('missingModal');
+        const missingModalContent = document.getElementById('missingModalContent');
+        const closeMissingBtn = document.getElementById('closeMissingBtn');
+        const missingListContainer = document.getElementById('missingListContainer');
+        const missingCountText = document.getElementById('missingCountText');
+        
+        let currentMissingStudents = []; // Lưu trữ danh sách chưa nộp hiện tại
+
+        // --- Biến & DOM Sidebar ---
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const menuLoginBtn = document.getElementById('menuLoginBtn');
+        const menuDownloadBtn = document.getElementById('menuDownloadBtn');
+
+        // --- Biến & DOM Quản trị (Admin) ---
+        let isAdmin = false;
+        let editingDocId = null;
+        let currentDocs = [];
+        const adminModal = document.getElementById('adminModal');
+        const adminModalContent = document.getElementById('adminModalContent');
+        const adminPassInput = document.getElementById('adminPassInput');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const adminCloseBtn = document.getElementById('adminCloseBtn');
+        const adminTrigger = document.getElementById('adminTrigger');
+        const mainTitle = document.getElementById('mainTitle');
+        const subTitle = document.getElementById('subTitle');
+
+        // --- Biến & DOM Xác nhận Xóa ---
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmModalContent = document.getElementById('confirmModalContent');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let docToDeleteId = null;
+
+        // Logic Đóng Confirm Modal
+        const closeConfirmModal = () => {
+            confirmModal.classList.add('opacity-0');
+            confirmModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                confirmModal.classList.add('hidden');
+                docToDeleteId = null;
+            }, 300);
+        };
+
+        cancelDeleteBtn.addEventListener('click', closeConfirmModal);
+
+        // Logic Mở/Đóng Modal Danh sách chưa nộp
+        const openMissingModal = () => {
+            missingListContainer.innerHTML = '';
+            
+            if (currentMissingStudents.length === 0) {
+                missingListContainer.innerHTML = `
+                    <li class="text-center py-8">
+                        <div class="text-4xl mb-3">🎉</div>
+                        <p class="text-green-600 font-extrabold text-lg">Tuyệt vời!</p>
+                        <p class="text-gray-500 font-semibold">Tất cả học sinh đã nộp đầy đủ.</p>
+                    </li>`;
+            } else {
+                currentMissingStudents.forEach((name, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'p-3 bg-gray-50 rounded-xl text-gray-700 font-semibold border border-gray-100 flex items-center gap-3 hover:bg-orange-50 transition-colors';
+                    li.innerHTML = `
+                        <span class="bg-orange-100 text-orange-600 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">${index + 1}</span> 
+                        <span class="text-sm md:text-base">${name}</span>
+                    `;
+                    missingListContainer.appendChild(li);
+                });
+            }
+            
+            missingCountText.innerText = `Tổng: ${currentMissingStudents.length} học sinh`;
+
+            missingModal.classList.remove('hidden');
+            setTimeout(() => {
+                missingModal.classList.remove('opacity-0');
+                missingModalContent.classList.remove('scale-95');
+            }, 10);
+        };
+
+        const closeMissingModal = () => {
+            missingModal.classList.add('opacity-0');
+            missingModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                missingModal.classList.add('hidden');
+            }, 300);
+        };
+
+        viewMissingBtn.addEventListener('click', openMissingModal);
+        closeMissingBtn.addEventListener('click', closeMissingModal);
+        missingModal.addEventListener('click', (e) => {
+            if (e.target === missingModal) closeMissingModal();
+        });
+
+        // Logic Xóa khi bấm xác nhận trong Modal
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!docToDeleteId) return;
+            
+            const originalText = confirmDeleteBtn.innerHTML;
+            confirmDeleteBtn.innerHTML = '<span class="animate-spin inline-block">⏳</span> Đang xóa...';
+            confirmDeleteBtn.disabled = true;
+
+            try {
+                await deleteDoc(doc(db, collectionName, docToDeleteId));
+                showToast('<span>🗑️</span> Đã xóa thông tin thành công!');
+                closeConfirmModal();
+            } catch (error) {
+                console.error("Lỗi khi xóa:", error);
+                showToast(`<span>❌</span> Lỗi: Không thể xóa! Vui lòng kiểm tra quyền (Rules) Firebase.`);
+            } finally {
+                confirmDeleteBtn.innerHTML = originalText;
+                confirmDeleteBtn.disabled = false;
+            }
+        });
+
+        // Logic Mở/Đóng Modal Quản Trị
+        adminTrigger.addEventListener('click', () => {
+            if (isAdmin) {
+                isAdmin = false;
+                showToast('<span>🔒</span> Đã thoát chế độ Quản trị!');
+                toggleAdminUI();
+                renderCards(currentDocs);
+            } else {
+                adminModal.classList.remove('hidden');
+                setTimeout(() => {
+                    adminModal.classList.remove('opacity-0');
+                    adminModalContent.classList.remove('scale-95');
+                }, 10);
+                adminPassInput.value = '';
+                adminPassInput.focus();
+            }
+        });
+
+        const closeAdminModal = () => {
+            adminModal.classList.add('opacity-0');
+            adminModalContent.classList.add('scale-95');
+            setTimeout(() => adminModal.classList.add('hidden'), 300);
+        };
+
+        adminCloseBtn.addEventListener('click', closeAdminModal);
+        
+        // Logic Đăng nhập
+        const handleAdminLogin = () => {
+            if (adminPassInput.value === '0788095095') {
+                isAdmin = true;
+                closeAdminModal();
+                showToast('<span>🔓</span> Đăng nhập Quản trị thành công!');
+                toggleAdminUI();
+                renderCards(currentDocs);
+            } else {
+                showToast('<span>❌</span> Mật khẩu không chính xác!');
+            }
+        };
+
+        adminLoginBtn.addEventListener('click', handleAdminLogin);
+        adminPassInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAdminLogin();
+        });
+
+        // --- Logic Sidebar ---
+        const openSidebar = () => {
+            sidebarOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                sidebarOverlay.classList.remove('opacity-0');
+                sidebar.classList.remove('-translate-x-full');
+            }, 10);
+        };
+
+        const closeSidebar = () => {
+            sidebarOverlay.classList.add('opacity-0');
+            sidebar.classList.add('-translate-x-full');
+            setTimeout(() => {
+                sidebarOverlay.classList.add('hidden');
+            }, 300);
+        };
+
+        menuBtn.addEventListener('click', openSidebar);
+        closeMenuBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        menuLoginBtn.addEventListener('click', () => {
+            closeSidebar();
+            // Tận dụng lại sự kiện click của adminTrigger để bật tắt quản trị
+            adminTrigger.click(); 
+        });
+
+        // Chức năng Tải danh sách về dưới dạng tệp Excel (.xlsx) sử dụng SheetJS
+        menuDownloadBtn.addEventListener('click', () => {
+            closeSidebar();
+            
+            if (currentDocs.length === 0) {
+                showToast('<span>⚠️</span> Không có dữ liệu để tải!');
+                return;
+            }
+
+            try {
+                // Lấy thứ tự gốc từ danh sách select (bỏ qua option đầu tiên là placeholder)
+                const originalOrder = Array.from(nameInput.options)
+                    .filter(opt => opt.value !== "")
+                    .map(opt => opt.value);
+
+                // Sắp xếp danh sách theo thứ tự gốc (danh sách học sinh ban đầu)
+                const exportDocs = [...currentDocs].sort((a, b) => {
+                    const indexA = originalOrder.indexOf(a.name);
+                    const indexB = originalOrder.indexOf(b.name);
+                    // Nếu tên không nằm trong danh sách chuẩn, cho xuống cuối
+                    const posA = indexA !== -1 ? indexA : 9999;
+                    const posB = indexB !== -1 ? indexB : 9999;
+                    return posA - posB;
+                });
+
+                // Tạo mảng dữ liệu với các cột tương ứng
+                const dataForExcel = exportDocs.map((doc, index) => ({
+                    "STT": index + 1,
+                    "Họ và tên": doc.name || "Không rõ tên",
+                    "Địa chỉ nơi ở": doc.address || doc.text || "Chưa có địa chỉ",
+                    "Thời gian nộp": doc.createdAt ? doc.createdAt.toDate().toLocaleString('vi-VN') : "Chưa rõ"
+                }));
+
+                // Tạo worksheet từ mảng dữ liệu JSON
+                const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+
+                // Tùy chỉnh độ rộng cho các cột để file Excel dễ nhìn hơn
+                const wscols = [
+                    {wch: 5},   // "STT"
+                    {wch: 30},  // "Họ và tên"
+                    {wch: 50},  // "Địa chỉ nơi ở"
+                    {wch: 25}   // "Thời gian nộp"
+                ];
+                worksheet['!cols'] = wscols;
+
+                // Tạo workbook và gắn worksheet vào
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachDiaChi");
+
+                // Xuất file và tải về dưới dạng .xlsx
+                XLSX.writeFile(workbook, "Danh_Sach_Dia_Chi_Hoc_Sinh.xlsx");
+                
+                showToast('<span>📥</span> Đã tải danh sách Excel về máy!');
+            } catch (error) {
+                console.error("Lỗi khi xuất file Excel:", error);
+                showToast('<span>❌</span> Lỗi tải file. Vui lòng thử lại!');
+            }
+        });
+
+        // Đổi Giao Diện theo chế độ
+        function toggleAdminUI() {
+            if (isAdmin) {
+                mainTitle.innerHTML = 'Quản lý Thông tin 🛠️';
+                subTitle.innerHTML = 'Khu vực dành cho giáo viên thêm, duyệt, sửa và xóa các địa chỉ.';
+                adminTrigger.innerHTML = '🔓';
+                adminTrigger.classList.remove('opacity-20');
+                adminTrigger.classList.add('opacity-100', 'text-blue-500');
+                
+                // Đổi UI trong Menu Hamburger
+                menuLoginBtn.innerHTML = `
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span class="text-red-500">Thoát Quản trị</span>
+                `;
+            } else {
+                mainTitle.innerHTML = 'Cập nhật địa chỉ nơi ở 🏠';
+                subTitle.innerHTML = 'Vui lòng cung cấp chính xác Họ tên và Địa chỉ nơi ở hiện tại để nhà trường điều chỉnh và cập nhật lên hệ thống nhé! 📝';
+                
+                if (editingDocId) {
+                    editingDocId = null;
+                    nameInput.value = '';
+                    addressInput.value = '';
+                    submitBtn.innerHTML = `<span>Cập nhật</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+                    cancelEditBtn.classList.add('hidden');
+                }
+
+                adminTrigger.innerHTML = '🔒';
+                adminTrigger.classList.add('opacity-20');
+                adminTrigger.classList.remove('opacity-100', 'text-blue-500');
+                
+                // Trả lại UI mặc định trong Menu Hamburger
+                menuLoginBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    <span>Đăng nhập Quản trị</span>
+                `;
+            }
+        }
+
+        // Hàm hiển thị Toast
+        function showToast(message = '<span>🎉</span> Đã cập nhật thành công!') {
+            toast.innerHTML = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Hàm định dạng thời gian (Tương đối)
+        function timeAgo(date) {
+            if (!date) return "Vừa xong";
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " năm trước";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " tháng trước";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " ngày trước";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " giờ trước";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " phút trước";
+            return "Vừa xong";
+        }
+
+        // Logic Hủy Sửa
+        cancelEditBtn.addEventListener('click', () => {
+            editingDocId = null;
+            nameInput.value = '';
+            addressInput.value = '';
+            submitBtn.innerHTML = `<span>Cập nhật</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+            cancelEditBtn.classList.add('hidden');
+        });
+
+        // 2. Chức năng Thêm mới (Gửi dữ liệu)
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentName = nameInput.value.trim();
+            const address = addressInput.value.trim();
+            
+            if (!studentName || !address) return;
+
+            // Đổi trạng thái nút
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="animate-spin text-xl">⏳</span> Đang lưu...`;
+
+            try {
+                if (editingDocId) {
+                    const docRef = doc(db, collectionName, editingDocId);
+                    await updateDoc(docRef, {
+                        name: studentName,
+                        address: address
+                    });
+                    showToast('<span>🎉</span> Đã sửa thông tin thành công!');
+                    
+                    editingDocId = null;
+                    cancelEditBtn.classList.add('hidden');
+                } else {
+                    await addDoc(collection(db, collectionName), {
+                        name: studentName,
+                        address: address,
+                        createdAt: serverTimestamp(),
+                        likes: 0
+                    });
+                    showToast('<span>🎉</span> Đã gửi địa chỉ thành công!');
+                }
+                
+                nameInput.value = ''; 
+                addressInput.value = ''; 
+                // Không tự động focus nameInput nữa để UX mượt hơn trên mobile
+            } catch (error) {
+                console.error("Lỗi khi lưu thông tin:", error);
+                showToast('<span>❌</span> Có lỗi xảy ra, vui lòng thử lại sau!');
+            } finally {
+                // Khôi phục nút
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Cập nhật</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+            }
+        });
+
+        // 3. Chức năng Hiển thị Real-time và Cập nhật Thống Kê
+        const randomSortKeys = {}; 
+
+        const unsub = onSnapshot(collection(db, collectionName), (snapshot) => {
+            loading.style.display = 'none';
+            container.classList.remove('hidden');
+
+            currentDocs = snapshot.docs.map(doc => {
+                if (!randomSortKeys[doc.id]) {
+                    randomSortKeys[doc.id] = Math.random();
+                }
+                return { id: doc.id, _randomKey: randomSortKeys[doc.id], ...doc.data() };
+            });
+            
+            // Xử lý Thống Kê
+            // Lấy toàn bộ danh sách tên học sinh (bỏ qua option đầu tiên)
+            const allStudents = Array.from(nameInput.options)
+                .filter(opt => opt.value !== "")
+                .map(opt => opt.value);
+            const totalStudentsCount = allStudents.length;
+            
+            // Lọc ra các tên học sinh độc nhất đã nộp
+            const uniqueNamesSubmitted = new Set(currentDocs.map(doc => doc.name).filter(Boolean));
+            const submittedCount = uniqueNamesSubmitted.size;
+            
+            // Cập nhật danh sách chưa nộp
+            currentMissingStudents = allStudents.filter(name => !uniqueNamesSubmitted.has(name));
+            const remainingCount = currentMissingStudents.length;
+
+            const progressPercentage = (submittedCount / totalStudentsCount) * 100;
+
+            // Cập nhật DOM của Thống Kê
+            statsContainer.classList.remove('hidden');
+            statTotal.innerText = totalStudentsCount;
+            statSubmitted.innerText = submittedCount;
+            statRemaining.innerText = remainingCount;
+            statProgressBar.style.width = `${progressPercentage}%`;
+
+            // Sắp xếp mới nhất lên đầu tiên thay vì random như bảng nguyện vọng
+            // Vì đây là dữ liệu cập nhật nên ưu tiên xem người mới nhất
+            currentDocs.sort((a, b) => {
+                const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                return timeB - timeA;
+            });
+
+            renderCards(currentDocs);
+            
+        }, (error) => {
+            console.error("Lỗi khi lắng nghe realtime:", error);
+            loading.innerHTML = "❌ Không thể tải dữ liệu. Vui lòng kiểm tra quyền Firestore của bạn.";
+            loading.classList.add('text-red-500');
+        });
+
+        // Hàm Render các thẻ Card
+        function renderCards(docs) {
+            container.innerHTML = '';
+
+            docs.forEach((data, index) => {
+                // Nếu data cũ không có trường name/address (do trước đó dùng bảng nguyện vọng) thì hỗ trợ fallback
+                const displayTitle = data.name || "Không rõ tên";
+                const displayAddress = data.address || data.text || "Chưa có địa chỉ";
+
+                const colorIndex = (displayTitle.length + index) % pastelColors.length;
+                const cardColor = pastelColors[colorIndex];
+                
+                const emojiIndex = (displayTitle.length + index) % emojis.length;
+                const cardEmoji = emojis[emojiIndex];
+                
+                const timeStr = timeAgo(data.createdAt?.toDate());
+                const likesCount = data.likes || 0;
+
+                const card = document.createElement('div');
+                card.className = `${cardColor} card-hover rounded-3xl p-6 relative flex flex-col justify-between shadow-sm border border-white/40`;
+                
+                const actionHTML = isAdmin ? `
+                    <div class="absolute top-3 right-3 flex gap-2 z-20">
+                        <button type="button" class="edit-btn w-8 h-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-white transition-colors shadow-sm" title="Sửa thông tin này">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button type="button" class="delete-btn w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors shadow-sm" title="Xóa thông tin này">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                ` : `<span class="text-3xl absolute top-4 right-4 opacity-30 select-none text-blue-500">🏠</span>`;
+
+                card.innerHTML = `
+                    ${actionHTML}
+                    <div class="mb-5 mt-1">
+                        <div class="text-3xl mb-2 select-none">${cardEmoji}</div>
+                        <!-- Hiển thị Tên Học Sinh -->
+                        <h3 class="text-xl font-extrabold text-gray-800 mb-2 pr-6 break-words z-10 relative">
+                            ${displayTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                        </h3>
+                        <!-- Hiển thị Địa chỉ -->
+                        <div class="bg-white/50 p-3 rounded-xl border border-white/60">
+                            <p class="text-gray-700 text-md font-medium leading-snug break-words">
+                                ${displayAddress.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-end mt-auto pt-4 border-t border-black/5">
+                        <span class="text-xs text-gray-500 font-semibold flex items-center gap-1">
+                            🕒 ${timeStr}
+                        </span>
+                        
+                        <!-- Nút Đã Ghi Nhận (thay cho nút Like) -->
+                        <button class="like-btn flex items-center gap-1.5 bg-white/70 hover:bg-white px-3 py-1.5 rounded-full shadow-sm transition-all text-blue-500 hover:text-green-500 group ${isAdmin ? 'pointer-events-none opacity-50' : ''}" title="Xác nhận đã xem">
+                            <svg class="w-5 h-5 transition-transform group-active:scale-75" fill="${likesCount > 0 ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-bold text-sm text-gray-700">${likesCount > 0 ? likesCount : 'Đã xem'}</span>
+                        </button>
+                    </div>
+                `;
+
+                if (isAdmin) {
+                    const deleteBtn = card.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.preventDefault(); 
+                        e.stopPropagation(); 
+                        
+                        docToDeleteId = data.id;
+                        confirmModal.classList.remove('hidden');
+                        setTimeout(() => {
+                            confirmModal.classList.remove('opacity-0');
+                            confirmModalContent.classList.remove('scale-95');
+                        }, 10);
+                    });
+
+                    const editBtn = card.querySelector('.edit-btn');
+                    editBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        editingDocId = data.id;
+                        nameInput.value = data.name || ''; 
+                        addressInput.value = data.address || data.text || ''; 
+
+                        submitBtn.innerHTML = `<span>Lưu thay đổi</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                        cancelEditBtn.classList.remove('hidden');
+
+                        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        addressInput.focus();
+                    });
+                } else {
+                    const likeBtn = card.querySelector('.like-btn');
+                    likeBtn.addEventListener('click', async () => {
+                        const svg = likeBtn.querySelector('svg');
+                        svg.classList.add('like-animate');
+                        setTimeout(() => svg.classList.remove('like-animate'), 300);
+
+                        const docRef = doc(db, collectionName, data.id);
+                        await updateDoc(docRef, { likes: increment(1) });
+                    });
+                }
+
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>

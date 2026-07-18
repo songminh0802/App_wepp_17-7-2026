@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Tuyển Sinh Lớp 10</title>
+    <!-- Tailwind CSS (Giao diện) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js (Biểu đồ) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; /* Xanh lá nhạt */ }
+        /* Tùy chỉnh Scrollbar cho bảng */
+        .table-container::-webkit-scrollbar { height: 8px; width: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Loading Overlay */
+        #loading-overlay { backdrop-filter: blur(4px); }
+        .loader {
+            border-top-color: #10b981; /* Emerald 500 */
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen pb-12">
+
+    <!-- KHAI BÁO URL WEB APP -->
+    <script>
+        // URL WEB APP CỦA BẠN
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz534SkxZqVVG-CIXIQuHAOCaWDNE4XH-E3gdyMBR0JvKz5mi9fWgmUSCovH8teKQLxxA/exec'; 
+    </script>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500 p-2 rounded-lg text-white">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Thống Kê Tuyển Sinh 10</h1>
+            </div>
+            <div class="flex gap-3 w-full sm:w-auto">
+                <button onclick="exportCSV()" class="flex-1 sm:flex-none bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 border border-blue-200 shadow-sm">
+                    <i class="fa-solid fa-file-csv"></i> <span class="hidden sm:inline">Xuất CSV</span>
+                </button>
+                <button onclick="fetchData()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-rotate-right"></i> <span class="hidden sm:inline">Làm mới</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
+        
+        <!-- Error Message Container -->
+        <div id="error-message" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm" role="alert">
+            <p class="font-bold">Lỗi tải dữ liệu!</p>
+            <p id="error-text">Vui lòng kiểm tra lại URL kết nối hoặc quyền truy cập Google Sheet.</p>
+        </div>
+
+        <!-- 1. Thẻ Thống Kê (Cards) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div class="bg-white rounded-xl shadow-sm border-t-4 border-slate-500 p-5 flex flex-col justify-between">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Tổng học sinh</p>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <p class="text-3xl font-bold text-slate-800" id="card-total">0</p>
+                    <i class="fa-solid fa-users text-slate-300 text-xl ml-auto"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm border-t-4 border-emerald-500 p-5 flex flex-col justify-between">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Đậu NV1</p>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <p class="text-3xl font-bold text-emerald-600" id="card-nv1">0</p>
+                    <i class="fa-solid fa-check-circle text-emerald-200 text-xl ml-auto"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border-t-4 border-blue-500 p-5 flex flex-col justify-between">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Đậu NV2/NV3</p>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <p class="text-3xl font-bold text-blue-600" id="card-nv2">0</p>
+                    <i class="fa-solid fa-check-double text-blue-200 text-xl ml-auto"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border-t-4 border-red-500 p-5 flex flex-col justify-between">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Chưa Đậu/Rớt</p>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <p class="text-3xl font-bold text-red-600" id="card-fail">0</p>
+                    <i class="fa-solid fa-circle-xmark text-red-200 text-xl ml-auto"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border-t-4 border-amber-500 p-5 flex flex-col justify-between col-span-2 md:col-span-1 lg:col-span-1">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Số Trường THPT</p>
+                <div class="mt-2 flex items-baseline gap-2">
+                    <p class="text-3xl font-bold text-amber-600" id="card-schools">0</p>
+                    <i class="fa-solid fa-school text-amber-200 text-xl ml-auto"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2 & 3. Biểu đồ -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Biểu đồ tròn -->
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-slate-100">
+                <h2 class="text-lg font-semibold text-slate-700 mb-4 border-b pb-2">Tỷ Lệ Đậu / Rớt</h2>
+                <div class="relative h-64 w-full">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Biểu đồ cột -->
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-slate-100 lg:col-span-2">
+                <h2 class="text-lg font-semibold text-slate-700 mb-4 border-b pb-2">Học Sinh Nhập Học Theo Trường</h2>
+                <div class="relative h-64 w-full">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Danh sách và Bộ lọc -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="text-lg font-semibold text-slate-700 mb-4">Danh Sách Học Sinh</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Search -->
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-slate-400"></i>
+                        </div>
+                        <input type="text" id="filter-search" placeholder="Tìm kiếm theo họ tên..." 
+                            class="pl-10 w-full rounded-lg border-slate-300 border p-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow">
+                    </div>
+                    
+                    <!-- Filter Result -->
+                    <select id="filter-result" class="w-full rounded-lg border-slate-300 border p-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white text-slate-700">
+                        <option value="">Tất cả kết quả</option>
+                    </select>
+
+                    <!-- Filter School -->
+                    <select id="filter-school" class="w-full rounded-lg border-slate-300 border p-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white text-slate-700">
+                        <option value="">Tất cả trường nhập học</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="data-table">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-sm uppercase tracking-wider" id="table-header">
+                            <!-- Headers sẽ được gen bằng JS -->
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700" id="table-body">
+                        <!-- Data sẽ được gen bằng JS -->
+                    </tbody>
+                </table>
+                
+                <div id="no-data-msg" class="hidden text-center py-10 text-slate-500">
+                    <i class="fa-solid fa-folder-open text-4xl mb-3 text-slate-300"></i>
+                    <p>Không tìm thấy dữ liệu phù hợp.</p>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-slate-100 bg-slate-50 text-sm text-slate-500 flex justify-between items-center">
+                <span>Đang hiển thị <strong id="count-filtered">0</strong> / <strong id="count-total">0</strong> học sinh</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/80 z-50 flex flex-col items-center justify-center hidden">
+        <div class="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-16 w-16 mb-4"></div>
+        <h2 class="text-center text-slate-700 text-xl font-semibold">Đang tải dữ liệu...</h2>
+        <p class="w-1/3 text-center text-slate-500 mt-2">Vui lòng đợi trong giây lát</p>
+    </div>
+
+    <script>
+        // Biến toàn cục lưu trữ dữ liệu
+        let globalData = [];
+        let filteredData = [];
+        let dataHeaders = [];
+        
+        // Cấu hình tên cột động (để linh hoạt nhận diện cột)
+        let colName = "";
+        let colResult = "";
+        let colSchool = "";
+
+        // Chart instances
+        let pieChartInstance = null;
+        let barChartInstance = null;
+
+        // Khởi chạy khi load trang
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            fetchData();
+        });
+
+        // Thiết lập sự kiện lắng nghe bộ lọc
+        function setupEventListeners() {
+            document.getElementById('filter-search').addEventListener('input', applyFilters);
+            document.getElementById('filter-result').addEventListener('change', applyFilters);
+            document.getElementById('filter-school').addEventListener('change', applyFilters);
+        }
+
+        // Tải dữ liệu từ API (Sử dụng phương pháp JSONP để MIỄN NHIỄM với lỗi CORS)
+        function fetchData() {
+            if(!GAS_URL || GAS_URL.includes('XXXXXXXXXX')) {
+                showError("Bạn chưa cấu hình biến GAS_URL trong file HTML.");
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            // 1. Tạo tên hàm callback ngẫu nhiên (chống trùng lặp)
+            const callbackName = 'jsonpCallback_' + Math.round(100000 * Math.random());
+            
+            // 2. Khai báo hàm callback trên window để Google Apps Script gọi lại
+            window[callbackName] = function(result) {
+                // Dọn dẹp script tag sau khi chạy xong
+                const scriptEl = document.getElementById(callbackName);
+                if(scriptEl) scriptEl.remove();
+                delete window[callbackName];
+                
+                showLoading(false);
+                
+                if (result.status === "error") {
+                    showError("Lỗi từ Google Apps Script: " + result.message);
+                    return;
+                }
+
+                globalData = result.data;
+                filteredData = [...globalData];
+                
+                if(globalData.length > 0) {
+                    dataHeaders = Object.keys(globalData[0]);
+                    identifyColumns(dataHeaders);
+                    updateFilterOptions();
+                    processStats(globalData);
+                    renderTableHeaders();
+                    renderTable(globalData);
+                } else {
+                    document.getElementById('table-body').innerHTML = "";
+                    document.getElementById('no-data-msg').classList.remove('hidden');
+                }
+            };
+
+            // 3. Tạo thẻ <script> để tải dữ liệu thay vì dùng fetch (Bỏ qua CORS)
+            const script = document.createElement('script');
+            script.id = callbackName;
+            // Thêm timestamp (t=...) để chống cache dữ liệu cũ
+            const separator = GAS_URL.includes('?') ? '&' : '?';
+            script.src = `${GAS_URL}${separator}callback=${callbackName}&t=${new Date().getTime()}`;
+            
+            // Xử lý nếu link hỏng hoặc mạng lỗi
+            script.onerror = function() {
+                showLoading(false);
+                showError("Không thể tải dữ liệu. Vui lòng đảm bảo bạn đã Deploy phiên bản Code.gs MỚI NHẤT.");
+                const scriptEl = document.getElementById(callbackName);
+                if(scriptEl) scriptEl.remove();
+                delete window[callbackName];
+            };
+
+            // Gắn thẻ script vào body để bắt đầu tải dữ liệu
+            document.body.appendChild(script);
+        }
+
+        // Tự động nhận diện các cột quan trọng dựa trên từ khóa
+        function identifyColumns(headers) {
+            colName = headers.find(h => h.toLowerCase().includes('tên')) || headers[1] || "";
+            colResult = headers.find(h => h.toLowerCase().includes('kết quả') || h.toLowerCase().includes('tuyển sinh')) || headers[2] || "";
+            colSchool = headers.find(h => h.toLowerCase().includes('nhập học') || h.toLowerCase().includes('trường')) || headers[3] || "";
+        }
+
+        // Tạo options cho dropdown bộ lọc
+        function updateFilterOptions() {
+            const resultSelect = document.getElementById('filter-result');
+            const schoolSelect = document.getElementById('filter-school');
+            
+            resultSelect.innerHTML = '<option value="">Tất cả kết quả</option>';
+            schoolSelect.innerHTML = '<option value="">Tất cả trường nhập học</option>';
+
+            const results = new Set();
+            const schools = new Set();
+
+            globalData.forEach(row => {
+                if(row[colResult]) results.add(row[colResult].trim());
+                if(row[colSchool]) schools.add(row[colSchool].trim());
+            });
+
+            Array.from(results).sort().forEach(res => {
+                if(res) resultSelect.add(new Option(res, res));
+            });
+
+            Array.from(schools).sort().forEach(school => {
+                if(school) schoolSelect.add(new Option(school, school));
+            });
+        }
+
+        // Tính toán thống kê và vẽ biểu đồ
+        function processStats(data) {
+            const total = data.length;
+            let countNV1 = 0;
+            let countNV2 = 0;
+            let countFail = 0;
+            const schoolsMap = {};
+            const resultStatusMap = { pass: 0, fail: 0 };
+
+            data.forEach(row => {
+                const result = (row[colResult] || "").toLowerCase();
+                if (result.includes("nv1") || result.includes("nguyện vọng 1")) {
+                    countNV1++;
+                    resultStatusMap.pass++;
+                } else if (result.includes("nv2") || result.includes("nv3") || result.includes("nv 2")) {
+                    countNV2++;
+                    resultStatusMap.pass++;
+                } else if (result.includes("rớt") || result.includes("trượt") || result.includes("không đậu")) {
+                    countFail++;
+                    resultStatusMap.fail++;
+                } else if (result.includes("đậu") || result.includes("trúng tuyển")) {
+                    resultStatusMap.pass++;
+                }
+
+                const school = (row[colSchool] || "").trim();
+                if (school) {
+                    schoolsMap[school] = (schoolsMap[school] || 0) + 1;
+                }
+            });
+
+            document.getElementById('card-total').innerText = total;
+            document.getElementById('card-nv1').innerText = countNV1;
+            document.getElementById('card-nv2').innerText = countNV2;
+            document.getElementById('card-fail').innerText = countFail;
+            document.getElementById('card-schools').innerText = Object.keys(schoolsMap).length;
+
+            renderPieChart(resultStatusMap.pass, resultStatusMap.fail);
+            renderBarChart(schoolsMap);
+        }
+
+        // Vẽ biểu đồ tròn
+        function renderPieChart(pass, fail) {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            
+            if(pieChartInstance) pieChartInstance.destroy();
+
+            pieChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đậu / Trúng tuyển', 'Chưa đậu / Rớt'],
+                    datasets: [{
+                        data: [pass, fail],
+                        backgroundColor: ['#10b981', '#ef4444'], 
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter' } } }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Vẽ biểu đồ cột
+        function renderBarChart(schoolsMap) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            
+            const sortedSchools = Object.entries(schoolsMap).sort((a, b) => b[1] - a[1]);
+            const labels = sortedSchools.map(item => item[0]);
+            const data = sortedSchools.map(item => item[1]);
+
+            if(barChartInstance) barChartInstance.destroy();
+
+            barChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số lượng học sinh',
+                        data: data,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter' } }, grid: { borderDash: [2, 4] } },
+                        x: { ticks: { font: { family: 'Inter' }, autoSkip: false, maxRotation: 45, minRotation: 0 }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Render Tiêu đề bảng
+        function renderTableHeaders() {
+            const thead = document.getElementById('table-header');
+            let html = `<th class="py-3 px-4 font-semibold w-16 text-center border-b">STT</th>`;
+            dataHeaders.forEach(header => {
+                if(header.toLowerCase() !== 'stt') {
+                    html += `<th class="py-3 px-4 font-semibold border-b whitespace-nowrap">${header}</th>`;
+                }
+            });
+            thead.innerHTML = html;
+        }
+
+        // Render Dữ liệu bảng
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            const noDataMsg = document.getElementById('no-data-msg');
+            
+            document.getElementById('count-filtered').innerText = data.length;
+            document.getElementById('count-total').innerText = globalData.length;
+
+            if (data.length === 0) {
+                tbody.innerHTML = "";
+                noDataMsg.classList.remove('hidden');
+                return;
+            }
+            
+            noDataMsg.classList.add('hidden');
+            let html = "";
+            
+            data.forEach((row, index) => {
+                const bgClass = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30';
+                html += `<tr class="hover:bg-blue-50 transition-colors ${bgClass}">`;
+                html += `<td class="py-3 px-4 text-center border-b text-slate-500 font-medium">${index + 1}</td>`;
+                
+                dataHeaders.forEach(header => {
+                    if(header.toLowerCase() !== 'stt') {
+                        let cellValue = row[header] || "";
+                        let textClass = "";
+                        
+                        if (header === colResult) {
+                            const valLower = cellValue.toLowerCase();
+                            if(valLower.includes('đậu') || valLower.includes('nv1') || valLower.includes('nv2')) textClass = "text-emerald-600 font-semibold";
+                            else if(valLower.includes('rớt') || valLower.includes('trượt')) textClass = "text-red-600 font-semibold";
+                        }
+                        else if (header === colName) {
+                            textClass = "font-medium text-slate-800";
+                        }
+
+                        html += `<td class="py-3 px-4 border-b ${textClass}">${cellValue}</td>`;
+                    }
+                });
+                html += `</tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Lọc dữ liệu
+        function applyFilters() {
+            const searchTerm = document.getElementById('filter-search').value.toLowerCase();
+            const resultFilter = document.getElementById('filter-result').value;
+            const schoolFilter = document.getElementById('filter-school').value;
+
+            filteredData = globalData.filter(row => {
+                const name = (row[colName] || "").toLowerCase();
+                const result = row[colResult] || "";
+                const school = row[colSchool] || "";
+
+                const matchSearch = name.includes(searchTerm);
+                const matchResult = resultFilter === "" || result === resultFilter;
+                const matchSchool = schoolFilter === "" || school === schoolFilter;
+
+                return matchSearch && matchResult && matchSchool;
+            });
+
+            renderTable(filteredData);
+        }
+
+        // Xuất file CSV
+        function exportCSV() {
+            if (filteredData.length === 0) {
+                alert("Không có dữ liệu để xuất!");
+                return;
+            }
+
+            let csvContent = "";
+            csvContent += "\uFEFF"; // Fix lỗi font tiếng Việt khi mở bằng Excel
+            
+            const exportHeaders = ['STT', ...dataHeaders.filter(h => h.toLowerCase() !== 'stt')];
+            csvContent += exportHeaders.map(h => `"${h}"`).join(',') + "\r\n";
+
+            filteredData.forEach((row, index) => {
+                const rowData = [index + 1];
+                dataHeaders.forEach(header => {
+                    if (header.toLowerCase() !== 'stt') {
+                        let val = row[header] || "";
+                        val = val.toString().replace(/"/g, '""');
+                        rowData.push(`"${val}"`);
+                    }
+                });
+                csvContent += rowData.join(',') + "\r\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Ket_Qua_Tuyen_Sinh_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Helpers UI
+        function showLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            if(show) overlay.classList.remove('hidden');
+            else overlay.classList.add('hidden');
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('error-message');
+            document.getElementById('error-text').innerText = msg;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error-message').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

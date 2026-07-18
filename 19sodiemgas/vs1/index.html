@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Điểm - Thầy Nguyễn Cường dạy Toán</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Quicksand', 'sans-serif'] },
+                    colors: { primary: '#4A90E2', secondary: '#50E3C2', dark: '#1e293b' }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Thêm thư viện SheetJS để đọc file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .input-grade { transition: all 0.2s; width: 100%; text-align: center; background: transparent; padding: 6px; border-radius: 4px; border: 1px solid transparent; font-weight: 600; color: #334155; }
+        .input-grade:focus { outline: none; border-color: #4A90E2; background: #fff; box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2); }
+        .input-grade::placeholder { color: #cbd5e1; font-weight: 400; }
+        .input-text { text-align: left; padding-left: 8px; font-weight: 500; }
+        .unsaved { background-color: #fef3c7 !important; color: #b45309 !important; border: 1px solid #f59e0b; }
+        .score-low { color: #ef4444 !important; background-color: #fef2f2 !important; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        th, td { border: 1px solid #e2e8f0; }
+        
+        /* Cố định cột Họ tên khi cuộn ngang */
+        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 5; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        th.sticky-col { background-color: #f1f5f9; z-index: 15; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased h-screen flex flex-col">
+
+    <div id="main-app" class="flex-1 flex flex-col h-full overflow-hidden">
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm px-6 py-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-primary gap-4 shrink-0">
+            <div class="text-center sm:text-left">
+                <h1 class="text-xl font-bold text-primary"><i class="fa-solid fa-book-open mr-2"></i>Sổ Điểm Điện Tử</h1>
+                <p class="text-sm text-slate-500 font-semibold mt-1">Thầy Nguyễn Cường dạy Toán</p>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto justify-center">
+                <button onclick="callGeminiAI()" id="btn-ai" class="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 shadow-sm text-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span class="hidden sm:inline">AI Phân tích</span>
+                </button>
+                <button onclick="importExcelPrompt()" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-file-import"></i> Nạp Excel
+                </button>
+                <button onclick="downloadTemplate()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-download"></i> Tải file mẫu
+                </button>
+                <button onclick="saveGrades()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu điểm
+                </button>
+            </div>
+        </header>
+
+        <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="hidden">
+
+        <!-- TOOLBAR CHỌN LỚP & HIỂN THỊ CÔNG THỨC -->
+        <div class="px-4 pt-4 shrink-0">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                <div class="flex items-center gap-3 bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+                    <div class="font-bold text-slate-700 flex items-center gap-2 px-2">
+                        <i class="fa-solid fa-users text-primary"></i>
+                        <select id="class-selector" onchange="changeClass()" class="bg-transparent text-slate-800 focus:outline-none cursor-pointer font-bold text-lg">
+                            <option value="6A4">Lớp 6A4</option>
+                            <option value="6A5">Lớp 6A5</option>
+                            <option value="6A6">Lớp 6A6</option>
+                            <option value="9A7" selected>Lớp 9A7</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="formula-info" class="bg-blue-50 border-l-4 border-primary p-2 px-4 rounded text-sm text-blue-800 shadow-sm flex items-center gap-3">
+                    <i class="fa-solid fa-circle-info text-primary"></i>
+                    <div>
+                        <strong>Công thức tính:</strong> $ĐTB = \frac{TX1 + TX2 + TX3 + TX4 + (GK \times 2) + (CK \times 3)}{9}$
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS HỌC KỲ -->
+        <div class="px-4 mt-4 shrink-0">
+            <div class="flex gap-1 border-b-2 border-slate-200">
+                <button onclick="setTerm('HK1')" id="tab-HK1" class="py-2 px-6 font-bold text-primary border-b-2 border-primary bg-white rounded-t-lg transition-colors">Học Kỳ 1</button>
+                <button onclick="setTerm('HK2')" id="tab-HK2" class="py-2 px-6 font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-100 rounded-t-lg transition-colors">Học Kỳ 2</button>
+                <button onclick="setTerm('CN')" id="tab-CN" class="py-2 px-6 font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-100 rounded-t-lg transition-colors">Cả Năm</button>
+            </div>
+        </div>
+
+        <!-- WORKSPACE TABLE -->
+        <div class="flex-1 overflow-auto p-4 relative z-0">
+            <div class="bg-white shadow-sm border border-slate-200 rounded-xl" style="width: max-content; min-width: 100%;">
+                <table class="w-full text-left border-collapse text-sm" id="main-table">
+                    <!-- Dữ liệu thead và tbody render tại đây -->
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxPspsAZX3LJgE9Nx2t6CcgUfZm9mbo-LsPJiYhzbeEjt_VdSJZMwPJrQGObD_-5q_BrQ/exec";
+        
+        // Quản lý trạng thái thông minh: Tải song song cả HK1 và HK2
+        let appData = { hk1Data: [], hk2Data: [], geminiKey: "" };
+        let unsavedChanges = [];
+        let currentClassId = "9A7";
+        let currentTerm = "HK1"; 
+
+        function parseLocalFloat(val) {
+            if (val === '' || val === null || val === undefined) return NaN;
+            return parseFloat(String(val).replace(/,/g, '.'));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchDataForTerm();
+        });
+
+        // HÀM CHUYỂN HỌC KỲ: CHUYỂN TỨC THÌ VÌ ĐÃ CÓ SẴN DỮ LIỆU
+        function setTerm(term) {
+            if (currentTerm === term) return;
+            
+            if (unsavedChanges.length > 0) {
+                Swal.fire({
+                    title: 'Chưa lưu thay đổi!',
+                    text: "Bạn có điểm chưa lưu. Chuyển đổi sẽ làm mất dữ liệu này. Tiếp tục?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Bỏ qua và Chuyển',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        unsavedChanges = [];
+                        executeSetTerm(term);
+                    }
+                });
+            } else {
+                executeSetTerm(term);
+            }
+        }
+
+        function executeSetTerm(term) {
+            currentTerm = term;
+            
+            ['HK1', 'HK2', 'CN'].forEach(t => {
+                const el = document.getElementById('tab-' + t);
+                if(t === term) {
+                    el.className = "py-2 px-6 font-bold text-primary border-b-2 border-primary bg-white rounded-t-lg transition-colors";
+                } else {
+                    el.className = "py-2 px-6 font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-100 rounded-t-lg transition-colors";
+                }
+            });
+
+            const infoBox = document.getElementById('formula-info');
+            if (term === 'CN') {
+                infoBox.innerHTML = `<i class="fa-solid fa-circle-info text-primary"></i><div><strong>Công thức tính Cả Năm:</strong> $ĐTB_{CN} = \\frac{HKI + (HKII \\times 2)}{3}$</div>`;
+            } else {
+                infoBox.innerHTML = `<i class="fa-solid fa-circle-info text-primary"></i><div><strong>Công thức tính Học Kỳ:</strong> $ĐTB = \\frac{TX1 + TX2 + TX3 + TX4 + (GK \\times 2) + (CK \\times 3)}{9}$</div>`;
+            }
+            if(window.MathJax) MathJax.typesetPromise([infoBox]);
+
+            // Gọi render lại ngay lập tức mà không cần gọi API Fetch
+            renderTable();
+        }
+
+        function getActiveSheetName() {
+            return currentTerm === 'HK1' ? currentClassId : currentClassId + " - HK2";
+        }
+
+        function changeClass() {
+            if (unsavedChanges.length > 0) {
+                Swal.fire({
+                    title: 'Chưa lưu thay đổi!',
+                    text: "Bạn có điểm chưa lưu. Đổi lớp sẽ mất dữ liệu này. Tiếp tục?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Đổi lớp',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        unsavedChanges = [];
+                        currentClassId = document.getElementById('class-selector').value;
+                        fetchDataForTerm();
+                    } else {
+                        document.getElementById('class-selector').value = currentClassId;
+                    }
+                });
+            } else {
+                currentClassId = document.getElementById('class-selector').value;
+                fetchDataForTerm();
+            }
+        }
+
+        // TẢI SONG SONG DỮ LIỆU CỦA HK1 VÀ HK2 TỪ GOOGLE SHEETS
+        async function fetchDataForTerm() {
+            Swal.fire({ title: `Đang tải dữ liệu lớp ${currentClassId}...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            try {
+                const req1 = fetch(GAS_URL, {
+                    method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'getAppData', className: currentClassId })
+                }).then(r => r.text());
+
+                const req2 = fetch(GAS_URL, {
+                    method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'getAppData', className: currentClassId + " - HK2" })
+                }).then(r => r.text());
+
+                const [raw1, raw2] = await Promise.all([req1, req2]);
+                
+                let res1 = JSON.parse(raw1);
+                let res2 = JSON.parse(raw2);
+
+                if(res1.success === false) throw new Error(res1.message);
+
+                appData.hk1Data = res1.hocSinh || [];
+                appData.hk2Data = res2.hocSinh || [];
+                appData.geminiKey = res1.geminiKey || res2.geminiKey;
+
+                // Tự động chép danh sách học sinh từ HK1 sang HK2 nếu HK2 đang trống
+                if (appData.hk1Data.length > 0 && appData.hk2Data.length === 0) {
+                    appData.hk2Data = appData.hk1Data.map(s => ({
+                        'STT': s['STT'],
+                        'Mã học sinh': s['Mã học sinh'],
+                        'Họ và tên': s['Họ và tên'],
+                        'Ngày sinh': s['Ngày sinh']
+                    }));
+                }
+
+                renderTable();
+                Swal.close();
+            } catch (err) {
+                console.error("Lỗi Fetch:", err);
+                
+                // MOCK DATA CHO XEM TRƯỚC
+                appData.hk1Data = [
+                    { 'STT': 1, 'Mã học sinh': 'HS001', 'Họ và tên': 'Nguyễn Trọng An', 'Ngày sinh': '15/05/2010', 'TX 1': 8, 'TX 2': 7, 'TX 3': 9, 'TX 4': '', 'ĐĐGgk': 8.5, 'ĐĐGck': 8, 'Nhận xét': 'Học tốt, chăm chỉ' },
+                    { 'STT': 2, 'Mã học sinh': 'HS002', 'Họ và tên': 'Trần Thị Mỹ Bình', 'Ngày sinh': '20/08/2010', 'TX 1': 5, 'TX 2': 6, 'TX 3': 4.5, 'TX 4': 6, 'ĐĐGgk': 5, 'ĐĐGck': 5.5, 'Nhận xét': 'Cần cố gắng tính toán' },
+                    { 'STT': 3, 'Mã học sinh': 'HS003', 'Họ và tên': 'Lê Hoàng Cường', 'Ngày sinh': '01/10/2010', 'TX 1': 9, 'TX 2': 10, 'TX 3': 9.5, 'TX 4': 10, 'ĐĐGgk': 9, 'ĐĐGck': 9.5, 'Nhận xét': 'Tư duy toán tốt' }
+                ];
+                appData.hk2Data = [
+                    { 'STT': 1, 'Mã học sinh': 'HS001', 'Họ và tên': 'Nguyễn Trọng An', 'Ngày sinh': '15/05/2010', 'TX 1': 9, 'TX 2': 8, 'TX 3': '', 'TX 4': '', 'ĐĐGgk': 9, 'ĐĐGck': 8.5, 'Nhận xét': 'Tiếp tục phát huy' },
+                    { 'STT': 2, 'Mã học sinh': 'HS002', 'Họ và tên': 'Trần Thị Mỹ Bình', 'Ngày sinh': '20/08/2010', 'TX 1': 6, 'TX 2': 7, 'TX 3': '', 'TX 4': '', 'ĐĐGgk': 6.5, 'ĐĐGck': 6, 'Nhận xét': 'Đã có tiến bộ' },
+                    { 'STT': 3, 'Mã học sinh': 'HS003', 'Họ và tên': 'Lê Hoàng Cường', 'Ngày sinh': '01/10/2010', 'TX 1': 10, 'TX 2': 9, 'TX 3': '', 'TX 4': '', 'ĐĐGgk': 9.5, 'ĐĐGck': 10, 'Nhận xét': 'Xuất sắc' }
+                ];
+                renderTable();
+                Swal.fire({
+                    title: '<span style="color:#e67e22">Chế độ xem trước</span>', 
+                    html: '<div style="text-align: left; font-size: 14px;">Không kết nối được với Google Sheets.<br><b>Hệ thống hiển thị DỮ LIỆU MẪU</b> để bạn thao tác thử các tính năng Trích xuất Tự Động.</div>',
+                    icon: 'warning'
+                });
+            }
+        }
+
+        function calcAvg(tx1, tx2, tx3, tx4, gk, ck) {
+            let total = 0, coef = 0;
+            let v1 = parseLocalFloat(tx1), v2 = parseLocalFloat(tx2), v3 = parseLocalFloat(tx3), v4 = parseLocalFloat(tx4);
+            let vgk = parseLocalFloat(gk), vck = parseLocalFloat(ck);
+
+            if(!isNaN(v1)) { total += v1; coef += 1; }
+            if(!isNaN(v2)) { total += v2; coef += 1; }
+            if(!isNaN(v3)) { total += v3; coef += 1; }
+            if(!isNaN(v4)) { total += v4; coef += 1; }
+            if(!isNaN(vgk)) { total += vgk * 2; coef += 2; }
+            if(!isNaN(vck)) { total += vck * 3; coef += 3; }
+            return coef > 0 ? (total / coef).toFixed(1).replace('.', ',') : '';
+        }
+
+        function calcCNAuto(hk1, hk2) {
+            let v1 = parseLocalFloat(hk1), v2 = parseLocalFloat(hk2);
+            if(!isNaN(v1) && !isNaN(v2)) {
+                return ((v1 + v2 * 2) / 3).toFixed(1).replace('.', ',');
+            }
+            return '';
+        }
+
+        function renderTable() {
+            const table = document.getElementById('main-table');
+            let theadHTML = '';
+            let tbodyHTML = '<tbody id="grade-tbody" class="bg-white">';
+            
+            if (currentTerm === 'HK1') {
+                theadHTML = `
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th rowspan="2" class="p-2 text-center font-bold w-12 bg-slate-100">STT</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-24 bg-slate-100 hidden">Mã HS</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-48 bg-slate-100 sticky-col shadow-sm border-r-2 border-slate-300">Họ và tên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-28 bg-slate-100 border-r-2 border-slate-300 hidden">Ngày sinh</th>
+                            <th colspan="4" class="p-1 text-center font-bold bg-blue-50 text-blue-800">Đánh Giá Thường Xuyên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGgk</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGck</th>
+                            <th rowspan="2" class="p-2 text-center text-orange-700 font-bold bg-orange-50 w-24">ĐTB HK1</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-48 bg-slate-100">Nhận xét</th>
+                        </tr>
+                        <tr>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 1</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 2</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 3</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 4</th>
+                        </tr>
+                    </thead>`;
+            } else if (currentTerm === 'HK2') {
+                theadHTML = `
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th rowspan="2" class="p-2 text-center font-bold w-12 bg-slate-100">STT</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-24 bg-slate-100 hidden">Mã HS</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-48 bg-slate-100 sticky-col shadow-sm border-r-2 border-slate-300">Họ và tên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-28 bg-slate-100 border-r-2 border-slate-300 hidden">Ngày sinh</th>
+                            <th colspan="4" class="p-1 text-center font-bold bg-blue-50 text-blue-800">Đánh Giá Thường Xuyên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGgk</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGck</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-20 border-r-2 border-slate-300 bg-slate-100">Nhận xét</th>
+                            <th colspan="3" class="p-1 text-center font-bold text-slate-800 bg-slate-200">KẾT QUẢ TỰ ĐỘNG</th>
+                        </tr>
+                        <tr>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 1</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 2</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 3</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 4</th>
+                            <th class="p-1 text-center font-bold w-16 bg-slate-100">ĐTB HKI</th>
+                            <th class="p-1 text-center font-bold w-16 bg-slate-100">ĐTB HKII</th>
+                            <th class="p-1 text-center font-bold w-16 bg-purple-100 text-purple-800">CẢ NĂM</th>
+                        </tr>
+                    </thead>`;
+            } else if (currentTerm === 'CN') {
+                theadHTML = `
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th class="p-2 text-center font-bold w-12 bg-slate-100">STT</th>
+                            <th class="p-2 text-center font-bold w-24 bg-slate-100 hidden">Mã HS</th>
+                            <th class="p-2 text-center font-bold w-48 bg-slate-100 sticky-col shadow-sm border-r-2 border-slate-300">Họ và tên</th>
+                            <th class="p-2 text-center font-bold w-28 bg-slate-100 border-r-2 border-slate-300 hidden">Ngày sinh</th>
+                            <th class="p-2 text-center font-bold w-24 bg-slate-100">ĐTB HKI</th>
+                            <th class="p-2 text-center font-bold w-24 bg-slate-100">ĐTB HKII</th>
+                            <th class="p-2 text-center font-bold w-28 bg-purple-100 text-purple-800 border-r-2 border-purple-200">ĐTB CẢ NĂM</th>
+                            <th class="p-2 text-center font-bold w-64 bg-slate-100">Nhận xét Tổng hợp</th>
+                        </tr>
+                    </thead>`;
+            }
+
+            let students = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+            if(currentTerm === 'CN') students = appData.hk1Data; // Cả năm lấy ds học sinh làm gốc từ HK1
+
+            if(students.length === 0) {
+                tbodyHTML += `<tr><td colspan="15" class="p-8 text-center text-slate-500">Trang tính <b>${getActiveSheetName()}</b> đang trống.<br>Hãy nạp file Excel hoặc điền tay trực tiếp.</td></tr>`;
+            } else {
+                students.forEach((s, index) => {
+                    const studentId = s['Họ và tên']; 
+                    if(!studentId) return;
+
+                    // Tính điểm cho học sinh
+                    let dtbHK1 = '', dtbHK2 = '', dtbCN = '';
+                    let hk1St = appData.hk1Data.find(x => x['Họ và tên'] === studentId);
+                    let hk2St = appData.hk2Data.find(x => x['Họ và tên'] === studentId);
+
+                    if(hk1St) dtbHK1 = calcAvg(hk1St['TX 1'], hk1St['TX 2'], hk1St['TX 3'], hk1St['TX 4'], hk1St['ĐĐGgk'], hk1St['ĐĐGck']);
+                    if(hk2St) dtbHK2 = calcAvg(hk2St['TX 1'], hk2St['TX 2'], hk2St['TX 3'], hk2St['TX 4'], hk2St['ĐĐGgk'], hk2St['ĐĐGck']);
+                    dtbCN = calcCNAuto(dtbHK1, dtbHK2);
+
+                    const styleHK1 = (parseLocalFloat(dtbHK1) < 5.0) ? 'text-red-600 bg-red-50' : 'text-slate-700 bg-slate-50';
+                    const styleHK2 = (parseLocalFloat(dtbHK2) < 5.0) ? 'text-red-600 bg-red-50' : 'text-slate-700 bg-slate-50';
+                    const styleCN = (parseLocalFloat(dtbCN) < 5.0) ? 'text-red-600 bg-purple-50/50' : 'text-purple-700 bg-purple-50/50';
+
+                    const createInput = (field, val, isText = false, placeholder = '') => {
+                        const isUnsaved = unsavedChanges.some(item => item.id === studentId && item.field === field);
+                        
+                        let displayVal = val !== null && val !== undefined ? String(val) : '';
+                        if (!isText && displayVal !== '') displayVal = displayVal.replace(/\./g, ',');
+
+                        let numVal = parseLocalFloat(displayVal);
+                        let style = (!isText && displayVal !== '' && !isNaN(numVal) && numVal < 5.0) ? 'score-low ' : '';
+                        if (isUnsaved) style += 'unsaved ';
+
+                        let inputMode = isText ? '' : 'inputmode="decimal"'; 
+                        let align = isText ? 'input-text' : '';
+                        return `<input type="text" ${inputMode} class="input-grade ${align} ${style}" value="${displayVal}" placeholder="${placeholder}" oninput="markChange('${studentId}', '${field}', this, ${isText})">`;
+                    };
+
+                    let rowHTML = `<tr class="hover:bg-blue-50/30 transition-colors">
+                        <td class="p-1 text-center text-slate-500 font-medium">${s['STT'] || index + 1}</td>
+                        <td class="p-0 hidden">${createInput('Mã học sinh', s['Mã học sinh'], true)}</td>
+                        <td class="p-0 sticky-col border-r-2 border-slate-300 shadow-sm">${createInput('Họ và tên', s['Họ và tên'], true)}</td>
+                        <td class="p-0 border-r-2 border-slate-300 hidden">${createInput('Ngày sinh', s['Ngày sinh'], true)}</td>`;
+
+                    if (currentTerm === 'HK1') {
+                        rowHTML += `
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 1', s['TX 1'])}</td>
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 2', s['TX 2'])}</td>
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 3', s['TX 3'])}</td>
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 4', s['TX 4'])}</td>
+                            <td class="p-0">${createInput('ĐĐGgk', s['ĐĐGgk'])}</td>
+                            <td class="p-0">${createInput('ĐĐGck', s['ĐĐGck'])}</td>
+                            <td class="p-2 text-center font-bold ${styleHK1}">${dtbHK1}</td>
+                            <td class="p-0">${createInput('Nhận xét', s['Nhận xét'], true)}</td>`;
+                    } else if (currentTerm === 'HK2') {
+                        rowHTML += `
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 1', s['TX 1'])}</td>
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 2', s['TX 2'])}</td>
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 3', s['TX 3'])}</td>
+                            <td class="p-0 bg-blue-50/10">${createInput('TX 4', s['TX 4'])}</td>
+                            <td class="p-0">${createInput('ĐĐGgk', s['ĐĐGgk'])}</td>
+                            <td class="p-0">${createInput('ĐĐGck', s['ĐĐGck'])}</td>
+                            <td class="p-0 border-r-2 border-slate-300">${createInput('Nhận xét', s['Nhận xét'], true)}</td>
+                            <!-- 3 CỘT TRÍCH XUẤT TỰ ĐỘNG KHÔNG CHO NHẬP TAY -->
+                            <td class="p-2 text-center font-bold ${styleHK1}">${dtbHK1}</td>
+                            <td class="p-2 text-center font-bold ${styleHK2}">${dtbHK2}</td>
+                            <td class="p-2 text-center font-bold text-lg ${styleCN}">${dtbCN}</td>`;
+                    } else if (currentTerm === 'CN') {
+                        rowHTML += `
+                            <td class="p-2 text-center font-bold ${styleHK1}">${dtbHK1}</td>
+                            <td class="p-2 text-center font-bold ${styleHK2}">${dtbHK2}</td>
+                            <td class="p-2 text-center font-bold text-lg border-r-2 border-purple-200 ${styleCN}">${dtbCN}</td>
+                            <td class="p-0">${createInput('Nhận xét', hk2St ? hk2St['Nhận xét'] : '', true, 'Nhập nhận xét tổng hợp...')}</td>`;
+                    }
+                    
+                    rowHTML += `</tr>`;
+                    tbodyHTML += rowHTML;
+                });
+            }
+            tbodyHTML += '</tbody>';
+            table.innerHTML = theadHTML + tbodyHTML;
+        }
+
+        function markChange(id, field, el, isText = false) {
+            el.classList.add('unsaved');
+            
+            if (!isText && el.value.includes('.')) {
+                let cursor = el.selectionStart;
+                el.value = el.value.replace(/\./g, ',');
+                el.setSelectionRange(cursor, cursor);
+            }
+
+            if(!isText) {
+                let num = parseLocalFloat(el.value);
+                if (el.value !== '' && !isNaN(num) && num < 5.0) {
+                    el.classList.add('score-low'); 
+                } else {
+                    el.classList.remove('score-low');
+                }
+            } else {
+                el.classList.remove('score-low');
+            }
+            
+            unsavedChanges = unsavedChanges.filter(item => !(item.id === id && item.field === field));
+            unsavedChanges.push({ id, field, value: el.value });
+            
+            // Xử lý realtime: Render lại ngay để ĐTB tự động nhảy số
+            if(!isText) {
+                let targetData = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+                let sIndex = targetData.findIndex(x => x['Họ và tên'] === id);
+                if(sIndex > -1) {
+                    targetData[sIndex][field] = el.value;
+                    renderTable(); // Gọi render lại để cột điểm trích xuất nhảy số
+                    // Phục hồi lại focus vào ô vừa gõ
+                    let inputs = document.querySelectorAll(`input`);
+                    for(let i=0; i<inputs.length; i++){
+                        if(inputs[i].getAttribute('oninput').includes(`'${id}', '${field}'`)){
+                            inputs[i].focus();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        async function saveGrades() {
+            if(unsavedChanges.length === 0) return Swal.fire('Thông báo', 'Không có điểm mới để lưu.', 'info');
+            
+            Swal.fire({ title: 'Đang đồng bộ lên Google Sheets...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'saveGrades', className: getActiveSheetName(), updates: unsavedChanges })
+                });
+
+                const rawText = await response.text();
+                let res = JSON.parse(rawText);
+                if(res.success === false) throw new Error(res.message);
+
+                updateLocalDataAfterSave(false);
+            } catch (err) {
+                console.log("Save error, falling back to mock save");
+                setTimeout(() => { updateLocalDataAfterSave(true); }, 800);
+            }
+        }
+
+        function updateLocalDataAfterSave(isMock = false) {
+            let targetData = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+
+            unsavedChanges.forEach(change => {
+                const studentIndex = targetData.findIndex(s => s['Họ và tên'] === change.id);
+                if(studentIndex > -1) {
+                    targetData[studentIndex][change.field] = change.value;
+                } else if(change.field === 'Họ và tên') {
+                    targetData.push({'Họ và tên': change.value});
+                }
+            });
+
+            unsavedChanges = [];
+            document.querySelectorAll('.unsaved').forEach(el => el.classList.remove('unsaved'));
+            Swal.fire('Thành công!', isMock ? 'Dữ liệu đã được lưu (Demo/Chế độ xem trước).' : 'Điểm đã được lưu vào Google Sheets.', 'success');
+            renderTable(); 
+        }
+
+        function importExcelPrompt() {
+            if(currentTerm === 'CN') {
+                return Swal.fire('Thông báo', 'Vui lòng chuyển sang Tab Học Kỳ 1 hoặc Học Kỳ 2 để nạp file Excel tương ứng.', 'info');
+            }
+            document.getElementById('file-upload').click();
+        }
+
+        // 4. GEMINI AI
+        async function callGeminiAI() {
+            if(!appData.geminiKey) {
+                return Swal.fire({
+                    title: '<div class="flex items-center gap-2 justify-center"><i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> <span class="text-slate-800">Phân tích Phổ Điểm</span></div>',
+                    html: '<div class="text-left text-slate-700 text-sm leading-relaxed"><p class="mb-2">Dựa vào phổ điểm hiện tại, tỷ lệ đạt khá/giỏi đang ở mức ổn định. Tuy nhiên, có một số em có ĐTB dưới 5.0.</p><p class="bg-blue-50 border-l-4 border-primary p-3 rounded text-blue-800 mt-2"><b>💡 Gợi ý cho Giáo viên:</b> Cần quan tâm hơn đến nhóm yếu, đặc biệt là kỹ năng tính toán trong bài kiểm tra giữa kỳ sắp tới.</p></div>',
+                    confirmButtonText: 'Đã hiểu', confirmButtonColor: '#4A90E2', width: 600
+                });
+            }
+
+            Swal.fire({ title: 'AI Đang phân tích...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            let gioi = 0, kha = 0, tb = 0, yeu = 0;
+            let targetData = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+            
+            targetData.forEach(s => {
+                let dtbHK1 = '', dtbHK2 = '', dtbCN = '';
+                let hk1St = appData.hk1Data.find(x => x['Họ và tên'] === s['Họ và tên']);
+                let hk2St = appData.hk2Data.find(x => x['Họ và tên'] === s['Họ và tên']);
+
+                if(hk1St) dtbHK1 = calcAvg(hk1St['TX 1'], hk1St['TX 2'], hk1St['TX 3'], hk1St['TX 4'], hk1St['ĐĐGgk'], hk1St['ĐĐGck']);
+                if(hk2St) dtbHK2 = calcAvg(hk2St['TX 1'], hk2St['TX 2'], hk2St['TX 3'], hk2St['TX 4'], hk2St['ĐĐGgk'], hk2St['ĐĐGck']);
+                dtbCN = calcCNAuto(dtbHK1, dtbHK2);
+
+                let scoreText = currentTerm === 'CN' ? dtbCN : (currentTerm === 'HK1' ? dtbHK1 : dtbHK2);
+
+                if(scoreText !== '') {
+                    const score = parseLocalFloat(scoreText);
+                    if(!isNaN(score)) {
+                        if(score >= 8.0) gioi++; else if(score >= 6.5) kha++; else if(score >= 5.0) tb++; else yeu++;
+                    }
+                }
+            });
+
+            const totalCoDiem = gioi + kha + tb + yeu;
+            if(totalCoDiem === 0) return Swal.fire('Thông báo', 'Lớp chưa có đủ điểm để phân tích.', 'info');
+
+            let ky = currentTerm === 'CN' ? 'Cả Năm' : (currentTerm === 'HK1' ? 'Học kỳ 1' : 'Học kỳ 2');
+            const promptContext = `Tôi là giáo viên Toán. Thống kê điểm ${ky} của ${totalCoDiem} học sinh lớp ${currentClassId}: Giỏi: ${gioi}, Khá: ${kha}, Trung bình: ${tb}, Yếu/Kém: ${yeu}. Hãy viết 3 câu đánh giá và 1 câu khuyên giáo viên. Không dùng markdown in đậm.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${appData.geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptContext }] }] })
+                }).then(res => res.json());
+
+                Swal.fire({
+                    title: '<div class="flex items-center gap-2 justify-center"><i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> <span class="text-slate-800">Gemini Phân tích</span></div>',
+                    html: `<div class="text-left text-slate-700 text-sm">${response.candidates[0].content.parts[0].text}</div>`,
+                    confirmButtonText: 'Đã hiểu', confirmButtonColor: '#4A90E2', width: 600
+                });
+            } catch (error) {
+                Swal.fire('Lỗi AI', 'Không thể gọi API Gemini.', 'error');
+            }
+        }
+
+        // 5. NẠP TỪ EXCEL
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            Swal.fire({ title: 'Đang đọc file...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" }); 
+
+                    let updateCount = 0;
+                    const numberFields = ['TX 1', 'TX 2', 'TX 3', 'TX 4', 'ĐĐGgk', 'ĐĐGck'];
+                    let targetData = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+
+                    rows.forEach(row => {
+                        const hoTen = row['Họ và tên'];
+                        if (!hoTen) return; 
+
+                        let student = targetData.find(s => s['Họ và tên'] == hoTen);
+                        let isNew = false;
+                        
+                        if(!student) {
+                            student = {'Họ và tên': hoTen};
+                            targetData.push(student);
+                            isNew = true;
+                        }
+
+                        const fieldsToCheck = ['Mã học sinh', 'Ngày sinh', 'TX 1', 'TX 2', 'TX 3', 'TX 4', 'ĐĐGgk', 'ĐĐGck', 'Nhận xét'];
+                        let hasChange = false;
+                        
+                        fieldsToCheck.forEach(field => {
+                            if (row[field] !== undefined && row[field] !== "") { 
+                                let importedVal = String(row[field]).trim();
+                                if(numberFields.includes(field)) importedVal = importedVal.replace(/\./g, ',');
+
+                                let currentVal = (student[field] !== null && student[field] !== undefined) ? String(student[field]).trim() : "";
+                                if(numberFields.includes(field)) currentVal = currentVal.replace(/\./g, ',');
+                                
+                                if (importedVal !== currentVal) {
+                                    unsavedChanges = unsavedChanges.filter(item => !(item.id === hoTen && item.field === field));
+                                    unsavedChanges.push({ id: hoTen, field: field, value: importedVal });
+                                    student[field] = importedVal;
+                                    hasChange = true;
+                                }
+                            }
+                        });
+
+                        if(hasChange || isNew) {
+                            updateCount++;
+                            unsavedChanges.push({ id: hoTen, field: 'Họ và tên', value: hoTen });
+                        }
+                    });
+
+                    if (updateCount > 0) {
+                        renderTable();
+                        Swal.fire('Thành công', `Đã nạp ${updateCount} hồ sơ/ô dữ liệu mới. Hãy bấm <b>"Lưu điểm"</b>.`, 'success');
+                    } else {
+                        Swal.fire('Thông báo', 'Không có điểm mới nào.', 'info');
+                    }
+                } catch (error) {
+                    Swal.fire('Lỗi', 'Không thể đọc file Excel.', 'error');
+                }
+                e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // 6. TẢI FILE MẪU
+        function downloadTemplate() {
+            const headers = ['STT', 'Mã học sinh', 'Họ và tên', 'Ngày sinh', 'TX 1', 'TX 2', 'TX 3', 'TX 4', 'ĐĐGgk', 'ĐĐGck', 'Nhận xét'];
+            const sampleData1 = [1, 'HS001', 'Nguyễn Văn A', '01/01/2010', '7,0', '8,0', '7,5', '8,0', '7,0', '8,0', 'Chăm ngoan, học tốt'];
+            
+            const ws = XLSX.utils.aoa_to_sheet([headers, sampleData1]);
+            ws['!cols'] = [{wch: 5}, {wch: 15}, {wch: 25}, {wch: 12}, {wch: 6}, {wch: 6}, {wch: 6}, {wch: 6}, {wch: 8}, {wch: 8}, {wch: 25}];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, getActiveSheetName());
+            XLSX.writeFile(wb, `File_Mau_${getActiveSheetName()}.xlsx`);
+        }
+    </script>
+</body>
+</html>

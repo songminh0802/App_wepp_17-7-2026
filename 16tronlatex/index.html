@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Trộn Đề LaTeX ✨</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome cho Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- MathJax để render LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Custom CSS cho Font và Layout -->
+    <style>
+        body { font-family: 'Nunito', sans-serif; }
+        .font-script { font-family: 'Dancing Script', cursive; }
+
+        /* Ẩn thanh cuộn cho đẹp */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Scrollbar riêng cho Code Block */
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* CSS Hack cho Placeholder của thẻ contenteditable */
+        [contenteditable]:empty:before {
+            content: attr(placeholder);
+            color: #9ca3af;
+            pointer-events: none;
+            display: block;
+        }
+        [contenteditable] { outline: 0px solid transparent; }
+
+        /* Hiệu ứng khi card được chọn để trộn đề */
+        .card-selected {
+            border: 3px solid #3b82f6 !important;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.15) !important;
+        }
+        
+        /* Ẩn input color */
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 1px solid #d1d5db; border-radius: 4px; }
+
+        /* Ẩn mũi tên của input type number cho gọn */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 min-h-screen relative pb-32">
+
+    <!-- Toast Notification (Thông báo) -->
+    <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full opacity-0 z-[250] flex items-center gap-3">
+        <i class="fas fa-check-circle text-xl"></i>
+        <span class="font-semibold">Đã lưu thành công! 🎉</span>
+    </div>
+
+    <!-- Nút Hamburger Menu Nổi -->
+    <button id="menu-btn" class="fixed top-6 left-6 z-[90] bg-white/90 backdrop-blur-sm border border-gray-200 p-3.5 rounded-2xl shadow-lg text-blue-600 hover:text-purple-600 hover:bg-blue-50 transform hover:scale-105 transition-all duration-300">
+        <i class="fas fa-bars text-2xl"></i>
+    </button>
+
+    <!-- Overlay mờ khi mở Menu -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[95] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Sidebar Menu Chính -->
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-80 max-w-[80vw] bg-white z-[100] shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col rounded-r-3xl border-r border-gray-100">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50 rounded-tr-3xl shrink-0">
+            <h2 class="text-xl font-extrabold flex items-center">
+                <i class="fas fa-random text-blue-500 mr-2"></i>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Menu</span>
+            </h2>
+            <button id="close-sidebar" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none bg-white w-8 h-8 flex items-center justify-center rounded-full shadow-sm border border-gray-200">&times;</button>
+        </div>
+        
+        <div class="p-6 flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+            <!-- Khu vực User -->
+            <div class="bg-blue-50 rounded-2xl p-4 flex items-center gap-4 mb-4 border border-blue-100">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold shadow-inner">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-blue-600 font-semibold">Xin chào,</p>
+                    <p class="text-sm font-bold text-gray-800">Thầy/Cô Giáo</p>
+                </div>
+            </div>
+
+            <!-- Nút Trang chủ -->
+            <a href="#" class="flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-xl transition-colors font-semibold" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); document.getElementById('close-sidebar').click();">
+                <i class="fas fa-home w-5 text-center"></i> Ngân hàng câu hỏi
+            </a>
+
+            <!-- Nút Thêm Bài Tập Mới -->
+            <a href="#" id="menu-add-btn" class="flex items-center gap-3 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-4 py-3 rounded-xl transition-colors font-bold">
+                <i class="fas fa-plus-circle w-5 text-center text-lg"></i> Thêm câu hỏi mới
+            </a>
+        </div>
+        
+        <div class="p-4 bg-slate-50 border-t border-gray-100 text-center shrink-0 rounded-br-3xl">
+            <p class="font-script text-xl text-gray-500">Trộn Đề Thông Minh</p>
+        </div>
+    </div>
+
+    <!-- NỘI DUNG CHÍNH -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-24 relative">
+        
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 inline-block">
+                ✨ <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Hệ Thống Trộn Đề LaTeX</span> 📝
+            </h1>
+            <p class="text-gray-500 text-lg font-medium">Lưu trữ câu hỏi, chọn lọc và xuất file đề thi tự động.</p>
+        </div>
+
+        <!-- Thanh Tìm Kiếm Thông Minh & Lọc Lớp & Lọc Chủ Đề -->
+        <div class="mb-12 max-w-5xl mx-auto relative z-10 flex flex-col lg:flex-row gap-4">
+            <!-- Ô Tìm Kiếm -->
+            <div class="relative flex-1 group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 rounded-[2rem] blur opacity-30 group-focus-within:opacity-70 transition duration-500"></div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-blue-500 group-focus-within:text-indigo-600 transition-colors text-xl"></i>
+                    </div>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm nội dung..." 
+                        class="w-full pl-14 pr-12 py-4 rounded-3xl bg-white/95 backdrop-blur-sm border-2 border-white focus:border-indigo-400 outline-none transition-all duration-300 shadow-xl text-gray-700 font-bold text-base placeholder-gray-400">
+                    <button id="clear-search" class="absolute inset-y-0 right-0 pr-5 flex items-center hidden text-gray-400 hover:text-red-500 transition-colors cursor-pointer">
+                        <i class="fas fa-times-circle text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Dropdown Lọc Lớp -->
+            <div class="relative w-full lg:w-48 group shrink-0">
+                <div class="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-[2rem] blur opacity-30 group-focus-within:opacity-70 transition duration-500"></div>
+                <div class="relative h-full">
+                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                        <i class="fas fa-graduation-cap text-emerald-500 text-lg"></i>
+                    </div>
+                    <select id="filter-grade" class="w-full h-full pl-12 pr-10 py-4 rounded-3xl bg-white/95 backdrop-blur-sm border-2 border-white focus:border-emerald-400 outline-none transition-all duration-300 shadow-xl text-gray-700 font-bold text-base appearance-none cursor-pointer">
+                        <option value="all">Tất cả lớp</option>
+                        <option value="Lớp 6">Lớp 6</option>
+                        <option value="Lớp 7">Lớp 7</option>
+                        <option value="Lớp 8">Lớp 8</option>
+                        <option value="Lớp 9">Lớp 9</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dropdown Lọc Chủ đề -->
+            <div class="relative w-full lg:w-56 group shrink-0">
+                <div class="absolute -inset-1 bg-gradient-to-r from-teal-400 to-cyan-400 rounded-[2rem] blur opacity-30 group-focus-within:opacity-70 transition duration-500"></div>
+                <div class="relative h-full">
+                    <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                        <i class="fas fa-tags text-teal-500 text-lg"></i>
+                    </div>
+                    <select id="filter-topic" class="w-full h-full pl-12 pr-10 py-4 rounded-3xl bg-white/95 backdrop-blur-sm border-2 border-white focus:border-teal-400 outline-none transition-all duration-300 shadow-xl text-gray-700 font-bold text-base appearance-none cursor-pointer">
+                        <option value="all">Tất cả chủ đề</option>
+                        <!-- Danh sách chủ đề sẽ được tạo tự động bởi Javascript -->
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khu vực hiển thị danh sách câu hỏi -->
+        <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h2 class="text-2xl font-bold text-gray-800"><i class="fas fa-layer-group text-yellow-500 mr-2"></i> Ngân hàng câu hỏi</h2>
+            <div class="flex flex-wrap gap-2 items-center">
+                <button id="btn-add-new-main" class="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold px-4 py-2 rounded-xl transition-colors shadow-md flex items-center gap-2">
+                    <i class="fas fa-plus-circle"></i> Thêm câu hỏi
+                </button>
+                <button id="btn-select-all" class="bg-indigo-100 text-indigo-800 hover:bg-indigo-200 text-sm font-bold px-4 py-2 rounded-xl transition-colors shadow-sm">
+                    <i class="fas fa-check-double mr-1"></i> Chọn tất cả
+                </button>
+                
+                <!-- Chức năng chọn ngẫu nhiên -->
+                <div class="flex items-center bg-white border border-gray-200 rounded-xl px-1 shadow-sm overflow-hidden h-[38px]">
+                    <input type="number" id="random-count" min="1" placeholder="Số câu" class="w-20 py-1 px-2 text-center outline-none text-sm font-bold border-r border-gray-100">
+                    <button id="btn-random-select" class="text-indigo-600 hover:bg-indigo-50 text-sm font-bold px-3 py-2 transition-colors flex items-center gap-1" title="Chọn ngẫu nhiên số lượng câu hỏi">
+                        <i class="fas fa-dice"></i> <span class="hidden sm:inline">Ngẫu nhiên</span>
+                    </button>
+                </div>
+
+                <button id="btn-deselect-all" class="bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm font-bold px-4 py-2 rounded-xl transition-colors shadow-sm">
+                    Bỏ chọn
+                </button>
+            </div>
+        </div>
+        
+        <!-- Grid chứa Cards (Đã sửa lưới để thẻ to hơn) -->
+        <div id="cards-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start pb-10">
+            <!-- Thẻ câu hỏi sẽ được render ở đây bằng JS -->
+        </div>
+
+    </div>
+
+    <!-- Thanh Công Cụ Nổi: Bảng Điều Khiển Trộn Đề -->
+    <div id="shuffle-bar" class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] transform translate-y-full transition-transform duration-300 z-[120]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xl shadow-inner">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-bold">Trạng thái thao tác</p>
+                    <p class="text-lg font-black text-gray-800">Đã chọn <span id="selected-count" class="text-indigo-600">0</span> câu hỏi</p>
+                </div>
+            </div>
+            <div class="flex gap-3 w-full sm:w-auto">
+                <button id="btn-open-bulk-assign" class="flex-1 sm:flex-none bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 font-bold py-3 px-6 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-tags"></i> GÁN HÀNG LOẠT
+                </button>
+                <button id="btn-generate-test" class="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-random"></i> TRỘN ĐỀ NGAY
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="absolute bottom-6 w-full text-center z-0">
+        <p class="font-script text-3xl text-gray-600 drop-shadow-sm">
+            © 2026 Designed with <i class="fas fa-heart text-red-500 animate-pulse"></i> Thầy Cường dạy Toán
+        </p>
+    </div>
+
+    <!-- ==========================================
+         CÁC MODAL HỖ TRỢ GIAO DIỆN
+    =========================================== -->
+
+    <!-- Modal Form Nhập Liệu Câu Hỏi -->
+    <div id="form-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[150] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden relative transform scale-95 transition-transform duration-300" id="form-modal-content">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 id="form-modal-title" class="text-xl font-bold text-gray-800"><i class="fas fa-plus-circle text-emerald-500 mr-2"></i> Thêm câu hỏi mới</h3>
+                <button id="close-form-modal" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <form id="latex-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="grade" class="block text-sm font-bold text-gray-700 mb-2">
+                                <i class="fas fa-graduation-cap text-green-500 mr-2"></i>Khối / Lớp
+                            </label>
+                            <select id="grade" required class="w-full px-5 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all duration-200 cursor-pointer text-gray-700 font-semibold">
+                                <option value="" disabled selected>Chọn lớp...</option>
+                                <option value="Lớp 6">Lớp 6</option>
+                                <option value="Lớp 7">Lớp 7</option>
+                                <option value="Lớp 8">Lớp 8</option>
+                                <option value="Lớp 9">Lớp 9</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="topic" class="block text-sm font-bold text-gray-700 mb-2">
+                                <i class="fas fa-layer-group text-blue-500 mr-2"></i>Chủ đề / Mức độ
+                            </label>
+                            <input type="text" id="topic" list="topic-suggestions" required placeholder="Nhận biết, Vận dụng, Hàm số..." class="w-full px-5 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200 font-semibold">
+                            <datalist id="topic-suggestions">
+                                <option value="Nhận biết">
+                                <option value="Thông hiểu">
+                                <option value="Vận dụng">
+                                <option value="Vận dụng cao">
+                                <option value="Đại số">
+                                <option value="Hình học">
+                                <option value="Giải tích">
+                                <option value="Khác">
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+                            <label for="content" class="block text-sm font-bold text-gray-700">
+                                <i class="fas fa-code text-indigo-500 mr-2"></i>Mã Code LaTeX (Hỗ trợ thêm hàng loạt)
+                            </label>
+                            <label class="cursor-pointer bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors border border-indigo-200 flex items-center justify-center gap-2 shadow-sm w-full sm:w-auto">
+                                <i class="fas fa-file-upload"></i> Nhập từ file .tex
+                                <input type="file" id="tex-file-upload" accept=".tex,.txt" class="hidden" multiple>
+                            </label>
+                        </div>
+                        <textarea id="content" required rows="8" placeholder="Dán 1 câu hoặc nhiều câu. Ví dụ: \begin{ex}... \end{ex}" class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all duration-200 font-mono text-sm resize-y"></textarea>
+                        <p class="text-xs text-emerald-600 mt-2 font-semibold"><i class="fas fa-magic mr-1"></i> Hệ thống tự động tách câu hỏi hàng loạt nếu phát hiện các khối \begin{bt/ex/vd} ... \end{bt/ex/vd}</p>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button type="button" id="cancel-form-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl transition-colors">Hủy</button>
+                        <button type="submit" id="submit-form-btn" class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-3">
+                            <i class="fas fa-save"></i> Lưu Câu Hỏi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Xem Chi Tiết Mã Nguồn & KẾT QUẢ TRỘN ĐỀ -->
+    <div id="view-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[200] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative transform scale-95 transition-transform duration-300" id="view-modal-content">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 id="view-modal-title" class="text-xl font-bold text-gray-800"><i class="fas fa-code text-blue-500 mr-2"></i> Mã Nguồn (Code LaTeX)</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <div id="modal-image-container" class="mb-6 hidden flex justify-center bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <img id="modal-image" src="" alt="Ảnh minh họa" class="max-h-[35vh] object-contain rounded-lg shadow-sm cursor-pointer hover:opacity-90 transition-opacity" title="Click để mở ảnh gốc">
+                </div>
+                <div class="relative group/code h-full flex flex-col rounded-xl overflow-hidden shadow-inner border border-slate-700">
+                    <div class="bg-slate-800 px-4 py-2 flex justify-between items-center border-b border-slate-700 shrink-0">
+                        <span class="text-xs text-slate-300 font-mono font-semibold"><i class="fas fa-file-code mr-1"></i> LaTeX</span>
+                        <span id="shuffle-info-text" class="text-xs text-yellow-400 font-mono font-bold hidden"><i class="fas fa-random mr-1"></i> Đã xáo trộn</span>
+                    </div>
+                    <div class="flex-1 flex flex-col">
+                        <pre id="modal-content-code" class="bg-slate-900 text-indigo-300 p-5 overflow-x-auto text-sm font-mono whitespace-pre-wrap leading-relaxed selection:bg-indigo-500/30 min-h-[40vh] flex-1 custom-scrollbar"></pre>
+                        <div class="bg-slate-900 border-t border-slate-700/80 p-4 flex justify-center shrink-0">
+                            <button id="modal-copy-btn" class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-bold py-3 px-10 rounded-full shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 border border-indigo-400/50">
+                                <i class="far fa-copy text-lg"></i> <span>Copy Toàn Bộ Code</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gán Hàng Loạt -->
+    <div id="bulk-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[250] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-300" id="bulk-modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800"><i class="fas fa-tags text-indigo-500 mr-2"></i> Cập nhật hàng loạt</h3>
+                <button id="close-bulk-modal" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none">&times;</button>
+            </div>
+            <p class="text-sm text-gray-500 mb-6">Đang chọn <span id="bulk-count-display" class="font-bold text-indigo-600">0</span> câu hỏi. Hãy chọn thông tin mới, để trống nếu không muốn thay đổi.</p>
+            <form id="bulk-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Đổi Khối / Lớp</label>
+                    <select id="bulk-grade" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold">
+                        <option value="" selected>-- Không thay đổi --</option>
+                        <option value="Lớp 6">Lớp 6</option>
+                        <option value="Lớp 7">Lớp 7</option>
+                        <option value="Lớp 8">Lớp 8</option>
+                        <option value="Lớp 9">Lớp 9</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Đổi Chủ đề / Mức độ</label>
+                    <input type="text" id="bulk-topic" list="topic-suggestions" placeholder="-- Không thay đổi --" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 outline-none transition-all font-semibold">
+                </div>
+                <div class="flex gap-3 pt-4 border-t border-gray-100">
+                    <button type="button" id="cancel-bulk-btn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors">Hủy</button>
+                    <button type="submit" id="submit-bulk-btn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition-colors flex justify-center items-center gap-2">
+                        <i class="fas fa-check"></i> Cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Hệ Thống (Z-index 300) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-[300] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 transform scale-95 transition-transform duration-300 text-center border border-gray-100" id="confirm-modal-content">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 id="confirm-title" class="text-xl font-bold text-gray-800 mb-2">Xác nhận</h3>
+            <p id="confirm-message" class="text-gray-500 mb-6">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+            <div class="flex gap-3">
+                <button id="cancel-confirm" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors">Hủy</button>
+                <button id="submit-confirm" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition-colors">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === FIREBASE & LOGIC JAVASCRIPT === -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc, deleteDoc } 
+            from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Cấu hình Firebase giữ nguyên
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // CHUYỂN COLLECTION THEO YÊU CẦU: 'trondelatex'
+        const colRef = collection(db, 'trondelatex');
+
+        const pastelColors = ['bg-blue-50', 'bg-indigo-50', 'bg-purple-50', 'bg-emerald-50', 'bg-cyan-50', 'bg-orange-50'];
+
+        let currentEditId = null;
+        let localDataMap = {};
+        let allQuestions = [];
+        let currentFilteredQuestions = []; // Lưu danh sách câu hỏi ĐÃ LỌC
+        
+        // --- QUẢN LÝ TRỘN ĐỀ (SHUFFLE) ---
+        let selectedQuestions = new Set(); // Chứa các ID câu hỏi được tick
+
+        // --- CÁC HÀM TIỆN ÍCH ---
+        const removeAccents = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+        };
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.querySelector('span').innerText = message;
+            const icon = toast.querySelector('i');
+            if (isError) {
+                toast.classList.replace('bg-green-500', 'bg-red-500');
+                icon.className = 'fas fa-exclamation-circle text-xl';
+            } else {
+                toast.classList.replace('bg-red-500', 'bg-green-500');
+                icon.className = 'fas fa-check-circle text-xl';
+            }
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-x-full', 'opacity-0'), 3000);
+        }
+
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmContent = document.getElementById('confirm-modal-content');
+        let pendingConfirmAction = null;
+
+        const showConfirmModal = (title, message, onConfirm) => {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            pendingConfirmAction = onConfirm;
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                confirmModal.classList.remove('opacity-0');
+                confirmContent.classList.remove('scale-95');
+            }, 10);
+        };
+        const closeConfirmModal = () => {
+            confirmModal.classList.add('opacity-0');
+            confirmContent.classList.add('scale-95');
+            setTimeout(() => confirmModal.classList.add('hidden'), 300);
+            pendingConfirmAction = null;
+        };
+        document.getElementById('cancel-confirm').addEventListener('click', closeConfirmModal);
+        document.getElementById('submit-confirm').addEventListener('click', () => {
+            if (pendingConfirmAction) pendingConfirmAction();
+            closeConfirmModal();
+        });
+
+        // --- SIDEBAR MENU ---
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const openSidebar = () => {
+            sidebarOverlay.classList.remove('hidden');
+            setTimeout(() => { sidebarOverlay.classList.remove('opacity-0'); sidebar.classList.remove('-translate-x-full'); }, 10);
+        };
+        const closeSidebar = () => {
+            sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('opacity-0');
+            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        };
+        menuBtn.addEventListener('click', openSidebar);
+        document.getElementById('close-sidebar').addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // --- CẬP NHẬT GIAO DIỆN THANH TRỘN ĐỀ ---
+        const updateSelectionBar = () => {
+            const count = selectedQuestions.size;
+            document.getElementById('selected-count').innerText = count;
+            const bar = document.getElementById('shuffle-bar');
+            
+            if (count > 0) {
+                bar.classList.remove('translate-y-full');
+            } else {
+                bar.classList.add('translate-y-full');
+            }
+
+            // Sync visual UI of cards
+            document.querySelectorAll('.question-card').forEach(card => {
+                const id = card.getAttribute('data-id');
+                const checkbox = card.querySelector('.q-checkbox');
+                if (selectedQuestions.has(id)) {
+                    card.classList.add('card-selected');
+                    checkbox.checked = true;
+                } else {
+                    card.classList.remove('card-selected');
+                    checkbox.checked = false;
+                }
+            });
+        };
+
+        // --- LOGIC FORM NHẬP CÂU HỎI ---
+        const formModal = document.getElementById('form-modal');
+        const formModalContent = document.getElementById('form-modal-content');
+        
+        const openFormModal = (isEdit = false) => {
+            document.getElementById('form-modal-title').innerHTML = isEdit 
+                ? '<i class="fas fa-pen text-amber-500 mr-2"></i> Cập nhật câu hỏi'
+                : '<i class="fas fa-plus-circle text-emerald-500 mr-2"></i> Thêm câu hỏi mới';
+            const submitBtn = document.getElementById('submit-form-btn');
+            if(isEdit) {
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Cập nhật Câu Hỏi';
+                submitBtn.className = 'flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-3';
+            } else {
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Lưu Câu Hỏi';
+                submitBtn.className = 'flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-3';
+            }
+            formModal.classList.remove('hidden');
+            setTimeout(() => { formModal.classList.remove('opacity-0'); formModalContent.classList.remove('scale-95'); }, 10);
+        };
+        const closeFormModal = () => {
+            formModal.classList.add('opacity-0'); formModalContent.classList.add('scale-95');
+            setTimeout(() => { formModal.classList.add('hidden'); }, 300);
+        };
+
+        document.getElementById('close-form-modal').addEventListener('click', closeFormModal);
+        document.getElementById('cancel-form-btn').addEventListener('click', closeFormModal);
+        document.getElementById('menu-add-btn').addEventListener('click', (e) => {
+            e.preventDefault(); closeSidebar(); currentEditId = null;
+            document.getElementById('latex-form').reset();
+            openFormModal(false);
+        });
+
+        // Thêm event cho nút thêm mới ngoài trang chủ
+        document.getElementById('btn-add-new-main').addEventListener('click', (e) => {
+            e.preventDefault(); currentEditId = null;
+            document.getElementById('latex-form').reset();
+            openFormModal(false);
+        });
+
+        // Đọc nội dung từ file .tex (Hỗ trợ nhiều file)
+        document.getElementById('tex-file-upload').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            try {
+                const readPromises = files.map(file => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = evt => resolve(evt.target.result);
+                        reader.onerror = () => reject(new Error(`Lỗi khi đọc file: ${file.name}`));
+                        reader.readAsText(file);
+                    });
+                });
+
+                const fileContents = await Promise.all(readPromises);
+                const combinedContent = fileContents.join('\n\n% --- Ngăn cách giữa các file ---\n\n');
+                
+                const contentInput = document.getElementById('content');
+                if (contentInput.value.trim() === '') {
+                    contentInput.value = combinedContent;
+                } else {
+                    contentInput.value += '\n\n' + combinedContent;
+                }
+
+                showToast(`Đã tải gộp nội dung từ ${files.length} file!`);
+            } catch (error) {
+                showToast("Lỗi khi đọc file!", true);
+                console.error(error);
+            }
+            
+            // Reset input để có thể chọn lại chính file đó lần sau
+            e.target.value = '';
+        });
+
+        // Submit Form
+        document.getElementById('latex-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-form-btn');
+            const grade = document.getElementById('grade').value;
+            const topic = document.getElementById('topic').value, content = document.getElementById('content').value;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true;
+            try {
+                if (currentEditId) {
+                    // Chế độ Cập nhật (Sửa 1 câu)
+                    await updateDoc(doc(db, 'trondelatex', currentEditId), { grade, topic, text: content });
+                    showToast("Cập nhật thành công!");
+                } else {
+                    // Chế độ Thêm mới (Hỗ trợ Hàng Loạt)
+                    // Regex tìm các khối \begin{bt/ex/vd} ... \end{bt/ex/vd}
+                    const regex = /\\begin\{(bt|ex|vd)\}[\s\S]*?\\end\{\1\}/g;
+                    const matches = content.match(regex);
+
+                    if (matches && matches.length > 0) {
+                        // Tách được nhiều câu, tiến hành push hàng loạt
+                        const promises = matches.map(matchText => {
+                            return addDoc(colRef, { grade, topic, text: matchText.trim(), createdAt: serverTimestamp() });
+                        });
+                        await Promise.all(promises);
+                        showToast(`Đã thêm hàng loạt ${matches.length} câu hỏi!`);
+                    } else {
+                        // Không có định dạng chuẩn, lưu toàn bộ nội dung thành 1 câu
+                        await addDoc(colRef, { grade, topic, text: content.trim(), createdAt: serverTimestamp() });
+                        showToast("Đã thêm 1 câu hỏi vào ngân hàng!");
+                    }
+                }
+                closeFormModal(); 
+            } catch (err) { 
+                showToast("Lỗi lưu dữ liệu!", true); 
+                console.error(err);
+            } finally { 
+                btn.disabled = false; 
+            }
+        });
+
+        // Render Danh sách bài tập
+        const renderCards = (dataList) => {
+            const container = document.getElementById('cards-container'); container.innerHTML = ''; 
+            if(dataList.length === 0) return container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">Không tìm thấy câu hỏi!</div>';
+            
+            dataList.forEach((item, idx) => {
+                const d = item.data;
+                const isSelected = selectedQuestions.has(item.id);
+                const borderClass = isSelected ? 'card-selected' : 'border-gray-200';
+
+                // Lấy ID gốc để hiển thị (số thứ tự)
+                const originalIdx = allQuestions.findIndex(q => q.id === item.id);
+
+                container.innerHTML += `
+                    <div class="question-card relative bg-white p-8 rounded-[2rem] shadow-sm border ${borderClass} flex flex-col transition-all cursor-default" data-id="${item.id}">
+                        <!-- Checkbox góc phải -->
+                        <div class="absolute top-6 right-6 z-10">
+                            <input type="checkbox" class="q-checkbox w-7 h-7 text-indigo-600 bg-gray-100 border-gray-300 rounded-lg focus:ring-indigo-500 cursor-pointer transition-all shadow-sm" ${isSelected ? 'checked' : ''}>
+                        </div>
+
+                        <div class="flex gap-3 items-center mb-5 pr-14">
+                            <span class="bg-indigo-100 text-indigo-700 text-sm font-black px-3 py-1.5 rounded-lg shadow-sm">ID:${String(allQuestions.length - originalIdx).padStart(3, '0')}</span>
+                            ${d.grade ? `<span class="bg-emerald-100 text-emerald-700 text-sm font-bold px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">${d.grade}</span>` : ''}
+                            <span class="bg-amber-100 text-amber-700 text-sm font-bold px-4 py-1.5 rounded-full truncate max-w-[250px] border border-amber-200 shadow-sm" title="${d.topic}">${d.topic}</span>
+                        </div>
+                        
+                        <!-- PHẦN XEM TRƯỚC NỘI DUNG CODE LATEX -->
+                        <div class="mb-5 bg-slate-900 border border-slate-700 p-6 rounded-2xl text-sm font-mono shadow-inner cursor-text overflow-y-auto custom-scrollbar max-h-80">
+                            <div class="leading-relaxed whitespace-pre-wrap text-indigo-300 selection:bg-indigo-500/30">${escapeHTML(d.text)}</div>
+                        </div>
+                        
+                        <div class="mt-auto pt-5 border-t border-gray-100">
+                            <div class="flex gap-3 w-full">
+                                <button class="view-btn flex-1 bg-gray-100 hover:bg-gray-200 text-indigo-600 px-4 py-3 rounded-xl text-base font-bold transition-colors" data-id="${item.id}">
+                                    <i class="fas fa-eye mr-1"></i> Xem Code
+                                </button>
+                                <button class="edit-btn flex-1 bg-gray-100 hover:bg-gray-200 text-amber-600 px-4 py-3 rounded-xl text-base font-bold transition-colors" data-id="${item.id}">
+                                    <i class="fas fa-pen mr-1"></i> Sửa
+                                </button>
+                                <button class="delete-btn flex-none bg-red-50 hover:bg-red-100 text-red-500 px-4 py-3 rounded-xl text-base font-bold transition-colors" data-id="${item.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        };
+
+        // Lấy dữ liệu Realtime
+        onSnapshot(query(colRef, orderBy('createdAt', 'desc')), (snap) => {
+            allQuestions = []; localDataMap = {};
+            snap.forEach(d => { allQuestions.push({id: d.id, data: d.data()}); localDataMap[d.id] = d.data(); });
+            
+            // Cập nhật danh sách chủ đề tự động cho Dropdown lọc
+            const topicSelect = document.getElementById('filter-topic');
+            const currentSelectedTopic = topicSelect.value;
+            const uniqueTopics = [...new Set(allQuestions.map(q => q.data.topic).filter(Boolean))];
+            
+            topicSelect.innerHTML = '<option value="all">Tất cả chủ đề</option>';
+            uniqueTopics.forEach(t => {
+                topicSelect.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+            // Giữ lại lựa chọn hiện tại nếu nó vẫn tồn tại
+            if (uniqueTopics.includes(currentSelectedTopic)) {
+                topicSelect.value = currentSelectedTopic;
+            }
+
+            filterAndRender();
+        });
+
+        // Hàm Lọc (Tìm kiếm + Khối/Lớp + Chủ đề)
+        const filterAndRender = () => {
+            const kw = removeAccents(document.getElementById('search-input').value);
+            const selectedGrade = document.getElementById('filter-grade').value;
+            const selectedTopic = document.getElementById('filter-topic').value;
+            
+            currentFilteredQuestions = allQuestions.filter(q => {
+                const textMatch = kw === '' || removeAccents((q.data.grade||'') + (q.data.topic||'') + (q.data.text||'')).includes(kw);
+                const gradeMatch = selectedGrade === 'all' || q.data.grade === selectedGrade || (!q.data.grade && selectedGrade === 'Khác');
+                const topicMatch = selectedTopic === 'all' || q.data.topic === selectedTopic;
+                return textMatch && gradeMatch && topicMatch;
+            });
+            renderCards(currentFilteredQuestions);
+        };
+
+        // Tìm kiếm & Lọc
+        document.getElementById('search-input').addEventListener('input', filterAndRender);
+        document.getElementById('filter-grade').addEventListener('change', filterAndRender);
+        document.getElementById('filter-topic').addEventListener('change', filterAndRender);
+
+        // Event Delegation cho Cards (Checkbox & Nút bấm)
+        document.getElementById('cards-container').addEventListener('click', async (e) => {
+            const card = e.target.closest('.question-card');
+            if(!card) return;
+            const id = card.getAttribute('data-id');
+
+            // Xử lý tick checkbox
+            if(e.target.classList.contains('q-checkbox')) {
+                if(e.target.checked) selectedQuestions.add(id);
+                else selectedQuestions.delete(id);
+                updateSelectionBar();
+                return;
+            }
+
+            // Click vào card (nhưng không click vào các nút chức năng) cũng tick checkbox
+            if(!e.target.closest('button')) {
+                const cb = card.querySelector('.q-checkbox');
+                cb.checked = !cb.checked;
+                if(cb.checked) selectedQuestions.add(id);
+                else selectedQuestions.delete(id);
+                updateSelectionBar();
+                return;
+            }
+            
+            // Xóa
+            const delBtn = e.target.closest('.delete-btn');
+            if(delBtn) {
+                showConfirmModal("Xóa", "Xóa câu hỏi này khỏi ngân hàng?", async () => {
+                    await deleteDoc(doc(db, 'trondelatex', id));
+                    selectedQuestions.delete(id);
+                    updateSelectionBar();
+                });
+                return;
+            }
+            
+            // Sửa
+            const editBtn = e.target.closest('.edit-btn');
+            if(editBtn) {
+                currentEditId = id; const d = localDataMap[currentEditId];
+                document.getElementById('grade').value = d.grade || '';
+                document.getElementById('topic').value = d.topic;
+                document.getElementById('content').value = d.text;
+                openFormModal(true);
+                return;
+            }
+            
+            // Xem Code
+            const viewBtn = e.target.closest('.view-btn');
+            if(viewBtn) {
+                const d = localDataMap[id];
+                document.getElementById('view-modal-title').innerHTML = `<i class="fas fa-file-code text-blue-500 mr-2"></i> Chi tiết Câu hỏi`;
+                document.getElementById('shuffle-info-text').classList.add('hidden');
+                document.getElementById('modal-content-code').innerText = d.text;
+                document.getElementById('view-modal').classList.remove('hidden');
+                setTimeout(() => { document.getElementById('view-modal').classList.remove('opacity-0'); document.getElementById('view-modal-content').classList.remove('scale-95'); }, 10);
+            }
+        });
+
+        // Nút Đóng Modal Code
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('view-modal').classList.add('opacity-0'); document.getElementById('view-modal-content').classList.add('scale-95');
+            setTimeout(() => document.getElementById('view-modal').classList.add('hidden'), 300);
+        });
+
+        // Nút Copy Code trong Modal
+        document.getElementById('modal-copy-btn').addEventListener('click', async (e) => {
+            const txt = document.getElementById('modal-content-code').innerText;
+            const btn = e.currentTarget;
+            const originalHTML = btn.innerHTML;
+            try { 
+                await navigator.clipboard.writeText(txt); 
+                btn.innerHTML = '<i class="fas fa-check"></i> Đã Copy!';
+            } catch(err) { 
+                const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); 
+                btn.innerHTML = '<i class="fas fa-check"></i> Đã Copy!';
+            }
+            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+        });
+
+        // Select All / Deselect All
+        document.getElementById('btn-select-all').addEventListener('click', () => {
+            const currentCards = document.querySelectorAll('.question-card');
+            currentCards.forEach(card => selectedQuestions.add(card.getAttribute('data-id')));
+            updateSelectionBar();
+        });
+        document.getElementById('btn-deselect-all').addEventListener('click', () => {
+            selectedQuestions.clear();
+            updateSelectionBar();
+        });
+
+        // Logic chọn ngẫu nhiên dựa trên các câu hỏi ĐÃ ĐƯỢC LỌC
+        document.getElementById('btn-random-select').addEventListener('click', () => {
+            const countInput = document.getElementById('random-count');
+            const count = parseInt(countInput.value);
+            
+            if (isNaN(count) || count <= 0) {
+                showToast("Vui lòng nhập số câu hợp lệ!", true);
+                return;
+            }
+
+            if (currentFilteredQuestions.length === 0) {
+                showToast("Danh sách hiện tại trống, không thể chọn!", true);
+                return;
+            }
+
+            if (count > currentFilteredQuestions.length) {
+                showToast(`Chỉ có tối đa ${currentFilteredQuestions.length} câu hỏi trong danh sách này!`, true);
+                return;
+            }
+
+            // Xóa lựa chọn cũ
+            selectedQuestions.clear();
+            
+            // Lấy danh sách câu hỏi đang hiển thị (đã lọc) và xáo trộn
+            const shuffled = shuffleArray([...currentFilteredQuestions]);
+            
+            // Chọn N câu đầu tiên sau khi xáo trộn
+            for (let i = 0; i < count; i++) {
+                selectedQuestions.add(shuffled[i].id);
+            }
+
+            updateSelectionBar();
+            showToast(`Đã chọn ngẫu nhiên ${count} câu hỏi! 🎉`);
+            countInput.value = ''; // Reset input
+        });
+
+        // ==========================================
+        // THUẬT TOÁN TRỘN ĐỀ (SHUFFLE)
+        // ==========================================
+        const shuffleArray = (array) => {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        document.getElementById('btn-generate-test').addEventListener('click', () => {
+            if(selectedQuestions.size === 0) return;
+
+            // Thu thập dữ liệu các câu đã chọn
+            let testDocs = [];
+            selectedQuestions.forEach(id => {
+                if(localDataMap[id]) testDocs.push(localDataMap[id]);
+            });
+
+            // XÁO TRỘN THỨ TỰ
+            testDocs = shuffleArray(testDocs);
+
+            // XÂY DỰNG FILE TEX ĐẦU RA
+            let texOutput = `% =========================================\n`;
+            texOutput += `% ĐỀ THI ĐƯỢC TẠO TỰ ĐỘNG BỞI HỆ THỐNG\n`;
+            texOutput += `% SỐ LƯỢNG CÂU HỎI: ${testDocs.length}\n`;
+            texOutput += `% THỜI GIAN TẠO: ${new Date().toLocaleString('vi-VN')}\n`;
+            texOutput += `% =========================================\n\n`;
+
+            testDocs.forEach((doc, index) => {
+                texOutput += `% --- Câu ${index + 1} (${doc.grade ? doc.grade + ' - ' : ''}${doc.topic}) ---\n`;
+                texOutput += doc.text + "\n\n";
+            });
+
+            // Hiển thị ra Modal
+            document.getElementById('view-modal-title').innerHTML = `<i class="fas fa-random text-indigo-500 mr-2"></i> KẾT QUẢ TRỘN ĐỀ`;
+            document.getElementById('shuffle-info-text').classList.remove('hidden');
+            document.getElementById('modal-content-code').innerText = texOutput;
+            
+            document.getElementById('view-modal').classList.remove('hidden');
+            setTimeout(() => { document.getElementById('view-modal').classList.remove('opacity-0'); document.getElementById('view-modal-content').classList.remove('scale-95'); }, 10);
+        });
+
+        // ==========================================
+        // LOGIC GÁN HÀNG LOẠT (BULK ASSIGN)
+        // ==========================================
+        const bulkModal = document.getElementById('bulk-modal');
+        const bulkModalContent = document.getElementById('bulk-modal-content');
+
+        const openBulkModal = () => {
+            if(selectedQuestions.size === 0) return showToast("Vui lòng chọn ít nhất 1 câu hỏi!", true);
+            document.getElementById('bulk-count-display').innerText = selectedQuestions.size;
+            document.getElementById('bulk-form').reset();
+            bulkModal.classList.remove('hidden');
+            setTimeout(() => { bulkModal.classList.remove('opacity-0'); bulkModalContent.classList.remove('scale-95'); }, 10);
+        };
+
+        const closeBulkModal = () => {
+            bulkModal.classList.add('opacity-0'); bulkModalContent.classList.add('scale-95');
+            setTimeout(() => bulkModal.classList.add('hidden'), 300);
+        };
+
+        document.getElementById('btn-open-bulk-assign').addEventListener('click', openBulkModal);
+        document.getElementById('close-bulk-modal').addEventListener('click', closeBulkModal);
+        document.getElementById('cancel-bulk-btn').addEventListener('click', closeBulkModal);
+
+        document.getElementById('bulk-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-bulk-btn');
+            const newGrade = document.getElementById('bulk-grade').value;
+            const newTopic = document.getElementById('bulk-topic').value.trim();
+
+            // Kiểm tra xem có trường nào được nhập không
+            if (!newGrade && !newTopic) {
+                return showToast("Vui lòng chọn Lớp hoặc nhập Chủ đề mới!", true);
+            }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+            btn.disabled = true;
+
+            try {
+                // Tạo một object chứa các trường cần cập nhật
+                const updates = {};
+                if (newGrade) updates.grade = newGrade;
+                if (newTopic) updates.topic = newTopic;
+
+                // Tiến hành cập nhật đồng thời nhiều câu hỏi trên Firestore
+                const promises = [];
+                selectedQuestions.forEach(id => {
+                    promises.push(updateDoc(doc(db, 'trondelatex', id), updates));
+                });
+
+                await Promise.all(promises);
+                showToast(`Đã gán thông tin mới cho ${selectedQuestions.size} câu hỏi! 🎉`);
+                
+                // Đóng modal và giữ nguyên lựa chọn (bạn có thể dùng selectedQuestions.clear() nếu muốn bỏ tích sau khi gán)
+                closeBulkModal();
+            } catch (error) {
+                console.error(error);
+                showToast("Có lỗi xảy ra khi cập nhật hàng loạt!", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Cập nhật';
+            }
+        });
+
+    </script>
+</body>
+</html>

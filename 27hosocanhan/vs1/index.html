@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Cá Nhân - Quản Lý Lương & Viên Chức</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        primary: '#059669', // Emerald 600
+                        secondary: '#4f46e5', // Indigo 600
+                        accent: '#f59e0b', // Amber 500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { 
+            background-color: #f0fdf4; 
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); 
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Bỏ white-space: nowrap để văn bản có thể xuống hàng */
+        th, td { border: 1px solid #e2e8f0; vertical-align: middle; white-space: normal; word-wrap: break-word; }
+        th { position: sticky; top: 0; z-index: 10; }
+        
+        /* Bảng lương */
+        #content-luong th { background-color: #d1fae5; color: #064e3b; border-bottom: 2px solid #a7f3d0; }
+
+        /* Bảng viên chức có header khác màu một chút */
+        #content-ketquavc th { background-color: #fef3c7; color: #92400e; border-bottom: 2px solid #fde68a; }
+
+        /* Bảng giấy tờ */
+        #content-giayto th { background-color: #e0f2fe; color: #075985; border-bottom: 2px solid #bae6fd; }
+
+        /* Bảng văn bằng */
+        #content-vanbang th { background-color: #dcfce3; color: #166534; border-bottom: 2px solid #bbf7d0; }
+
+        /* Bảng thành tích */
+        #content-thanhtich th { background-color: #f3e8ff; color: #6b21a8; border-bottom: 2px solid #e9d5ff; }
+        
+        .tab-btn {
+            white-space: nowrap;
+        }
+        
+        .tab-btn.active {
+            border-bottom: 2px solid #059669;
+            color: #059669;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased h-screen flex flex-col">
+
+    <!-- MÀN HÌNH CHÍNH -->
+    <div id="main-app" class="flex-1 flex flex-col h-full overflow-hidden max-w-[1400px] mx-auto w-full p-2 sm:p-4 transition-opacity duration-500">
+        
+        <!-- HEADER -->
+        <header class="glass-card rounded-2xl px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 mb-4 border-t-4 border-primary shadow-sm relative overflow-hidden">
+            <div class="absolute right-[-20px] top-[-20px] opacity-10">
+                <i class="fa-solid fa-id-card text-9xl text-emerald-600"></i>
+            </div>
+            
+            <div class="flex items-center gap-4 z-10 w-full">
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-sm border border-emerald-200 shrink-0">
+                    <i class="fa-solid fa-user-tie text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Hồ Sơ Cá Nhân & Quá Trình Công Tác</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[11px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase tracking-wider">Trường THCS Tân Bình</span>
+                        <span class="text-xs text-slate-500 font-medium border-l border-slate-300 pl-2">Thông tin bảo mật</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="z-10 shrink-0">
+                <button onclick="fetchData()" class="bg-white text-slate-600 hover:text-primary hover:bg-emerald-50 px-4 py-2 rounded-xl font-bold transition-colors shadow-sm flex items-center gap-2 border border-slate-200">
+                    <i class="fa-solid fa-rotate text-sm"></i> Tải lại dữ liệu
+                </button>
+            </div>
+        </header>
+
+        <!-- TABS -->
+        <div class="flex gap-2 sm:gap-4 mb-4 shrink-0 border-b border-slate-200 px-2 overflow-x-auto custom-scrollbar pb-1">
+            <button onclick="switchTab('luong')" id="tab-luong" class="tab-btn active pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-money-check-dollar"></i> Lịch Sử Lương
+            </button>
+            <button onclick="switchTab('ketquavc')" id="tab-ketquavc" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-award"></i> Kết Quả Viên Chức
+            </button>
+            <button onclick="switchTab('giayto')" id="tab-giayto" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-file-signature"></i> Tổng Hợp Giấy Tờ
+            </button>
+            <button onclick="switchTab('vanbang')" id="tab-vanbang" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-graduation-cap"></i> Văn Bằng Chứng Chỉ
+            </button>
+            <button onclick="switchTab('thanhtich')" id="tab-thanhtich" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-trophy"></i> Bảng Thành Tích
+            </button>
+        </div>
+
+        <!-- NỘI DUNG TAB LƯƠNG -->
+        <div id="content-luong" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-emerald-100">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1200px]">
+                    <thead class="bg-emerald-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Bậc</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Hệ số</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Mã ngạch</th>
+                            <th class="p-3 text-left font-bold min-w-[200px]">Nội dung</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số QĐ</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày cấp</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày hiệu lực</th>
+                            <th class="p-3 text-left font-bold min-w-[150px]">Người ký QĐ</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Nâng bậc</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Nâng tiếp theo</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Phần trăm</th>
+                        </tr>
+                    </thead>
+                    <tbody id="luong-tbody">
+                        <tr><td colspan="12" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB VIÊN CHỨC (ketquavc) -->
+        <div id="content-ketquavc" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-amber-100 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1000px]">
+                    <thead class="bg-amber-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-center font-bold w-[120px] whitespace-nowrap">Năm học</th>
+                            <th class="p-3 text-left font-bold min-w-[250px]">Nhiệm vụ được giao</th>
+                            <th class="p-3 text-center font-bold w-[150px]">Đăng ký thi đua</th>
+                            <th class="p-3 text-center font-bold w-[150px]">Kết quả thi đua</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Đăng ký BM</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Tỷ lệ</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Hạng lớp CN</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ketquavc-tbody">
+                        <tr><td colspan="8" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-amber-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB GIẤY TỜ (giayto) -->
+        <div id="content-giayto" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-sky-100 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[800px]">
+                    <thead class="bg-sky-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-left font-bold min-w-[250px]">Nội dung</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">SỐ QUYẾT ĐỊNH</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">NGÀY THÁNG NĂM CẤP</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">NGÀY CÓ HIỆU LỰC</th>
+                            <th class="p-3 text-left font-bold min-w-[150px]">NGƯỜI KÝ QĐ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="giayto-tbody">
+                        <tr><td colspan="6" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-sky-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB VĂN BẰNG (vanbang) -->
+        <div id="content-vanbang" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-green-200 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1200px]">
+                    <thead class="bg-green-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-left font-bold min-w-[180px]">Tên VBCC</th>
+                            <th class="p-3 text-left font-bold min-w-[180px]">Nơi cấp VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày cấp VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số hiệu VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số vào sổ</th>
+                            <th class="p-3 text-left font-bold min-w-[180px]">Hội đồng kiểm tra - khóa thi</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Thời gian đào tạo</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Hình thức đào tạo</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Tình trạng VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Xếp loại</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vanbang-tbody">
+                        <tr><td colspan="11" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-green-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB THÀNH TÍCH (thanhtich) -->
+        <div id="content-thanhtich" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-purple-200 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1000px]">
+                    <thead class="bg-purple-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-center font-bold w-[120px] whitespace-nowrap">NĂM HỌC</th>
+                            <th class="p-3 text-left font-bold min-w-[250px]">NỘI DUNG</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Đạt cấp</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số Quyết định</th>
+                            <th class="p-3 text-center font-bold min-w-[120px]">Nơi cấp</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số vào sổ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="thanhtich-tbody">
+                        <tr><td colspan="8" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-purple-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- FOOTER -->
+        <footer class="mt-4 text-center shrink-0">
+            <p class="text-sm text-slate-500 font-medium">Được phát triển bởi <span class="font-bold text-emerald-700">Thầy Nguyễn Cường dạy Toán</span></p>
+        </footer>
+    </div>
+
+    <script>
+        // KẾT NỐI API
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw1GdrjxcvuOVW4j-Jk56yPqnMM0jmS-UMo6SlLqEOpvvla0jFCKLXXiLC4EKn6mgIr/exec"; 
+
+        // Tự động tải dữ liệu ngay khi mở trang
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+        });
+
+        // Chuyển Tab
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            document.getElementById('content-luong').classList.add('hidden');
+            document.getElementById('content-ketquavc').classList.add('hidden');
+            document.getElementById('content-giayto').classList.add('hidden');
+            document.getElementById('content-vanbang').classList.add('hidden');
+            document.getElementById('content-thanhtich').classList.add('hidden');
+            
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+        }
+
+        // Fetch Dữ Liệu từ Google Sheets
+        async function fetchData() {
+            const tbodyLuong = document.getElementById('luong-tbody');
+            const tbodyKetQuaVc = document.getElementById('ketquavc-tbody');
+            const tbodyGiayTo = document.getElementById('giayto-tbody');
+            const tbodyVanBang = document.getElementById('vanbang-tbody');
+            const tbodyThanhTich = document.getElementById('thanhtich-tbody');
+            
+            tbodyLuong.innerHTML = `<tr><td colspan="12" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i><br>Đang đồng bộ từ Google Sheets...</td></tr>`;
+            tbodyKetQuaVc.innerHTML = `<tr><td colspan="8" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-amber-500 mb-2"></i><br>Đang đồng bộ từ Google Sheets...</td></tr>`;
+            tbodyGiayTo.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-sky-500 mb-2"></i><br>Đang đồng bộ từ Google Sheets...</td></tr>`;
+            tbodyVanBang.innerHTML = `<tr><td colspan="11" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-green-500 mb-2"></i><br>Đang đồng bộ từ Google Sheets...</td></tr>`;
+            tbodyThanhTich.innerHTML = `<tr><td colspan="8" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-purple-500 mb-2"></i><br>Đang đồng bộ từ Google Sheets...</td></tr>`;
+            
+            try {
+                if (!GAS_URL || GAS_URL.includes("YOUR_GAS_URL_HERE")) throw new Error("Chưa cấu hình GAS_URL");
+
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'getData' }) 
+                });
+                
+                const res = await response.json();
+                if(!res.success) throw new Error(res.message);
+                
+                if (Array.isArray(res.data)) {
+                    renderTableLuong(res.data);
+                    renderTableKetQuaVc([]); 
+                    renderTableGiayTo([]);
+                    renderTableVanBang([]);
+                    renderTableThanhTich([]);
+                } else if (res.data) {
+                    renderTableLuong(res.data.luong || []);
+                    renderTableKetQuaVc(res.data.ketquavc || []);
+                    renderTableGiayTo(res.data.giayto || []);
+                    renderTableVanBang(res.data.vanbang || []);
+                    renderTableThanhTich(res.data.thanhtich || []);
+                }
+
+            } catch (err) {
+                console.error(err);
+                tbodyLuong.innerHTML = `<tr><td colspan="12" class="p-12 text-center text-red-500 bg-red-50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><br>Không thể tải dữ liệu: ${err.message}</td></tr>`;
+                tbodyKetQuaVc.innerHTML = `<tr><td colspan="8" class="p-12 text-center text-red-500 bg-red-50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><br>Không thể tải dữ liệu: ${err.message}</td></tr>`;
+                tbodyGiayTo.innerHTML = `<tr><td colspan="6" class="p-12 text-center text-red-500 bg-red-50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><br>Không thể tải dữ liệu: ${err.message}</td></tr>`;
+                tbodyVanBang.innerHTML = `<tr><td colspan="11" class="p-12 text-center text-red-500 bg-red-50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><br>Không thể tải dữ liệu: ${err.message}</td></tr>`;
+                tbodyThanhTich.innerHTML = `<tr><td colspan="8" class="p-12 text-center text-red-500 bg-red-50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><br>Không thể tải dữ liệu: ${err.message}</td></tr>`;
+            }
+        }
+
+        // Render Bảng Lương
+        function renderTableLuong(data) {
+            const tbody = document.getElementById('luong-tbody');
+            let html = '';
+
+            if(!data || data.length === 0) {
+                html = `<tr><td colspan="12" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi lương nào trong hệ thống.</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    html += `
+                    <tr class="bg-white hover:bg-emerald-50 transition-colors border-b border-slate-100">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-700">${row['Bậc'] || ''}</td>
+                        <td class="p-3 text-center font-bold text-indigo-600 bg-indigo-50/50">${row['Hệ số'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Mã ngạch'] || ''}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[300px]">${row['Nội dung'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Số Quyết định'] || row['Số QĐ'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['Ngày tháng năm cấp'] || row['Ngày cấp'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 font-medium whitespace-nowrap">${row['Ngày tháng năm có hiệu lực'] || row['Ngày hiệu lực'] || ''}</td>
+                        <td class="p-3 text-left whitespace-pre-wrap max-w-[150px]">${row['Người ký Quyết định'] || row['Người ký'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Thời điểm nâng bậc'] || ''}</td>
+                        <td class="p-3 text-center font-medium text-amber-600 whitespace-nowrap">${row['Thời điểm nâng tiếp theo'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Phần trăm'] || ''}</td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Viên Chức
+        function renderTableKetQuaVc(data) {
+            const tbody = document.getElementById('ketquavc-tbody');
+            let html = '';
+
+            if(!data || data.length === 0) {
+                html = `<tr><td colspan="8" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi đánh giá viên chức nào trong hệ thống.</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    html += `
+                    <tr class="bg-white hover:bg-amber-50 transition-colors border-b border-slate-100">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-center font-bold text-indigo-700 bg-indigo-50/50 whitespace-nowrap">${row['NĂM HỌC'] || ''}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[300px]">${row['NHIỆM VỤ ĐƯỢC GIAO'] || ''}</td>
+                        <td class="p-3 text-center text-amber-600 font-medium whitespace-pre-wrap max-w-[150px]">${row['ĐĂNG KÝ'] || ''}</td>
+                        <td class="p-3 text-center font-bold text-emerald-600 whitespace-pre-wrap max-w-[150px]">${row['THI ĐUA'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['ĐĂNG KÝ BM'] || ''}</td>
+                        <td class="p-3 text-center font-medium whitespace-nowrap">${row['TỶ LỆ'] || ''}</td>
+                        <td class="p-3 text-center font-semibold text-slate-700 whitespace-nowrap">${row['Hạng lớp CN'] || ''}</td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Giấy Tờ
+        function renderTableGiayTo(data) {
+            const tbody = document.getElementById('giayto-tbody');
+            let html = '';
+
+            if(!data || data.length === 0) {
+                html = `<tr><td colspan="6" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi giấy tờ nào trong hệ thống.</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    html += `
+                    <tr class="bg-white hover:bg-sky-50 transition-colors border-b border-slate-100">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[350px]">${row['Nội dung'] || ''}</td>
+                        <td class="p-3 text-center font-semibold text-sky-700 bg-sky-50/50 whitespace-nowrap">${row['SỐ QUYẾT ĐỊNH'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['NGÀY THÁNG NĂM CẤP'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['NGÀY THÁNG NĂM CÓ HIỆU LỰC'] || ''}</td>
+                        <td class="p-3 text-left font-medium text-slate-700 whitespace-pre-wrap max-w-[200px]">${row['NGƯỜI KÝ QUYẾT ĐỊNH'] || ''}</td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Văn Bằng
+        function renderTableVanBang(data) {
+            const tbody = document.getElementById('vanbang-tbody');
+            let html = '';
+
+            if(!data || data.length === 0) {
+                html = `<tr><td colspan="11" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi văn bằng chứng chỉ nào trong hệ thống.</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    html += `
+                    <tr class="bg-white hover:bg-green-50 transition-colors border-b border-slate-100">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-left font-medium text-blue-600 whitespace-pre-wrap max-w-[200px]">${row['Tên VBCC'] || ''}</td>
+                        <td class="p-3 text-left font-medium text-amber-700 whitespace-pre-wrap max-w-[200px]">${row['Nơi cấp VBCC'] || ''}</td>
+                        <td class="p-3 text-center text-slate-700 whitespace-nowrap">${row['Ngày cấp VBCC'] || ''}</td>
+                        <td class="p-3 text-center font-medium whitespace-nowrap">${row['Số hiệu VBCC'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Số vào sổ'] || ''}</td>
+                        <td class="p-3 text-left text-slate-700 whitespace-pre-wrap max-w-[200px]">${row['Hội đồng kiểm tra - khóa thi'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Thời gian đào tạo'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Hình thức đào tạo'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Tình trạng VBCC'] || ''}</td>
+                        <td class="p-3 text-center font-bold text-slate-800 whitespace-nowrap">${row['Xếp loại'] || ''}</td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Thành Tích
+        function renderTableThanhTich(data) {
+            const tbody = document.getElementById('thanhtich-tbody');
+            let html = '';
+
+            if(!data || data.length === 0) {
+                html = `<tr><td colspan="8" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi thành tích nào trong hệ thống.</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    html += `
+                    <tr class="bg-white hover:bg-purple-50 transition-colors border-b border-slate-100">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-center font-bold text-purple-700 bg-purple-50/50 whitespace-nowrap">${row['NĂM HỌC'] || ''}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[350px]">${row['NỘI DUNG'] || ''}</td>
+                        <td class="p-3 text-center text-purple-600 font-medium whitespace-nowrap">${row['Đạt cấp'] || ''}</td>
+                        <td class="p-3 text-center font-semibold text-slate-700 whitespace-nowrap">${row['Số Quyết định'] || ''}</td>
+                        <td class="p-3 text-center whitespace-pre-wrap max-w-[150px]">${row['Nơi cấp'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['Ngày'] || ''}</td>
+                        <td class="p-3 text-center font-medium whitespace-nowrap">${row['Số vào sổ'] || ''}</td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

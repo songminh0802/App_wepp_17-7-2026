@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kế Hoạch Bài Dạy - Phân Phối Chương Trình</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        primary: '#059669', // Emerald 600
+                        secondary: '#4f46e5', // Indigo 600
+                        accent: '#f59e0b', // Amber 500
+                        dark: '#0f172a' 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Thư viện SheetJS để đọc file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        body { background-color: #f0fdf4; background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+        
+        .input-text { 
+            transition: all 0.2s; 
+            width: 100%; 
+            background: transparent; 
+            padding: 5px 8px; 
+            border-radius: 6px; 
+            border: 1px solid transparent; 
+            font-weight: 500; 
+            color: #334155; 
+        }
+        .input-text:focus, select.input-text:focus { 
+            outline: none; 
+            border-color: #059669; 
+            background: #fff; 
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1); 
+        }
+        .input-text::placeholder { color: #94a3b8; font-weight: 400; }
+        
+        .unsaved { 
+            background-color: #fef3c7 !important; 
+            color: #b45309 !important; 
+            border: 1px dashed #f59e0b !important; 
+        }
+
+        .empty-cell {
+            background-color: #fee2e2 !important; 
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        th, td { border: 1px solid #e2e8f0; vertical-align: middle; }
+        
+        .sticky-col-1 { position: sticky; left: 0; z-index: 5; }
+        .sticky-col-2 { position: sticky; left: 50px; z-index: 5; }
+        .sticky-col-3 { position: sticky; left: 130px; z-index: 5; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        th.sticky-col-1, th.sticky-col-2, th.sticky-col-3 { background-color: #d1fae5; z-index: 15; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased h-screen flex flex-col">
+
+    <div id="main-app" class="flex-1 flex flex-col h-full overflow-hidden max-w-[1600px] mx-auto w-full p-2 sm:p-4">
+        
+        <!-- HEADER -->
+        <header class="glass-card rounded-2xl px-5 py-3 flex flex-col lg:flex-row justify-between items-center gap-4 shrink-0 mb-3 border-t-4 border-primary">
+            <div class="flex items-center gap-4 w-full lg:w-auto">
+                <div class="bg-emerald-100 p-2.5 rounded-xl text-primary shadow-sm border border-emerald-200">
+                    <i class="fa-solid fa-calendar-week text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">Kế Hoạch & Phân Phối Chương Trình</h1>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-[11px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase tracking-wider">Năm học 2025 - 2026</span>
+                        <p class="text-xs text-slate-500 font-medium">Theo dõi tiến độ giảng dạy</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-start lg:justify-end items-center">
+                <!-- BỘ CHỌN PHÂN MÔN VÀ NÚT THÊM / XÓA -->
+                <div class="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-emerald-200">
+                    <i class="fa-solid fa-book-bookmark text-emerald-600"></i>
+                    <select id="subject-selector" onchange="changeSubject()" class="bg-transparent text-slate-800 focus:outline-none font-bold text-sm cursor-pointer max-w-[150px] truncate">
+                        <!-- Options sẽ được tự động render từ Javascript -->
+                    </select>
+                    <div class="h-4 w-px bg-emerald-200 mx-0.5"></div>
+                    <button onclick="addNewSubject()" class="text-emerald-500 hover:text-emerald-700 transition-colors px-1" title="Thêm phân môn mới">
+                        <i class="fa-solid fa-circle-plus"></i>
+                    </button>
+                    <button onclick="deleteCurrentSubject()" class="text-red-400 hover:text-red-600 transition-colors px-1" title="Xóa phân môn hiện tại">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+
+                <button onclick="handleRefresh()" class="bg-white text-slate-600 hover:text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-xl font-bold transition-colors shadow-sm flex items-center gap-2 text-sm border border-slate-200" title="Tải lại dữ liệu">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+
+                <button onclick="addNewRow()" class="bg-white text-slate-700 hover:bg-slate-50 px-4 py-1.5 rounded-xl font-bold transition-colors shadow-sm flex items-center gap-2 text-sm border border-slate-200">
+                    <i class="fa-solid fa-plus text-primary"></i> Thêm 1 bài
+                </button>
+
+                <!-- INPUT FILE ẨN CHO EXCEL -->
+                <input type="file" id="excel-upload" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+                <button onclick="document.getElementById('excel-upload').click()" class="bg-green-50 text-green-700 hover:bg-green-100 px-4 py-1.5 rounded-xl font-bold transition-colors shadow-sm flex items-center gap-2 text-sm border border-green-200">
+                    <i class="fa-solid fa-file-excel text-green-600"></i> Nhập từ Excel
+                </button>
+                
+                <button onclick="saveData()" id="btn-save" class="bg-primary hover:bg-emerald-700 text-white px-6 py-1.5 rounded-xl font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Lưu Kế Hoạch
+                </button>
+            </div>
+        </header>
+
+        <!-- INFO BAR & THỐNG KÊ NHANH CÓ BỘ LỌC -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-3 shrink-0">
+            <div class="glass-card rounded-xl px-4 py-2 flex-1 flex items-center gap-3 text-sm font-medium text-slate-600">
+                <i class="fa-solid fa-circle-info text-accent text-lg"></i>
+                <span>Click trực tiếp vào ô để sửa nội dung. Ô màu vàng nét đứt là dữ liệu chưa lưu.</span>
+            </div>
+            
+            <!-- BỘ LỌC THEO TUẦN VÀ NÚT XEM TỔNG HỢP -->
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="glass-card rounded-xl px-4 py-2 flex items-center gap-2 text-sm font-bold bg-indigo-50 border border-indigo-100 text-indigo-800 shadow-sm">
+                    <i class="fa-solid fa-filter text-indigo-500"></i>
+                    <select id="week-filter" onchange="applyWeekFilter()" class="bg-transparent focus:outline-none cursor-pointer w-36">
+                        <option value="all">Tất cả các tuần</option>
+                    </select>
+                </div>
+                
+                <button onclick="showWeeklySummary()" class="glass-card rounded-xl px-4 py-2 text-sm font-bold bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-amber-500"></i> Xem tất cả môn
+                </button>
+            </div>
+
+            <!-- THỐNG KÊ (THAY ĐỔI THEO BỘ LỌC) -->
+            <div class="glass-card rounded-xl px-4 py-2 flex gap-4 text-sm font-bold shrink-0">
+                <div class="flex flex-col items-center justify-center px-2 border-r border-slate-200/60">
+                    <span class="text-slate-400 text-[10px] uppercase">Tổng Tiết</span>
+                    <span id="stat-total" class="text-base text-slate-700">0</span>
+                </div>
+                <div class="flex flex-col items-center justify-center px-2 border-r border-slate-200/60">
+                    <span class="text-slate-400 text-[10px] uppercase">Đã Dạy</span>
+                    <span id="stat-done" class="text-base text-emerald-600">0</span>
+                </div>
+                <div class="flex flex-col items-center justify-center px-2">
+                    <span class="text-slate-400 text-[10px] uppercase">Chậm</span>
+                    <span id="stat-late" class="text-base text-red-500">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- WORKSPACE TABLE -->
+        <div class="flex-1 overflow-auto relative z-0 glass-card rounded-2xl border border-emerald-100 custom-scrollbar">
+            <table class="w-full text-left border-collapse text-sm min-w-max" id="main-table">
+                <thead class="bg-emerald-100/90 backdrop-blur-md text-emerald-900 sticky top-0 z-20 shadow-sm border-b-2 border-emerald-200">
+                    <tr>
+                        <th class="p-2 text-center font-bold w-[50px] sticky-col-1 border-r border-emerald-200">STT</th>
+                        <th class="p-2 text-center font-bold w-[80px] sticky-col-2 border-r border-emerald-200 leading-tight">Tuần<br>làm việc</th>
+                        <th class="p-2 text-center font-bold w-[80px] sticky-col-3 border-r-2 border-emerald-200 leading-tight">Tuần<br>thực dạy</th>
+                        <th class="p-2 text-center font-bold w-[120px] border-r border-emerald-200">
+                            <i class="fa-regular fa-calendar-days mr-1 text-primary"></i> Thời gian
+                        </th>
+                        <th class="p-2 text-center font-bold w-[60px] border-r border-emerald-200">Tiết</th>
+                        <th class="p-2 text-left font-bold min-w-[200px] border-r border-emerald-200">
+                            <i class="fa-solid fa-book-open-reader mr-1 text-primary"></i> Tên bài học
+                        </th>
+                        <th class="p-2 text-center font-bold w-[130px] border-r border-emerald-200">
+                            <i class="fa-solid fa-list-check mr-1 text-primary"></i> Trạng thái
+                        </th>
+                        <th class="p-2 text-left font-bold min-w-[180px] border-r border-emerald-200">
+                            <i class="fa-regular fa-comment-dots mr-1 text-primary"></i> Ghi chú
+                        </th>
+                        <th class="p-2 text-center font-bold w-[40px] text-red-500">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="plan-tbody">
+                    <!-- Dữ liệu render tại đây -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbypksjN6L69NoyFcpFfgGuw1_WgJtzQZmS7h_BzPPbGn4XNqObYcYrTM6dgbW1IJFtB/exec"; 
+        
+        let allSubjectCache = {}; 
+        let planData = [];
+        let unsavedChanges = [];
+        let deletedRows = []; 
+        let newTempIdCounter = 1;
+        let currentSubject = localStorage.getItem('ppct_current_subject') || "dai9"; 
+        let currentWeekFilter = "all"; 
+
+        const STATUS_OPTIONS = [
+            { val: 'Chưa dạy', text: 'Chưa dạy' },
+            { val: 'Đã dạy', text: 'Đã hoàn thành' },
+            { val: 'Chậm tiến độ', text: 'Chậm tiến độ' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSubjects();
+            fetchData(false);
+        });
+
+        // ==========================================
+        // QUẢN LÝ PHÂN MÔN (ĐỌC TỪ LOCAL STORAGE)
+        // ==========================================
+        function initSubjects() {
+            let saved = localStorage.getItem('ppct_subjects');
+            let subjects = saved ? JSON.parse(saved) : [
+                { id: 'dai9', name: 'Đại số 9' },
+                { id: 'hinh9', name: 'Hình học 9' }
+            ];
+
+            const selector = document.getElementById('subject-selector');
+            selector.innerHTML = '';
+            
+            subjects.forEach(sub => {
+                let opt = document.createElement('option');
+                opt.value = sub.id;
+                opt.innerText = sub.name;
+                selector.appendChild(opt);
+            });
+            
+            if (subjects.find(s => s.id === currentSubject)) {
+                selector.value = currentSubject;
+            } else {
+                currentSubject = subjects[0].id;
+                selector.value = currentSubject;
+                localStorage.setItem('ppct_current_subject', currentSubject);
+            }
+        }
+
+        async function addNewSubject() {
+            const { value: subjectName } = await Swal.fire({
+                title: 'Thêm môn/phân môn mới',
+                input: 'text',
+                inputLabel: 'Tên phân môn (VD: Đại số 8, Vật lý 9...)',
+                inputPlaceholder: 'Nhập tên môn học',
+                showCancelButton: true,
+                confirmButtonText: 'Thêm ngay',
+                cancelButtonText: 'Hủy',
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'Vui lòng nhập tên môn học!';
+                    }
+                }
+            });
+
+            if (subjectName) {
+                let subjectId = subjectName.trim(); 
+                let saved = localStorage.getItem('ppct_subjects');
+                let subjects = saved ? JSON.parse(saved) : [
+                    { id: 'dai9', name: 'Đại số 9' },
+                    { id: 'hinh9', name: 'Hình học 9' }
+                ];
+
+                if (subjects.find(s => s.id.toLowerCase() === subjectId.toLowerCase() || s.name.toLowerCase() === subjectId.toLowerCase())) {
+                    return Swal.fire('Thông báo', 'Môn học này đã tồn tại trong danh sách!', 'warning');
+                }
+
+                subjects.push({ id: subjectId, name: subjectId });
+                localStorage.setItem('ppct_subjects', JSON.stringify(subjects));
+                localStorage.setItem('ppct_current_subject', subjectId); 
+                
+                initSubjects(); 
+                document.getElementById('subject-selector').value = subjectId;
+                
+                if (unsavedChanges.length > 0 || deletedRows.length > 0) {
+                    Swal.fire({
+                        title: 'Chưa lưu thay đổi!',
+                        text: 'Bạn đang có dữ liệu chưa lưu ở môn hiện tại. Nếu chuyển luôn sẽ mất dữ liệu.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Bỏ qua và chuyển',
+                        cancelButtonText: 'Hủy'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            unsavedChanges = []; 
+                            deletedRows = [];
+                            currentSubject = subjectId;
+                            currentWeekFilter = 'all'; 
+                            document.getElementById('week-filter').value = 'all';
+                            fetchData(false); 
+                        } else {
+                            document.getElementById('subject-selector').value = currentSubject; 
+                            localStorage.setItem('ppct_current_subject', currentSubject);
+                        }
+                    });
+                } else {
+                    currentSubject = subjectId;
+                    currentWeekFilter = 'all';
+                    document.getElementById('week-filter').value = 'all';
+                    fetchData(false); 
+                }
+
+                Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: `Đã thêm môn: ${subjectName}`, showConfirmButton: false, timer: 2500 });
+            }
+        }
+
+        function deleteCurrentSubject() {
+            let saved = localStorage.getItem('ppct_subjects');
+            let subjects = saved ? JSON.parse(saved) : [
+                { id: 'dai9', name: 'Đại số 9' },
+                { id: 'hinh9', name: 'Hình học 9' }
+            ];
+
+            if (subjects.length <= 1) {
+                return Swal.fire('Không thể xóa', 'Bạn cần giữ lại ít nhất 1 phân môn trong danh sách!', 'error');
+            }
+
+            let subName = subjects.find(s => s.id === currentSubject)?.name || currentSubject;
+
+            Swal.fire({
+                title: 'Xóa phân môn?',
+                html: `Bạn có chắc muốn ẩn phân môn <b>${subName}</b> khỏi giao diện?<br><br><span class="text-xs text-red-500">(Lưu ý: Dữ liệu trên Google Sheets vẫn an toàn. Nếu muốn xóa hẳn, bạn hãy vào Google Sheets để xóa tab nhé.)</span>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Đồng ý ẩn',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    subjects = subjects.filter(s => s.id !== currentSubject);
+                    localStorage.setItem('ppct_subjects', JSON.stringify(subjects));
+                    
+                    currentSubject = subjects[0].id;
+                    localStorage.setItem('ppct_current_subject', currentSubject);
+                    
+                    unsavedChanges = [];
+                    deletedRows = [];
+                    
+                    initSubjects();
+                    fetchData(true);
+                    
+                    Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: 'Đã ẩn phân môn khỏi danh sách', showConfirmButton: false, timer: 2500 });
+                }
+            });
+        }
+
+        // ==========================================
+        // ĐỒNG BỘ DANH SÁCH TỪ SERVER 
+        // ==========================================
+        function syncSubjectsFromServer(serverSubjects) {
+            let saved = localStorage.getItem('ppct_subjects');
+            let localSubjects = saved ? JSON.parse(saved) : [];
+
+            serverSubjects.forEach(subName => {
+                if (!localSubjects.find(s => s.id === subName)) {
+                    localSubjects.push({ id: subName, name: subName });
+                }
+            });
+
+            localSubjects = localSubjects.filter(s => serverSubjects.includes(s.id));
+            localStorage.setItem('ppct_subjects', JSON.stringify(localSubjects));
+
+            const selector = document.getElementById('subject-selector');
+            selector.innerHTML = '';
+            localSubjects.forEach(sub => {
+                let opt = document.createElement('option');
+                opt.value = sub.id;
+                opt.innerText = sub.name;
+                selector.appendChild(opt);
+            });
+
+            if (localSubjects.find(s => s.id === currentSubject)) {
+                selector.value = currentSubject;
+            } else if(localSubjects.length > 0) {
+                currentSubject = localSubjects[0].id;
+                selector.value = currentSubject;
+                localStorage.setItem('ppct_current_subject', currentSubject);
+            }
+        }
+
+        // ==========================================
+        // FETCH DỮ LIỆU TẤT CẢ MÔN
+        // ==========================================
+        function handleRefresh() {
+            if (unsavedChanges.length > 0 || deletedRows.length > 0) {
+                Swal.fire({
+                    title: 'Chưa lưu thay đổi!',
+                    text: 'Bạn đang có dữ liệu (thêm/sửa/xóa) chưa lưu. Tải lại trang sẽ làm mất các nội dung này. Bạn có chắc chắn muốn tải lại?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Tải lại',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        unsavedChanges = [];
+                        deletedRows = [];
+                        fetchData(true);
+                    }
+                });
+            } else {
+                fetchData(true);
+            }
+        }
+
+        async function fetchData(isForce = false) {
+            const subjectSelect = document.getElementById('subject-selector');
+            let subjects = Array.from(subjectSelect.options).map(opt => opt.value);
+            
+            if (!subjects.includes(currentSubject)) subjects.push(currentSubject);
+
+            let needsFetch = isForce || subjects.some(sub => !allSubjectCache[sub]);
+
+            if (!needsFetch) {
+                planData = JSON.parse(JSON.stringify(allSubjectCache[currentSubject] || [])); 
+                unsavedChanges = [];
+                deletedRows = [];
+                updateWeekFilterOptions();
+                renderTable();
+                return;
+            }
+
+            Swal.fire({ title: 'Đang tải toàn bộ phân môn...', text: 'Hệ thống đang đồng bộ dữ liệu PPCT an toàn.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            try {
+                if (!GAS_URL || GAS_URL === "YOUR_WEB_APP_URL") throw new Error("Chưa cấu hình GAS_URL");
+
+                for (const sub of subjects) {
+                    if (!isForce && allSubjectCache[sub]) continue;
+                    const response = await fetch(GAS_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        redirect: 'follow',
+                        body: JSON.stringify({ action: 'getData', sheetName: sub }) 
+                    });
+                    const res = await response.json();
+                    if(!res.success) throw new Error(res.message);
+                    
+                    allSubjectCache[sub] = res.data || [];
+                    
+                    if (res.allSubjects) syncSubjectsFromServer(res.allSubjects);
+                }
+
+                planData = JSON.parse(JSON.stringify(allSubjectCache[currentSubject] || []));
+                unsavedChanges = []; 
+                deletedRows = [];
+                
+                updateWeekFilterOptions();
+                renderTable();
+                
+                if (isForce) Swal.fire({ icon: 'success', title: 'Đã làm mới', text: 'Dữ liệu toàn bộ phân môn đã được tải về.', timer: 1500, showConfirmButton: false });
+                else Swal.close();
+
+            } catch (err) {
+                console.error("Lỗi Fetch:", err);
+                planData = [];
+                updateWeekFilterOptions();
+                renderTable();
+                Swal.fire({ title: 'Bảng Kế Hoạch Trống', html: `<div class="text-left text-sm">Chưa có dữ liệu từ Google Sheets hoặc lỗi kết nối.<br><br><b>Gợi ý:</b> Sử dụng chức năng <b>Nhập từ Excel</b> hoặc tự Thêm bài mới để bắt đầu nhé!</div>`, icon: 'info' });
+            }
+        }
+
+        // ==========================================
+        // HÀM NHẬN DIỆN NGÀY THÁNG THÔNG MINH
+        // ==========================================
+        function parseFlexibleDate(val) {
+            if (!val) return '';
+            let str = String(val).trim().toLowerCase();
+            
+            // 1. Chuẩn YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+            // 2. ISO format: 2025-08-15T00:00:00.000Z
+            if (str.includes('t') && /^\d{4}-\d{2}-\d{2}/.test(str)) {
+                return str.split('t')[0];
+            }
+
+            // 3. Excel serial number (ví dụ: 45167)
+            if (!isNaN(str) && Number(str) > 20000 && Number(str) < 60000) {
+                let excelEpoch = new Date(1899, 11, 30);
+                let jsDate = new Date(excelEpoch.getTime() + Number(str) * 86400000);
+                return jsDate.toISOString().split('T')[0];
+            }
+
+            // 4. Xóa chữ tiếng Việt (ngày, tháng, năm) thay bằng "/"
+            str = str.replace(/ngày/g, '').replace(/tháng/g, '/').replace(/năm/g, '/').replace(/\s+/g, '');
+
+            // 5. Trích xuất DD/MM/YYYY, MM/DD/YYYY, YYYY/MM/DD, DD/MM
+            let match = str.match(/(\d{1,4})[\/\-\.](\d{1,2})(?:[\/\-\.](\d{2,4}))?/);
+            if (match) {
+                let p1 = match[1];
+                let p2 = match[2];
+                let p3 = match[3];
+                
+                let day, month, year;
+                
+                if (p1.length === 4) { // Dạng YYYY/MM/DD
+                    year = p1; 
+                    month = p2; 
+                    day = p3 || "01";
+                } else { // Dạng DD/MM/YYYY hoặc DD/MM
+                    day = p1; 
+                    month = p2;
+                    year = p3;
+                    if (!year) {
+                        year = new Date().getFullYear().toString(); // Mặc định năm hiện tại
+                    } else if (year.length === 2) {
+                        year = "20" + year; // Năm có 2 chữ số
+                    }
+                }
+
+                if (parseInt(month) > 12 && parseInt(day) <= 12) {
+                    let temp = month; month = day; day = temp;
+                }
+
+                if (parseInt(month) >= 1 && parseInt(month) <= 12 && parseInt(day) >= 1 && parseInt(day) <= 31) {
+                    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                }
+            }
+            
+            // 6. Phương án cuối
+            let parsed = Date.parse(str);
+            if (!isNaN(parsed)) {
+                let d = new Date(parsed);
+                return d.toISOString().split('T')[0];
+            }
+
+            return ''; // Không nhận dạng được
+        }
+
+        // ==========================================
+        // NHẬP TỰ ĐỘNG TỪ EXCEL
+        // ==========================================
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            Swal.fire({ title: 'Đang đọc Excel...', text: 'Hệ thống đang trích xuất dữ liệu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
+
+                    if(json.length === 0) throw new Error("File Excel trống!");
+
+                    let headerRowIdx = 0;
+                    let maxScore = -1;
+                    for(let i=0; i<Math.min(json.length, 20); i++) {
+                        let str = json[i].join(" ").toLowerCase();
+                        let score = 0;
+                        if(str.includes("tuần")) score += 2;
+                        if(str.includes("tiết")) score += 2;
+                        if(str.includes("bài") || str.includes("nội dung")) score += 2;
+                        if(str.includes("ghi chú")) score += 1;
+                        if(score > maxScore && score > 0) {
+                            maxScore = score;
+                            headerRowIdx = i;
+                        }
+                    }
+
+                    let headers = json[headerRowIdx].map(h => String(h).toLowerCase().trim());
+                    let dataRows = json.slice(headerRowIdx + 1);
+
+                    let colTuan = -1, colTiet = -1, colTenBai = -1, colGhiChu = -1, colDate = -1;
+                    headers.forEach((h, idx) => {
+                        if (h.includes("tuần") && colTuan === -1) colTuan = idx;
+                        if (h.includes("tiết") && colTiet === -1) colTiet = idx;
+                        if ((h.includes("bài") || h.includes("nội dung")) && colTenBai === -1) colTenBai = idx;
+                        if (h.includes("ghi chú") && colGhiChu === -1) colGhiChu = idx;
+                        if ((h.includes("thời gian") || h.includes("ngày") || h.includes("date")) && colDate === -1) colDate = idx;
+                    });
+
+                    if(colTenBai === -1) colTenBai = headers.findIndex(h => h !== "") || 1; 
+
+                    let newData = [];
+                    let currentWeek = "";
+
+                    dataRows.forEach(row => {
+                        if(row.every(cell => !cell)) return; 
+                        
+                        let tenBai = row[colTenBai] ? String(row[colTenBai]).trim() : '';
+                        if(!tenBai && colTuan === -1 && colTiet === -1) return; 
+                        
+                        if(colTuan !== -1 && row[colTuan]) currentWeek = String(row[colTuan]).trim();
+
+                        let tempId = 'NEW_' + newTempIdCounter++;
+                        let newRow = {
+                            'ID': tempId,
+                            'Tuần làm việc': currentWeek,
+                            'Tuần thực dạy': currentWeek,
+                            'Thời gian': colDate !== -1 ? parseFlexibleDate(String(row[colDate] || '')) : '',
+                            'Tiết PPCT': colTiet !== -1 ? String(row[colTiet] || '').trim() : '',
+                            'Tên bài học': tenBai,
+                            'Trạng thái': 'Chưa dạy',
+                            'Ghi chú / Điều chỉnh': colGhiChu !== -1 ? String(row[colGhiChu] || '').trim() : ''
+                        };
+                        newData.push(newRow);
+
+                        ['Tuần làm việc', 'Tuần thực dạy', 'Thời gian', 'Tiết PPCT', 'Tên bài học', 'Trạng thái', 'Ghi chú / Điều chỉnh'].forEach(field => {
+                            unsavedChanges.push({ id: tempId, field: field, value: newRow[field] });
+                        });
+                    });
+
+                    planData = planData.concat(newData);
+                    updateWeekFilterOptions();
+                    renderTable();
+
+                    Swal.fire('Hoàn tất!', `Đã chèn tự động <b>${newData.length} dòng</b> từ Excel. Vui lòng kiểm tra lại và bấm <b>Lưu Kế Hoạch</b>.`, 'success');
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Lỗi', 'Không thể đọc file Excel. Vui lòng đảm bảo file không bị lỗi.', 'error');
+                }
+                event.target.value = ''; 
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ==========================================
+        // TỔNG HỢP LỊCH THEO TUẦN
+        // ==========================================
+        async function showWeeklySummary() {
+            if (currentWeekFilter === 'all') {
+                return Swal.fire({ title: 'Chưa chọn Tuần Làm Việc', html: 'Vui lòng chọn một tuần cụ thể ở <b>Bộ lọc theo tuần</b> (ngay bên cạnh) trước khi xem tổng hợp tất cả các môn.', icon: 'info', confirmButtonColor: '#059669' });
+            }
+            
+            const subjectSelect = document.getElementById('subject-selector');
+            const subjects = Array.from(subjectSelect.options).map(opt => ({ value: opt.value, text: opt.text }));
+            let weekTasksByDate = {}; 
+            
+            // Biến lưu trữ thống kê số tiết
+            let subjectStats = [];
+            let totalLessons = 0;
+
+            try {
+                for (let sub of subjects) {
+                    let subData = allSubjectCache[sub.value] || [];
+                    let subWeekTasks = subData.filter(row => String(row['Tuần làm việc']) === String(currentWeekFilter) && String(row['Tiết PPCT'] || '').trim() !== '');
+
+                    // Tính toán thống kê cho môn hiện tại
+                    if (subWeekTasks.length > 0) {
+                        subjectStats.push({ name: sub.text, count: subWeekTasks.length });
+                        totalLessons += subWeekTasks.length;
+                    }
+
+                    subWeekTasks.forEach(t => {
+                        let rawDate = t['Thời gian'];
+                        let dateStr = rawDate ? parseFlexibleDate(rawDate) : '';
+                        if (dateStr === '') dateStr = 'Chưa xếp lịch';
+
+                        if (!weekTasksByDate[dateStr]) weekTasksByDate[dateStr] = [];
+                        weekTasksByDate[dateStr].push({ subjectName: sub.text, task: t });
+                    });
+                }
+
+                if (Object.keys(weekTasksByDate).length === 0) {
+                    Swal.fire({ title: `Tổng Hợp Tuần ${currentWeekFilter}`, html: `<div class="text-emerald-600 font-medium mt-2">Không có tiết dạy nào được xếp cho Tuần ${currentWeekFilter} ở tất cả các môn.</div>`, icon: 'success', confirmButtonColor: '#059669' });
+                    return;
+                }
+
+                let sortedDateStrs = Object.keys(weekTasksByDate).sort((a, b) => {
+                    if (a === 'Chưa xếp lịch') return 1;
+                    if (b === 'Chưa xếp lịch') return -1;
+                    return new Date(a) - new Date(b);
+                });
+
+                let htmlContent = `<div class="text-left text-sm max-h-[65vh] overflow-y-auto custom-scrollbar pr-2 mt-2 space-y-4">`;
+
+                // Render Bảng thống kê mini
+                let statsHtml = `<div class="mb-4 bg-indigo-50 border border-indigo-100 rounded-xl p-3 shadow-sm">
+                    <div class="font-bold text-indigo-800 mb-2 border-b border-indigo-200/80 pb-2 flex justify-between items-center">
+                        <span><i class="fa-solid fa-chart-pie mr-1 text-indigo-600"></i> Phân bổ số tiết trong tuần</span>
+                        <span class="bg-indigo-600 text-white px-2.5 py-0.5 rounded-lg text-[11px] shadow-sm tracking-wide">TỔNG CỘNG: ${totalLessons} TIẾT</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-2">`;
+                
+                subjectStats.forEach(stat => {
+                    statsHtml += `<div class="bg-white border border-indigo-100 text-slate-700 px-2.5 py-1.5 rounded-lg text-[13px] shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-bookmark text-indigo-400 text-xs"></i>
+                        <span class="font-semibold">${stat.name}:</span>
+                        <span class="text-indigo-700 font-extrabold bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">${stat.count} tiết</span>
+                    </div>`;
+                });
+                statsHtml += `</div></div>`;
+                
+                // Đưa bảng thống kê lên đầu nội dung
+                htmlContent += statsHtml;
+
+                sortedDateStrs.forEach(ds => {
+                    let dayTasks = weekTasksByDate[ds];
+                    let headerHtml = '';
+                    if (ds === 'Chưa xếp lịch') {
+                        headerHtml = `<div class="bg-slate-100 px-3 py-2 font-bold text-slate-600 border-b border-slate-200 flex justify-between items-center"><span><i class="fa-solid fa-calendar-xmark mr-1 text-slate-400"></i> Ngày chưa xác định</span></div>`;
+                    } else {
+                        let dObj = new Date(ds);
+                        let dayName = getDayOfWeek(ds);
+                        let dateFormatted = `${String(dObj.getDate()).padStart(2,'0')}/${String(dObj.getMonth()+1).padStart(2,'0')}/${dObj.getFullYear()}`;
+                        headerHtml = `<div class="bg-amber-100 px-3 py-2 font-bold text-amber-800 border-b border-amber-200 flex justify-between items-center"><span><i class="fa-solid fa-calendar-day mr-1 text-amber-600"></i> ${dayName}</span><span class="text-xs bg-amber-200 px-2 py-0.5 rounded-full text-amber-900 shadow-sm">${dateFormatted}</span></div>`;
+                    }
+
+                    htmlContent += `<div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">${headerHtml}<ul class="divide-y divide-slate-100 bg-white">`;
+
+                    dayTasks.forEach(item => {
+                        let t = item.task;
+                        let statusColor = t['Trạng thái'] === 'Đã dạy' ? 'text-emerald-600' : (t['Trạng thái'] === 'Chậm tiến độ' ? 'text-red-500' : 'text-slate-500');
+                        htmlContent += `<li class="p-3 hover:bg-slate-50 transition-colors">
+                            <div class="font-bold text-emerald-700 text-[14px] mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-book-bookmark text-emerald-500 text-xs"></i> ${item.subjectName}</div>
+                            <div class="font-medium text-slate-800 text-[13px] ml-4"><i class="fa-regular fa-clock text-slate-400 mr-1.5"></i> Tiết ${t['Tiết PPCT']}: ${t['Tên bài học']}</div>
+                            <div class="text-[11px] text-slate-500 mt-2 ml-4 flex items-center justify-between border-t border-slate-100 pt-2">
+                                <span>Tuần thực dạy: <span class="font-bold text-slate-700">${t['Tuần thực dạy'] || '-'}</span></span>
+                                <span class="font-bold bg-slate-100 px-2 py-0.5 rounded ${statusColor}">${t['Trạng thái']}</span>
+                            </div>
+                        </li>`;
+                    });
+                    htmlContent += `</ul></div>`;
+                });
+                htmlContent += `</div>`;
+
+                Swal.fire({ title: `<div class="flex flex-col items-center"><i class="fa-solid fa-layer-group text-amber-500 text-4xl mb-2 drop-shadow-sm"></i> Tổng Hợp Tuần ${currentWeekFilter}</div>`, html: `<div class="text-slate-500 text-xs font-medium border-b pb-3 mb-2">Liệt kê tất cả các môn, nhóm theo ngày dạy</div>` + htmlContent, showConfirmButton: true, confirmButtonText: 'Đóng lại', confirmButtonColor: '#059669', width: 650 });
+            } catch (err) { console.error(err); Swal.fire('Lỗi', 'Không thể tổng hợp dữ liệu.', 'error'); }
+        }
+
+        // ==========================================
+        // TÍNH NĂNG LỌC TUẦN
+        // ==========================================
+        function updateWeekFilterOptions() {
+            const filterSelect = document.getElementById('week-filter');
+            if (!filterSelect) return;
+            
+            const weeks = [...new Set(planData.map(item => item['Tuần làm việc']))]
+                          .filter(w => w && String(w).trim() !== '')
+                          .sort((a, b) => {
+                              let numA = parseInt(String(a).replace(/[^0-9]/g, ''));
+                              let numB = parseInt(String(b).replace(/[^0-9]/g, ''));
+                              return (numA || 0) - (numB || 0);
+                          });
+
+            let html = `<option value="all">Tất cả các tuần</option>`;
+            weeks.forEach(w => {
+                html += `<option value="${w}">Tuần làm việc ${w}</option>`;
+            });
+
+            filterSelect.innerHTML = html;
+
+            if (weeks.includes(currentWeekFilter) || currentWeekFilter === 'all') {
+                filterSelect.value = currentWeekFilter;
+            } else {
+                filterSelect.value = 'all';
+                currentWeekFilter = 'all';
+            }
+        }
+
+        function applyWeekFilter() {
+            currentWeekFilter = document.getElementById('week-filter').value;
+            renderTable();
+        }
+
+        // ==========================================
+        // HIỂN THỊ BẢNG & TÍNH TOÁN THỐNG KÊ
+        // ==========================================
+        function updateStats(dataToStat) {
+            let validLessons = dataToStat.filter(x => String(x['Tiết PPCT'] || '').trim() !== '');
+            let total = validLessons.length;
+            let done = validLessons.filter(x => x['Trạng thái'] === 'Đã dạy').length;
+            let late = validLessons.filter(x => x['Trạng thái'] === 'Chậm tiến độ').length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-done').innerText = done;
+            document.getElementById('stat-late').innerText = late;
+        }
+
+        function getDayOfWeek(dateStr) {
+            if (!dateStr) return '';
+            const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            return days[d.getDay()];
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('plan-tbody');
+            let html = '';
+
+            let displayData = planData;
+            if (currentWeekFilter !== 'all') {
+                displayData = planData.filter(row => String(row['Tuần làm việc']) === String(currentWeekFilter));
+            }
+
+            updateStats(displayData);
+
+            if(planData.length === 0) {
+                html = `<tr><td colspan="9" class="p-12 text-center text-slate-500 bg-white/40">
+                    <div class="flex flex-col items-center justify-center gap-3">
+                        <i class="fa-solid fa-folder-open text-5xl text-emerald-300"></i>
+                        <p class="font-medium text-lg text-emerald-800">Chưa có kế hoạch bài dạy nào.</p>
+                        <div class="flex gap-3 mt-2">
+                            <button onclick="addNewRow()" class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 font-bold text-primary hover:bg-emerald-50 transition-colors">Thêm 1 bài</button>
+                            <button onclick="document.getElementById('excel-upload').click()" class="bg-green-50 text-green-700 px-4 py-2 rounded-lg shadow-sm font-bold border border-green-200 hover:bg-green-100 transition-colors">Nhập từ Excel</button>
+                        </div>
+                    </div>
+                </td></tr>`;
+            } else if (displayData.length === 0) {
+                html = `<tr><td colspan="9" class="p-12 text-center text-slate-500 bg-white/40"><p class="font-medium text-lg">Không có tiết dạy nào được xếp trong tuần này.</p></td></tr>`;
+            } else {
+                displayData.forEach((row) => {
+                    const rowId = row['ID'];
+                    const originalIndex = planData.indexOf(row);
+                    
+                    const createInput = (field, val, align = 'left', placeholder = '') => {
+                        const isUnsaved = unsavedChanges.some(item => item.id === rowId && item.field === field);
+                        let displayVal = val || '';
+                        let styleClass = '';
+                        if (isUnsaved) styleClass += 'unsaved ';
+                        if (displayVal.trim() === '') styleClass += 'empty-cell ';
+
+                        return `<input type="text" class="input-text text-${align} ${styleClass}" value="${displayVal}" placeholder="${placeholder}" oninput="markChange('${rowId}', '${field}', this.value, this)">`;
+                    };
+
+                    const createDateInput = (field, val) => {
+                        const isUnsaved = unsavedChanges.some(item => item.id === rowId && item.field === field);
+                        
+                        let displayVal = parseFlexibleDate(val);
+                        
+                        let styleClass = '';
+                        if (isUnsaved) styleClass += 'unsaved ';
+                        if (displayVal === '') styleClass += 'empty-cell ';
+                        
+                        let dayText = getDayOfWeek(displayVal);
+                        let dayHtml = dayText ? `<div class="text-[11px] text-emerald-700 font-bold mb-0.5 whitespace-nowrap">${dayText}</div>` : `<div class="h-[16px]"></div>`;
+
+                        return `<div class="flex flex-col items-center justify-center p-1 w-full">${dayHtml}<input type="date" class="input-text text-center text-xs w-full p-1 h-7 ${styleClass}" value="${displayVal}" onchange="markDateChange('${rowId}', this.value, this)"></div>`;
+                    };
+
+                    const createSelect = (field, val) => {
+                        const isUnsaved = unsavedChanges.some(item => item.id === rowId && item.field === field);
+                        let styleClass = isUnsaved ? 'unsaved' : '';
+                        let textColor = 'text-slate-600';
+                        if(val === 'Đã dạy') textColor = 'text-emerald-700 font-bold';
+                        if(val === 'Chậm tiến độ') textColor = 'text-red-600 font-bold';
+
+                        let selectHtml = `<select class="input-text text-center cursor-pointer ${textColor} ${styleClass}" onchange="markChange('${rowId}', '${field}', this.value, this); renderTable();">`;
+                        STATUS_OPTIONS.forEach(opt => {
+                            let selected = (val === opt.val) ? 'selected' : '';
+                            selectHtml += `<option value="${opt.val}" ${selected}>${opt.text}</option>`;
+                        });
+                        selectHtml += `</select>`;
+                        return selectHtml;
+                    };
+
+                    html += `
+                    <tr class="bg-white hover:bg-emerald-50/80 transition-colors border-b border-slate-200 group">
+                        <td class="p-0 sticky-col-1 border-r border-emerald-100 bg-white group-hover:bg-emerald-50 align-middle"><div class="text-center text-slate-500 font-bold">${originalIndex + 1}</div></td>
+                        <td class="p-0 sticky-col-2 border-r border-emerald-100 bg-white group-hover:bg-emerald-50">${createInput('Tuần làm việc', row['Tuần làm việc'], 'center', 'T1')}</td>
+                        <td class="p-0 sticky-col-3 border-r-2 border-emerald-100 bg-white group-hover:bg-emerald-50">${createInput('Tuần thực dạy', row['Tuần thực dạy'], 'center', 'T1')}</td>
+                        <td class="p-0 border-r border-slate-100">${createDateInput('Thời gian', row['Thời gian'])}</td>
+                        <td class="p-0 border-r border-slate-100">${createInput('Tiết PPCT', row['Tiết PPCT'], 'center', '1')}</td>
+                        <td class="p-0 border-r border-slate-100">${createInput('Tên bài học', row['Tên bài học'], 'left', 'Nhập tên bài...')}</td>
+                        <td class="p-1 border-r border-slate-100 align-middle">${createSelect('Trạng thái', row['Trạng thái'] || 'Chưa dạy')}</td>
+                        <td class="p-0 border-r border-slate-100">${createInput('Ghi chú / Điều chỉnh', row['Ghi chú / Điều chỉnh'], 'left', 'Ghi chú...')}</td>
+                        <td class="p-0 border-l border-slate-100 align-middle text-center">
+                            <button onclick="deleteRow('${rowId}')" class="text-red-400 hover:text-red-600 transition-colors w-full h-full py-2" title="Xóa bài học này">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        // ==========================================
+        // XÓA DÒNG BÀI HỌC
+        // ==========================================
+        function deleteRow(id) {
+            Swal.fire({
+                title: 'Xóa bài học này?',
+                text: "Dòng này sẽ bị xóa khỏi bảng hiện tại.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Đồng ý xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    planData = planData.filter(x => x['ID'] !== id);
+                    unsavedChanges = unsavedChanges.filter(x => x.id !== id);
+                    
+                    if (!String(id).startsWith('NEW_')) {
+                        deletedRows.push(id);
+                    }
+                    
+                    updateWeekFilterOptions();
+                    renderTable();
+                    Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: 'Đã xóa. Hãy bấm Lưu để cập nhật lên Sheets', showConfirmButton: false, timer: 3000 });
+                }
+            });
+        }
+
+        // ==========================================
+        // THEO DÕI CHỈNH SỬA
+        // ==========================================
+        function markChange(id, field, value, el) {
+            el.classList.add('unsaved');
+            if (value.trim() === '') el.classList.add('empty-cell');
+            else el.classList.remove('empty-cell');
+            
+            unsavedChanges = unsavedChanges.filter(item => !(item.id === id && item.field === field));
+            unsavedChanges.push({ id, field, value: value });
+            
+            let rowIdx = planData.findIndex(x => x['ID'] === id);
+            if (rowIdx > -1) planData[rowIdx][field] = value;
+        }
+
+        function changeSubject() {
+            if (unsavedChanges.length > 0 || deletedRows.length > 0) {
+                Swal.fire({
+                    title: 'Chưa lưu thay đổi!',
+                    text: 'Bạn có nội dung chưa lưu. Đổi môn sẽ làm mất các dữ liệu này.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Đổi luôn',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        unsavedChanges = []; 
+                        deletedRows = [];
+                        currentSubject = document.getElementById('subject-selector').value;
+                        localStorage.setItem('ppct_current_subject', currentSubject); 
+                        currentWeekFilter = 'all'; 
+                        document.getElementById('week-filter').value = 'all';
+                        fetchData(false); 
+                    } else {
+                        document.getElementById('subject-selector').value = currentSubject; 
+                    }
+                });
+            } else {
+                currentSubject = document.getElementById('subject-selector').value;
+                localStorage.setItem('ppct_current_subject', currentSubject); 
+                currentWeekFilter = 'all';
+                document.getElementById('week-filter').value = 'all';
+                fetchData(false); 
+            }
+        }
+
+        function markDateChange(id, value, el) {
+            markChange(id, 'Thời gian', value, el); 
+
+            let startIdx = planData.findIndex(x => x['ID'] === id);
+            if (startIdx === -1 || !value) return;
+
+            let baseWeekStr = String(planData[startIdx]['Tuần làm việc']).replace(/[^0-9]/g, '');
+            let baseWeek = parseInt(baseWeekStr);
+            if(isNaN(baseWeek)) return;
+
+            let baseDateObj = new Date(value);
+            let hasUpdates = false;
+
+            for (let i = startIdx + 1; i < planData.length; i++) {
+                let currentWeekStr = String(planData[i]['Tuần làm việc']).replace(/[^0-9]/g, '');
+                let currentWeek = parseInt(currentWeekStr);
+                
+                if (!isNaN(currentWeek) && currentWeek >= baseWeek) {
+                    let diffWeeks = currentWeek - baseWeek;
+                    let targetDate = new Date(baseDateObj.getTime());
+                    targetDate.setDate(targetDate.getDate() + diffWeeks * 7);
+                    let newDateStr = targetDate.toISOString().split('T')[0];
+                    
+                    if (planData[i]['Thời gian'] !== newDateStr) {
+                        planData[i]['Thời gian'] = newDateStr;
+                        unsavedChanges = unsavedChanges.filter(item => !(item.id === planData[i]['ID'] && item.field === 'Thời gian'));
+                        unsavedChanges.push({ id: planData[i]['ID'], field: 'Thời gian', value: newDateStr });
+                        hasUpdates = true;
+                    }
+                }
+            }
+            
+            if (hasUpdates) {
+                renderTable(); 
+                Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: 'Đã tự động tính ngày cho các tuần tiếp theo', showConfirmButton: false, timer: 2500 });
+            }
+        }
+
+        function addNewRow() {
+            let tempId = 'NEW_' + newTempIdCounter++;
+            let lastWorkWeek = "", lastTeachWeek = "", lastTime = "", lastLesson = "";
+            if(planData.length > 0) {
+                let lastRow = planData[planData.length - 1];
+                lastWorkWeek = lastRow['Tuần làm việc'] || "";
+                lastTeachWeek = lastRow['Tuần thực dạy'] || "";
+                lastTime = lastRow['Thời gian'] || "";
+                let prevLesson = parseInt(lastRow['Tiết PPCT']);
+                lastLesson = !isNaN(prevLesson) ? (prevLesson + 1).toString() : "";
+            }
+
+            let newRow = {
+                'ID': tempId,
+                'Tuần làm việc': lastWorkWeek,
+                'Tuần thực dạy': lastTeachWeek,
+                'Thời gian': lastTime,
+                'Tiết PPCT': lastLesson,
+                'Tên bài học': '',
+                'Trạng thái': 'Chưa dạy',
+                'Ghi chú / Điều chỉnh': ''
+            };
+            
+            planData.push(newRow);
+            
+            unsavedChanges.push({ id: tempId, field: 'Tuần làm việc', value: lastWorkWeek });
+            unsavedChanges.push({ id: tempId, field: 'Tuần thực dạy', value: lastTeachWeek });
+            if(lastTime) unsavedChanges.push({ id: tempId, field: 'Thời gian', value: lastTime });
+            unsavedChanges.push({ id: tempId, field: 'Tiết PPCT', value: lastLesson });
+            unsavedChanges.push({ id: tempId, field: 'Trạng thái', value: 'Chưa dạy' });
+
+            updateWeekFilterOptions();
+            renderTable();
+
+            const tableContainer = document.querySelector('.overflow-auto');
+            setTimeout(() => { tableContainer.scrollTop = tableContainer.scrollHeight; }, 100);
+        }
+
+        async function saveData() {
+            if (unsavedChanges.length === 0 && deletedRows.length === 0) return Swal.fire({ icon: 'info', title: 'Chưa có thay đổi', text: 'Bạn chưa chỉnh sửa hoặc xóa nội dung nào để lưu.', timer: 2000 });
+
+            Swal.fire({ title: 'Đang lưu kế hoạch...', text: 'Hệ thống đang đồng bộ với Google Sheets.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    redirect: 'follow',
+                    body: JSON.stringify({ 
+                        action: 'saveData', 
+                        sheetName: currentSubject, 
+                        updates: unsavedChanges,
+                        deletedIds: deletedRows
+                    }) 
+                });
+
+                const res = await response.json();
+                if(!res.success) throw new Error(res.message);
+                
+                if (res.allSubjects) syncSubjectsFromServer(res.allSubjects);
+
+                allSubjectCache[currentSubject] = res.data || [];
+                planData = JSON.parse(JSON.stringify(allSubjectCache[currentSubject]));
+                unsavedChanges = [];
+                deletedRows = [];
+                newTempIdCounter = 1;
+                
+                document.querySelectorAll('.unsaved').forEach(el => el.classList.remove('unsaved'));
+                updateWeekFilterOptions();
+                renderTable();
+                
+                Swal.fire({ icon: 'success', title: 'Thành công!', text: 'Kế hoạch giảng dạy đã được lưu an toàn.', timer: 2000, showConfirmButton: false });
+
+            } catch (err) {
+                console.log("Lưu thất bại:", err);
+                Swal.fire('Lỗi kết nối', `Không thể lưu dữ liệu. Chi tiết lỗi: ${err.message}.`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

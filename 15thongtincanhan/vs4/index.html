@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho Lưu Trữ Thông Tin</title>
+    <!-- Tích hợp Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tích hợp Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background-color: #f4f4f9; 
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .credit-text { font-family: 'Dancing Script', cursive; font-size: 2.2rem; }
+        
+        .pastel-0 { background-color: #ffdde1; color: #5a2e34; } 
+        .pastel-1 { background-color: #d4fc79; color: #3a4a15; } 
+        .pastel-2 { background-color: #c2e9fb; color: #1e4b61; } 
+        .pastel-3 { background-color: #e0c3fc; color: #3a1c5e; } 
+        .pastel-4 { background-color: #ffecd2; color: #5c411c; } 
+        .pastel-5 { background-color: #d1f2eb; color: #1a4a3e; } 
+        
+        .card-hover { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .card-hover:hover {
+            transform: scale(1.03) translateY(-6px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 15px -6px rgba(0, 0, 0, 0.05);
+        }
+        
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: transparent; }
+        textarea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* Ẩn thanh cuộn nhưng vẫn cho phép cuộn ngang */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-gray-800">
+    
+    <!-- Safelist các class Tailwind dành cho custom color (để CDN không xóa) -->
+    <div class="hidden">
+        <!-- RED --> <div class="bg-red-50/60 border-red-400 peer-checked:border-red-400 peer-checked:bg-white peer-checked:shadow-[0_8px_20px_rgba(239,68,68,0.25)] text-red-600 peer-checked:text-red-600 bg-red-100 text-red-700 group-[.active]:border-red-400 group-[.active]:bg-white group-[.active]:shadow-[0_8px_20px_rgba(239,68,68,0.25)] group-hover:text-red-600 group-[.active]:text-red-600 hover:bg-red-50 hover:text-red-600"></div>
+        <!-- BLUE --> <div class="bg-blue-50/60 border-blue-400 peer-checked:border-blue-400 peer-checked:bg-white peer-checked:shadow-[0_8px_20px_rgba(59,130,246,0.25)] text-blue-600 peer-checked:text-blue-600 bg-blue-100 text-blue-700 group-[.active]:border-blue-400 group-[.active]:bg-white group-[.active]:shadow-[0_8px_20px_rgba(59,130,246,0.25)] group-hover:text-blue-600 group-[.active]:text-blue-600 hover:bg-blue-50 hover:text-blue-600"></div>
+        <!-- PINK --> <div class="bg-pink-50/60 border-pink-400 peer-checked:border-pink-400 peer-checked:bg-white peer-checked:shadow-[0_8px_20px_rgba(236,72,153,0.25)] text-pink-600 peer-checked:text-pink-600 bg-pink-100 text-pink-700 group-[.active]:border-pink-400 group-[.active]:bg-white group-[.active]:shadow-[0_8px_20px_rgba(236,72,153,0.25)] group-hover:text-pink-600 group-[.active]:text-pink-600 hover:bg-pink-50 hover:text-pink-600"></div>
+        <!-- CYAN --> <div class="bg-cyan-50/60 border-cyan-400 peer-checked:border-cyan-400 peer-checked:bg-white peer-checked:shadow-[0_8px_20px_rgba(6,182,212,0.25)] text-cyan-600 peer-checked:text-cyan-600 bg-cyan-100 text-cyan-700 group-[.active]:border-cyan-400 group-[.active]:bg-white group-[.active]:shadow-[0_8px_20px_rgba(6,182,212,0.25)] group-hover:text-cyan-600 group-[.active]:text-cyan-600 hover:bg-cyan-50 hover:text-cyan-600"></div>
+        <!-- TEAL --> <div class="bg-teal-50/60 border-teal-400 peer-checked:border-teal-400 peer-checked:bg-white peer-checked:shadow-[0_8px_20px_rgba(20,184,166,0.25)] text-teal-600 peer-checked:text-teal-600 bg-teal-100 text-teal-700 group-[.active]:border-teal-400 group-[.active]:bg-white group-[.active]:shadow-[0_8px_20px_rgba(20,184,166,0.25)] group-hover:text-teal-600 group-[.active]:text-teal-600 hover:bg-teal-50 hover:text-teal-600"></div>
+    </div>
+
+    <!-- Modal Đăng Nhập / Firebase Auth (GATEKEEPER) -->
+    <div id="auth-modal" class="fixed inset-0 z-[300] flex items-center justify-center bg-gray-900/80 backdrop-blur-xl transition-opacity duration-500 opacity-0 p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col transform scale-95 transition-transform duration-500 relative border border-white">
+            <div class="p-8 pb-10">
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-20 h-20 bg-teal-50 rounded-full mb-4 shadow-inner border border-teal-100">
+                        <span class="text-4xl">👋</span>
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-teal-600">Đăng Nhập</h2>
+                    <p class="text-gray-500 font-medium mt-2">Vui lòng đăng nhập để truy cập kho lưu trữ</p>
+                </div>
+                
+                <button id="google-login-btn" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-bold py-3.5 px-4 rounded-2xl shadow-sm transition-all active:scale-95 mb-6">
+                    <svg class="w-6 h-6" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                    Tiếp tục với Google
+                </button>
+
+                <div class="relative flex items-center justify-center mb-6">
+                    <div class="border-t border-gray-200 w-full"></div>
+                    <span class="bg-white px-3 text-gray-400 text-sm absolute font-semibold">Hoặc dùng Email</span>
+                </div>
+
+                <form id="email-auth-form" class="space-y-4">
+                    <input type="email" id="auth-email" placeholder="Email của bạn..." class="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all font-medium" required>
+                    <input type="password" id="auth-password" placeholder="Mật khẩu..." class="w-full px-5 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all font-medium" required>
+                    
+                    <button type="submit" id="email-login-btn" class="w-full bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-600 hover:to-emerald-500 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 mt-2">
+                        Đăng Nhập
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHU VỰC NỘI DUNG APP (MẶC ĐỊNH BỊ ẨN) -->
+    <div id="app-content" class="hidden opacity-0 flex flex-col min-h-screen w-full transition-opacity duration-700">
+        
+        <!-- Nút Menu Hamburger (Fixed Góc Trái) -->
+        <button id="menu-btn" class="fixed top-5 left-5 z-[60] p-3.5 bg-white/90 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white hover:bg-teal-50 hover:text-teal-600 transition-all active:scale-95 group">
+            <svg class="w-6 h-6 text-gray-700 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+
+        <!-- Nút Đăng xuất / User Info (Fixed Góc Phải) -->
+        <div class="fixed top-5 right-5 z-[60] flex items-center gap-2">
+            <button id="auth-trigger-btn" class="px-5 py-3.5 bg-white/90 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white hover:bg-red-50 hover:text-red-600 font-bold text-gray-700 transition-all active:scale-95 flex items-center gap-2 group" title="Đăng xuất">
+                <svg class="w-5 h-5 text-gray-700 group-hover:text-red-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <span id="auth-btn-text" class="group-hover:text-red-600 transition-colors">User</span>
+            </button>
+        </div>
+
+        <!-- Sidebar & Overlay (Menu Trượt) -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-opacity duration-300"></div>
+        <div id="sidebar-menu" class="fixed top-0 left-0 w-72 max-w-[80vw] h-full bg-white z-[160] transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col rounded-r-3xl">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/80 rounded-tr-3xl">
+                <h2 class="text-2xl font-bold text-teal-600 flex items-center gap-2"><span>📂</span> Danh Mục</h2>
+                <button id="close-menu-btn" class="p-2 bg-white hover:bg-red-50 hover:text-red-600 rounded-full transition-all shadow-sm border border-gray-100 active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Vùng chứa các nút Sidebar Filter (Render động) -->
+            <div id="sidebar-tabs-container" class="p-6 flex flex-col gap-3 flex-grow overflow-y-auto">
+                <!-- Tự động điền qua JS -->
+            </div>
+
+            <!-- Nút Cài Đặt / Admin (Ẩn mặc định, chỉ hiện cho Admin) -->
+            <div id="admin-menu-container" class="p-4 border-t border-gray-100 bg-gray-50/80 flex flex-col gap-2 rounded-br-3xl hidden">
+                <button id="open-admin-btn" class="w-full text-left px-5 py-3.5 rounded-2xl font-bold text-gray-600 bg-white hover:bg-gray-100 hover:text-gray-800 shadow-sm transition-all transform active:scale-95 flex items-center gap-3 border border-gray-200">
+                    <span class="text-xl">⚙️</span> Quản lý Tab
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-20 right-5 bg-gradient-to-r from-green-400 to-green-500 text-white px-6 py-3 rounded-2xl shadow-lg transform transition-all duration-500 translate-y-[-100px] opacity-0 z-50 flex items-center gap-2 font-semibold">
+            <span id="toast-msg">🎉 Đã lưu thành công!</span>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-8 max-w-6xl pt-24">
+            
+            <!-- Header Tiêu đề chính -->
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-center mb-6 text-teal-600 flex justify-center items-center gap-3 drop-shadow-sm">
+                <span>✨</span> Kho Lưu Trữ <span>🚀</span>
+            </h1>
+
+            <!-- Nút Thêm Mới Dữ Liệu (Hiển thị mặc định, ẩn khi mở Form) -->
+            <div id="add-new-container" class="flex justify-center mb-10 transition-all duration-300">
+                <button id="show-form-btn" class="bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-600 hover:to-emerald-500 text-white font-bold py-3.5 px-8 rounded-full shadow-[0_10px_20px_rgba(20,184,166,0.3)] hover:shadow-[0_15px_25px_rgba(20,184,166,0.4)] transform hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-3 text-lg border border-teal-400/50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    Thêm Dữ Liệu Mới
+                </button>
+            </div>
+
+            <!-- Giao diện Form (Ẩn đi theo mặc định) -->
+            <div id="form-container" class="hidden max-w-2xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-8 border border-white mb-12 relative overflow-hidden transform transition-all duration-300 opacity-0 scale-95">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
+                <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70"></div>
+                
+                <div class="flex justify-between items-center mb-6 relative z-10 border-b border-gray-100 pb-4">
+                    <h2 id="form-title" class="text-2xl font-bold text-teal-600 flex items-center gap-2">✨ Thêm Dữ Liệu Mới</h2>
+                    <button type="button" id="close-form-btn" class="p-2 bg-gray-100 hover:bg-red-100 hover:text-red-600 text-gray-500 rounded-full transition-all active:scale-95" title="Đóng">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <form id="note-form" class="space-y-5 relative z-10">
+                    
+                    <!-- Tabs Form Phong Cách App (Render động) -->
+                    <div id="form-tabs-container" class="flex justify-start sm:justify-center items-start gap-2 sm:gap-4 mb-8 overflow-x-auto pb-2 snap-x hide-scrollbar">
+                        <!-- Tự động điền qua JS -->
+                    </div>
+
+                    <div>
+                        <input type="text" id="note-title" list="title-suggestions" placeholder="Nhập hoặc chọn tiêu đề từ gợi ý... 🏷️" class="w-full px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-400 focus:bg-white transition-all text-lg" required>
+                        <datalist id="title-suggestions">
+                            <option value="Chuyên môn"></option>
+                            <option value="Chủ nhiệm"></option>
+                            <option value="Tuyển sinh 10"></option>
+                            <option value="Lương"></option>
+                            <option value="Giấy tờ"></option>
+                            <option value="Đảng"></option>
+                            <option value="Khác"></option>
+                        </datalist>
+                    </div>
+
+                    <!-- Khu vực dành riêng cho: Thành tích -->
+                    <div id="info-fields" class="space-y-5 block">
+                        <div>
+                            <input type="text" id="note-school-year" list="school-years" placeholder="Nhập hoặc chọn năm học từ gợi ý... 🎓" class="w-full px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-400 focus:bg-white transition-all text-lg">
+                            <datalist id="school-years">
+                                <option value="2021 - 2022"></option>
+                                <option value="2022 - 2023"></option>
+                                <option value="2023 - 2024"></option>
+                                <option value="2024 - 2025"></option>
+                                <option value="2025 - 2026"></option>
+                                <option value="2026 - 2027"></option>
+                                <option value="2027 - 2028"></option>
+                                <option value="2028 - 2029"></option>
+                                <option value="2029 - 2030"></option>
+                                <option value="2030 - 2031"></option>
+                            </datalist>
+                        </div>
+                        <div>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 font-bold">🗓️</span>
+                                <input type="date" id="note-date-received" class="w-full pl-12 pr-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-400 focus:bg-white transition-all text-lg text-gray-600" title="Ngày tháng nhận">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khu vực dành riêng cho: Tài khoản -->
+                    <div id="account-fields" class="space-y-5 hidden">
+                        <div class="flex gap-4">
+                            <input type="text" id="note-account-username" placeholder="Tài khoản đăng nhập..." class="w-1/2 px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-all text-lg">
+                            <input type="text" id="note-account-password" placeholder="Mật khẩu..." class="w-1/2 px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-all text-lg">
+                        </div>
+                        <div>
+                            <textarea id="note-account-notes" rows="2" placeholder="Ghi chú thêm cho tài khoản (không bắt buộc)... 📝" class="w-full px-5 py-4 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-all text-lg resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Khu vực dành riêng cho: Lương -->
+                    <div id="salary-fields" class="space-y-5 hidden">
+                        <div class="flex gap-4">
+                            <input type="text" id="note-he-so" placeholder="Hệ số (VD: 3.33)" class="w-1/2 px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 focus:bg-white transition-all text-lg">
+                            <input type="text" id="note-bac" placeholder="Bậc (VD: 3/9)" class="w-1/2 px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 focus:bg-white transition-all text-lg">
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-1/2 flex flex-col gap-1.5">
+                                <label class="text-sm font-bold text-gray-500 pl-2">Ngày hưởng</label>
+                                <input type="date" id="note-ngay-huong" class="w-full px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 focus:bg-white transition-all text-lg text-gray-600">
+                            </div>
+                            <div class="w-1/2 flex flex-col gap-1.5">
+                                <label class="text-sm font-bold text-gray-500 pl-2">Nâng bậc sau</label>
+                                <input type="date" id="note-lan-nang-sau" class="w-full px-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 focus:bg-white transition-all text-lg text-gray-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khu vực dành riêng cho: Giấy tờ -->
+                    <div id="document-fields" class="space-y-5 hidden">
+                        <div>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 font-bold">🗓️</span>
+                                <input type="date" id="note-document-date" class="w-full pl-12 pr-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 focus:bg-white transition-all text-lg text-gray-600" title="Ngày tháng giấy tờ">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khu vực dành riêng cho: Các Tab Tự tạo (Custom) -->
+                    <div id="custom-fields" class="space-y-5 hidden">
+                        <div>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-400 font-bold">🗓️</span>
+                                <input type="date" id="note-custom-date" class="w-full pl-12 pr-5 py-3.5 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400 focus:bg-white transition-all text-lg text-gray-600" title="Ngày tháng">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <textarea id="note-content" rows="4" placeholder="Nhập nội dung chi tiết cần lưu... ✍️" class="w-full px-5 py-4 rounded-2xl bg-gray-50/80 border border-gray-200 focus:outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-400 focus:bg-white transition-all text-lg resize-none" required></textarea>
+                    </div>
+                    
+                    <!-- Vùng Thêm Ảnh -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-2xl p-4 text-center relative hover:bg-gray-50 transition-colors" id="image-upload-zone">
+                        <input type="file" id="image-input" accept="image/*" class="hidden">
+                        
+                        <!-- Khu vực hiển thị khi có ảnh -->
+                        <div id="image-preview-container" class="hidden relative inline-block">
+                            <img id="image-preview" src="" alt="Preview" class="max-h-48 rounded-xl mx-auto shadow-sm object-contain">
+                            <button type="button" id="remove-image-btn" class="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-md transition-transform active:scale-95" title="Xóa ảnh">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Khu vực nút thêm ảnh -->
+                        <div id="image-placeholder" class="py-2">
+                            <button type="button" id="trigger-upload-btn" class="text-teal-500 font-semibold hover:text-teal-600 flex items-center justify-center gap-2 mx-auto transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                Bấm để chọn ảnh hoặc <kbd class="px-2 py-1 bg-gray-200 text-gray-700 rounded-md text-sm shadow-sm border border-gray-300">Ctrl + V</kbd> dán trực tiếp
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <button type="submit" id="submit-btn" class="w-full bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-600 hover:to-emerald-500 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transform transition-all active:scale-95 flex justify-center items-center gap-2 text-lg">
+                            Lưu Thông Tin <span>💾</span>
+                        </button>
+                        <button type="button" id="cancel-form-btn" class="w-1/3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 px-6 rounded-2xl shadow-md transform transition-all active:scale-95 flex justify-center items-center gap-2 text-lg">
+                            Hủy <span>❌</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Dashboard Filter Tabs (Thanh Điều Hướng App-like - Render Động) -->
+            <div id="main-dashboard-tabs" class="flex justify-start sm:justify-center gap-4 sm:gap-8 mb-10 overflow-x-auto pb-6 pt-4 px-2 snap-x hide-scrollbar w-full relative z-10 mx-auto max-w-4xl">
+                <!-- Tự động điền qua JS -->
+            </div>
+
+            <!-- Thanh Tìm kiếm thông minh & Lọc chủ đề -->
+            <div class="max-w-2xl mx-auto mb-8 flex flex-col sm:flex-row gap-3 relative z-10">
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm theo tiêu đề hoặc nội dung..." class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white border border-gray-200 focus:outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-400 transition-all text-gray-700 shadow-sm text-lg font-medium">
+                </div>
+                <select id="topic-filter" class="w-full sm:w-[35%] px-4 py-3.5 rounded-2xl bg-white border border-gray-200 focus:outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-400 transition-all text-gray-700 shadow-sm text-lg font-medium cursor-pointer">
+                    <option value="all">📁 Tất cả chủ đề</option>
+                    <!-- Tùy chọn sẽ được điền tự động bằng JavaScript -->
+                </select>
+            </div>
+
+            <!-- Tiêu đề Danh mục hiện tại -->
+            <div class="flex items-center justify-between mb-6 px-2">
+                <h2 id="current-category-title" class="text-2xl font-bold text-gray-700 flex items-center gap-3 bg-white/80 px-6 py-3 rounded-2xl shadow-sm border border-white">
+                    <span class="text-3xl">🌟</span> Tất cả
+                </h2>
+            </div>
+
+            <!-- Khu vực Lưới thẻ -->
+            <div id="cards-container" class="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-6 gap-6">
+                <!-- Nội dung được tải từ Firebase -->
+            </div>
+        </main>
+
+        <!-- Credit Footer -->
+        <footer class="py-8 mt-auto w-full flex justify-center items-center bg-gradient-to-t from-gray-100 to-transparent">
+            <div class="text-center flex flex-col items-center">
+                <span class="text-gray-400 text-sm tracking-widest uppercase block mb-1">Thiết kế bởi</span>
+                <p class="credit-text text-gray-600 hover:text-teal-500 transition-colors duration-300 drop-shadow-sm cursor-default">
+                    Thầy Nguyễn Cường
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal Xem Chi Tiết -->
+    <div id="view-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-gray-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 p-4">
+        <div class="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col transform scale-95 transition-transform duration-300">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
+                <div>
+                    <h2 id="modal-title" class="text-2xl font-bold text-gray-800 pr-8">Tiêu đề</h2>
+                    <div id="modal-badge" class="mt-3 flex flex-wrap gap-2"></div>
+                </div>
+                <button id="close-modal-btn-view" class="p-2 bg-gray-200 hover:bg-red-100 hover:text-red-600 rounded-full transition-all active:scale-95">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-grow">
+                <!-- Khu vực thông số Lương -->
+                <div id="modal-salary-info" class="hidden mb-6 bg-emerald-50 rounded-2xl p-4 border border-emerald-100 shadow-inner">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                        <div><p class="text-sm text-emerald-600 font-bold mb-1">Hệ số</p><p id="modal-he-so" class="text-lg font-extrabold text-emerald-800">-</p></div>
+                        <div><p class="text-sm text-emerald-600 font-bold mb-1">Bậc</p><p id="modal-bac" class="text-lg font-extrabold text-emerald-800">-</p></div>
+                        <div><p class="text-sm text-emerald-600 font-bold mb-1">Ngày hưởng</p><p id="modal-ngay-huong" class="text-lg font-extrabold text-emerald-800">-</p></div>
+                        <div><p class="text-sm text-emerald-600 font-bold mb-1">Lần nâng sau</p><p id="modal-lan-nang-sau" class="text-lg font-extrabold text-emerald-800">-</p></div>
+                    </div>
+                </div>
+
+                <!-- Khu vực thông số Tài khoản -->
+                <div id="modal-account-info" class="hidden mb-6 bg-blue-50 rounded-2xl p-4 border border-blue-100 shadow-inner">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><p class="text-sm text-blue-600 font-bold mb-1">Tài khoản</p><p id="modal-account-username" class="text-lg font-extrabold text-blue-800 break-all">-</p></div>
+                        <div><p class="text-sm text-blue-600 font-bold mb-1">Mật khẩu</p><p id="modal-account-password" class="text-lg font-extrabold text-blue-800 break-all">-</p></div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-blue-200/50 hidden" id="modal-account-notes-container">
+                        <p class="text-sm text-blue-600 font-bold mb-1">Ghi chú</p>
+                        <p id="modal-account-notes" class="text-md font-medium text-blue-800 whitespace-pre-wrap">-</p>
+                    </div>
+                </div>
+
+                <!-- Khu vực chứa ảnh nếu có -->
+                <img id="modal-image" src="" alt="Attached Image" class="w-full max-h-96 object-contain rounded-2xl mb-6 hidden shadow-sm border border-gray-100">
+                <p id="modal-content-text" class="text-lg text-gray-700 whitespace-pre-wrap leading-relaxed font-medium"></p>
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                <span id="modal-time" class="text-sm font-bold text-gray-500 uppercase tracking-wide">Thời gian</span>
+                <button id="copy-btn" class="flex items-center gap-2 bg-teal-100 hover:bg-teal-200 text-teal-700 px-4 py-2 rounded-xl font-bold transition-all active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    Copy Nội Dung
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem Ảnh To (Lightbox) -->
+    <div id="lightbox-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 opacity-0 p-4">
+        <button id="close-lightbox-btn" class="absolute top-5 right-5 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all active:scale-95 z-[210]">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <img id="lightbox-image" src="" alt="Zoomed Image" class="max-w-full max-h-[95vh] object-contain rounded-lg shadow-2xl transform scale-95 transition-transform duration-300">
+    </div>
+
+    <!-- Modal Quản Lý Danh Mục (Admin Tabs) -->
+    <div id="admin-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-gray-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0 p-4">
+        <div class="bg-white w-full max-w-lg max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col transform scale-95 transition-transform duration-300">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2"><span>⚙️</span> Quản Lý Tab</h2>
+                <button id="close-admin-btn" class="p-2 bg-gray-200 hover:bg-red-100 hover:text-red-600 rounded-full transition-all active:scale-95">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-grow bg-gray-50/30">
+                <!-- Form Thêm Mới Tab -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                    <h3 class="font-bold text-teal-600 mb-4 flex items-center gap-2">➕ Tạo Tab Tự Chọn Mới</h3>
+                    <form id="add-tab-form" class="flex flex-wrap gap-3">
+                        <div class="w-[25%]">
+                            <input type="text" id="new-tab-icon" placeholder="Icon 🚀" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-100 text-center" required maxlength="5">
+                        </div>
+                        <div class="w-auto flex-grow">
+                            <input type="text" id="new-tab-name" placeholder="Tên Tab (VD: Dự án)" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-100" required>
+                        </div>
+                        <div class="w-full sm:w-[35%]">
+                            <select id="new-tab-color" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-teal-100 cursor-pointer">
+                                <option value="blue" class="text-blue-600 font-bold">Xanh Dương</option>
+                                <option value="red" class="text-red-600 font-bold">Đỏ</option>
+                                <option value="pink" class="text-pink-600 font-bold">Hồng</option>
+                                <option value="cyan" class="text-cyan-600 font-bold">Xanh Lam</option>
+                                <option value="teal" class="text-teal-600 font-bold">Teal (Mặc định)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full mt-2 bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow-sm transition-all active:scale-95">Lưu Tab Mới</button>
+                    </form>
+                </div>
+
+                <!-- Danh sách Tab tự chọn hiện có -->
+                <h3 class="font-bold text-gray-600 mb-3 ml-1">Danh sách Tab Tự Tạo:</h3>
+                <div id="custom-tabs-list" class="space-y-3">
+                    <!-- Javascript sẽ render danh sách vào đây -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỞI TẠO FIREBASE & LOGIC ỨNG DỤNG -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc, increment, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ==========================================
+        // KHAI BÁO BIẾN TRẠNG THÁI TOÀN CỤC
+        // ==========================================
+        let allData = [];
+        let customCategories = [];
+        let currentFilter = 'all';
+        let searchQuery = ''; 
+        let editingId = null;
+        let selectedImageFile = null;
+        let existingImageUrl = null;
+        let currentUser = null;
+        let isAdmin = false;
+        let isDataLoaded = false;
+
+        const defaultCategories = [
+            { id: 'info', name: 'Thành tích', icon: '🏆', color: 'purple' },
+            { id: 'salary', name: 'Lương', icon: '💰', color: 'emerald' },
+            { id: 'document', name: 'Giấy tờ', icon: '📁', color: 'orange' },
+            { id: 'account', name: 'Tài khoản', icon: '🔑', color: 'blue' }
+        ];
+
+        // ==========================================
+        // CẤU HÌNH FIREBASE
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const notesCollection = collection(db, 'thongtin');
+        const categoriesCollection = collection(db, 'danh_muc');
+
+        // ==========================================
+        // KHAI BÁO DOM ELEMENTS
+        // ==========================================
+        const appContent = document.getElementById('app-content');
+        const formContainer = document.getElementById('form-container');
+        const showFormBtn = document.getElementById('show-form-btn');
+        const addNewContainer = document.getElementById('add-new-container');
+        const closeFormBtn = document.getElementById('close-form-btn');
+        const cancelFormBtn = document.getElementById('cancel-form-btn');
+        const formTitle = document.getElementById('form-title');
+        
+        const form = document.getElementById('note-form');
+        const titleInput = document.getElementById('note-title');
+        const schoolYearInput = document.getElementById('note-school-year');
+        const dateReceivedInput = document.getElementById('note-date-received');
+        const contentInput = document.getElementById('note-content');
+        
+        const heSoInput = document.getElementById('note-he-so');
+        const bacInput = document.getElementById('note-bac');
+        const ngayHuongInput = document.getElementById('note-ngay-huong');
+        const lanNangSauInput = document.getElementById('note-lan-nang-sau');
+        const documentDateInput = document.getElementById('note-document-date');
+        const customDateInput = document.getElementById('note-custom-date');
+        
+        const accountUsernameInput = document.getElementById('note-account-username');
+        const accountPasswordInput = document.getElementById('note-account-password');
+        const accountNotesInput = document.getElementById('note-account-notes');
+
+        const infoFields = document.getElementById('info-fields');
+        const accountFields = document.getElementById('account-fields');
+        const salaryFields = document.getElementById('salary-fields');
+        const documentFields = document.getElementById('document-fields');
+        const customFields = document.getElementById('custom-fields');
+        
+        const formTabsContainer = document.getElementById('form-tabs-container');
+        const mainDashboardTabs = document.getElementById('main-dashboard-tabs');
+        const sidebarTabsContainer = document.getElementById('sidebar-tabs-container');
+        const customTabsList = document.getElementById('custom-tabs-list');
+
+        const cardsContainer = document.getElementById('cards-container');
+        const toast = document.getElementById('toast');
+        const submitBtn = document.getElementById('submit-btn');
+        const searchInput = document.getElementById('search-input');
+        const topicFilter = document.getElementById('topic-filter');
+
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarMenu = document.getElementById('sidebar-menu');
+        const menuBtn = document.getElementById('menu-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const currentCategoryTitle = document.getElementById('current-category-title');
+        
+        const adminModal = document.getElementById('admin-modal');
+        const openAdminBtn = document.getElementById('open-admin-btn');
+        const closeAdminBtn = document.getElementById('close-admin-btn');
+        const addTabForm = document.getElementById('add-tab-form');
+
+        // DOM Auth
+        const authTriggerBtn = document.getElementById('auth-trigger-btn');
+        const authBtnText = document.getElementById('auth-btn-text');
+        const authModal = document.getElementById('auth-modal');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const emailAuthForm = document.getElementById('email-auth-form');
+        const authEmail = document.getElementById('auth-email');
+        const authPassword = document.getElementById('auth-password');
+        const adminMenuContainer = document.getElementById('admin-menu-container');
+
+        const imageInput = document.getElementById('image-input');
+        const triggerUploadBtn = document.getElementById('trigger-upload-btn');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePlaceholder = document.getElementById('image-placeholder');
+        const removeImageBtn = document.getElementById('remove-image-btn');
+
+        const viewModal = document.getElementById('view-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBadge = document.getElementById('modal-badge');
+        const modalContentText = document.getElementById('modal-content-text');
+        const modalTime = document.getElementById('modal-time');
+        const modalImage = document.getElementById('modal-image');
+        const closeModalBtnView = document.getElementById('close-modal-btn-view');
+        const copyBtn = document.getElementById('copy-btn');
+        const modalSalaryInfo = document.getElementById('modal-salary-info');
+        const modalAccountInfo = document.getElementById('modal-account-info');
+        const modalAccountNotesContainer = document.getElementById('modal-account-notes-container');
+
+        const lightboxModal = document.getElementById('lightbox-modal');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const closeLightboxBtn = document.getElementById('close-lightbox-btn');
+
+        // ==========================================
+        // CÁC HÀM TIỆN ÍCH (UTILITIES)
+        // ==========================================
+        function escapeHtml(unsafe) {
+            return (unsafe || "").toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function highlightText(text, query) {
+            const safeText = escapeHtml(text || "");
+            if (!query) return safeText;
+            const safeQuery = escapeHtml(query);
+            const regex = new RegExp(`(${escapeRegExp(safeQuery)})`, 'gi');
+            return safeText.replace(regex, '<mark class="bg-yellow-300 text-gray-900 rounded-sm px-0.5">$1</mark>');
+        }
+        
+        function formatDateVN(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : escapeHtml(dateStr);
+        }
+
+        function getAllCategories() {
+            return [...defaultCategories, ...customCategories];
+        }
+
+        function getCategoryData(id) {
+            return getAllCategories().find(c => c.id === id) || { id: 'unknown', name: 'Khác', icon: '📌', color: 'gray' };
+        }
+
+        // ==========================================
+        // LOGIC AUTHENTICATION (ĐĂNG NHẬP/ĐĂNG XUẤT)
+        // ==========================================
+        const googleProvider = new GoogleAuthProvider();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const displayName = user.displayName || user.email.split('@')[0];
+                authBtnText.innerText = displayName;
+                
+                isAdmin = false;
+                if (user.email === 'cuong.gvtoan@gmail.com') {
+                    isAdmin = true;
+                } else {
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (userDoc.exists() && userDoc.data().role === 'admin') {
+                            isAdmin = true;
+                        }
+                    } catch (e) {
+                        // Bỏ qua
+                    }
+                }
+
+                if (isAdmin) {
+                    adminMenuContainer.classList.remove('hidden');
+                } else {
+                    adminMenuContainer.classList.add('hidden');
+                }
+
+                // Ẩn màn hình đăng nhập
+                authModal.classList.add('opacity-0');
+                authModal.querySelector('div').classList.remove('scale-100');
+                authModal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => authModal.classList.add('hidden'), 500);
+
+                // Hiển thị nội dung app
+                appContent.classList.remove('hidden');
+                setTimeout(() => appContent.classList.remove('opacity-0'), 50);
+
+                // Chỉ tải dữ liệu nếu chưa tải
+                if (!isDataLoaded) {
+                    initFirebaseData();
+                    isDataLoaded = true;
+                }
+
+            } else {
+                currentUser = null;
+                isAdmin = false;
+                isDataLoaded = false;
+                authBtnText.innerText = 'Đăng nhập';
+                adminMenuContainer.classList.add('hidden');
+                
+                // Ẩn nội dung App
+                appContent.classList.add('opacity-0');
+                setTimeout(() => appContent.classList.add('hidden'), 500);
+
+                // Hiển thị bắt buộc màn hình Đăng Nhập
+                authModal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    authModal.classList.remove('opacity-0');
+                    authModal.querySelector('div').classList.remove('scale-95');
+                    authModal.querySelector('div').classList.add('scale-100');
+                });
+            }
+        });
+
+        authTriggerBtn.addEventListener('click', async () => {
+            if (currentUser) {
+                if(confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
+                    await signOut(auth);
+                    showToast("👋 Đã đăng xuất thành công!");
+                }
+            }
+        });
+
+        googleLoginBtn.addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, googleProvider);
+                showToast("🎉 Đăng nhập Google thành công!");
+            } catch (error) {
+                console.error(error);
+                alert("Đăng nhập Google thất bại!");
+            }
+        });
+
+        emailAuthForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = authEmail.value;
+            const password = authPassword.value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                emailAuthForm.reset();
+                showToast("🎉 Đăng nhập thành công!");
+            } catch (error) {
+                console.error(error);
+                alert("Đăng nhập thất bại! Vui lòng kiểm tra lại Email và Mật khẩu.");
+            }
+        });
+
+
+        // ==========================================
+        // RENDER DANH MỤC (TABS) ĐỘNG
+        // ==========================================
+        function renderAllTabsUI() {
+            const allCats = getAllCategories();
+            
+            // 1. Render trong Form
+            let formHtml = '';
+            allCats.forEach((cat, index) => {
+                const checked = (editingId === null && index === 0) ? 'checked' : '';
+                formHtml += `
+                    <label class="cursor-pointer relative flex-shrink-0 flex justify-center">
+                        <input type="radio" name="note-type" value="${cat.id}" class="peer sr-only" ${checked}>
+                        <div class="flex flex-col items-center gap-2 group w-[72px]">
+                            <div class="w-[60px] h-[60px] sm:w-[72px] sm:h-[72px] rounded-2xl sm:rounded-[1.5rem] bg-${cat.color}-50/60 shadow-sm flex items-center justify-center text-[1.75rem] sm:text-[2rem] group-hover:-translate-y-1 transition-all duration-300 border-2 border-transparent peer-checked:border-${cat.color}-400 peer-checked:bg-white peer-checked:shadow-[0_8px_20px_rgba(0,0,0,0.1)] relative">
+                                <span class="drop-shadow-sm transition-transform group-hover:scale-110">${cat.icon}</span>
+                            </div>
+                            <span class="text-[13px] sm:text-[14px] font-bold text-gray-400 peer-checked:text-${cat.color}-600 text-center leading-tight transition-colors">${escapeHtml(cat.name).replace(' ', '<br>')}</span>
+                        </div>
+                    </label>
+                `;
+            });
+            formTabsContainer.innerHTML = formHtml;
+
+            // 2. Render ngoài Dashboard (Main Filter)
+            let dashboardHtml = `
+                <button class="main-filter-btn ${currentFilter === 'all' ? 'active' : ''} flex flex-col items-center gap-2.5 w-[72px] shrink-0 snap-center group" data-filter="all">
+                    <div class="w-[72px] h-[72px] rounded-[1.5rem] bg-gray-50 shadow-[0_2px_15px_rgba(0,0,0,0.04)] flex items-center justify-center text-[2rem] group-hover:-translate-y-1 transition-all duration-300 border-2 border-transparent group-[.active]:border-teal-400 group-[.active]:bg-white group-[.active]:shadow-[0_8px_20px_rgba(20,184,166,0.25)]">
+                        <span class="drop-shadow-sm transition-transform group-hover:scale-110">🌟</span>
+                    </div>
+                    <span class="text-[14px] font-bold text-gray-400 group-[.active]:text-teal-600 text-center leading-snug transition-colors">Tất cả</span>
+                </button>
+            `;
+            allCats.forEach(cat => {
+                const isActive = currentFilter === cat.id ? 'active' : '';
+                dashboardHtml += `
+                    <button class="main-filter-btn ${isActive} flex flex-col items-center gap-2.5 w-[72px] shrink-0 snap-center group" data-filter="${cat.id}">
+                        <div class="w-[72px] h-[72px] rounded-[1.5rem] bg-${cat.color}-50/60 shadow-[0_2px_15px_rgba(0,0,0,0.04)] flex items-center justify-center text-[2rem] group-hover:-translate-y-1 transition-all duration-300 border-2 border-transparent group-[.active]:border-${cat.color}-400 group-[.active]:bg-white group-[.active]:shadow-[0_8px_20px_rgba(0,0,0,0.1)]">
+                            <span class="drop-shadow-sm transition-transform group-hover:scale-110">${cat.icon}</span>
+                        </div>
+                        <span class="text-[14px] font-bold text-gray-400 group-[.active]:text-${cat.color}-600 text-center leading-snug transition-colors">${escapeHtml(cat.name).replace(' ', '<br>')}</span>
+                    </button>
+                `;
+            });
+            mainDashboardTabs.innerHTML = dashboardHtml;
+
+            // 3. Render trong Sidebar
+            let sidebarHtml = `
+                <button class="sidebar-filter-btn ${currentFilter === 'all' ? 'active bg-teal-500 text-white shadow-md' : 'bg-gray-50 text-gray-600 shadow-sm'} w-full text-left px-5 py-4 rounded-2xl font-bold transition-all transform hover:scale-105 flex items-center gap-3" data-filter="all"><span class="text-xl">🌟</span> Tất cả</button>
+            `;
+            allCats.forEach(cat => {
+                const isActive = currentFilter === cat.id ? `active bg-teal-500 text-white shadow-md` : `bg-gray-50 text-gray-600 hover:bg-${cat.color}-50 hover:text-${cat.color}-600 shadow-sm`;
+                sidebarHtml += `
+                    <button class="sidebar-filter-btn ${isActive} w-full text-left px-5 py-4 rounded-2xl font-bold transition-all transform hover:scale-105 flex items-center gap-3" data-filter="${cat.id}">
+                        <span class="text-xl">${cat.icon}</span> ${escapeHtml(cat.name)}
+                    </button>
+                `;
+            });
+            sidebarTabsContainer.innerHTML = sidebarHtml;
+
+            // 4. Render danh sách Admin
+            if(customCategories.length === 0) {
+                customTabsList.innerHTML = '<p class="text-sm text-gray-400 italic">Chưa có tab tự tạo nào.</p>';
+            } else {
+                let adminListHtml = '';
+                customCategories.forEach(cat => {
+                    adminListHtml += `
+                        <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <span class="w-10 h-10 flex items-center justify-center bg-${cat.color}-50 rounded-lg text-xl">${cat.icon}</span>
+                                <span class="font-bold text-gray-700">${escapeHtml(cat.name)}</span>
+                            </div>
+                            <button type="button" class="delete-tab-btn p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" data-id="${cat.id}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                });
+                customTabsList.innerHTML = adminListHtml;
+            }
+        }
+
+        // Lắng nghe dữ liệu Custom Categories từ Firebase
+        onSnapshot(query(categoriesCollection, orderBy('createdAt', 'asc')), (snapshot) => {
+            customCategories = [];
+            snapshot.forEach((doc) => customCategories.push({ dbId: doc.id, ...doc.data() }));
+            renderAllTabsUI();
+            
+            // Re-render cards to reflect possible color/icon changes
+            if(allData.length > 0) renderCards();
+        });
+
+        // ==========================================
+        // XỬ LÝ ẨN/HIỆN FORM & GIAO DIỆN
+        // ==========================================
+        function toggleSpecificFields(selectedType) {
+            infoFields.classList.add('hidden');
+            accountFields.classList.add('hidden');
+            salaryFields.classList.add('hidden');
+            documentFields.classList.add('hidden');
+            customFields.classList.add('hidden');
+
+            if (selectedType === 'salary') {
+                salaryFields.classList.remove('hidden');
+            } else if (selectedType === 'document') {
+                documentFields.classList.remove('hidden');
+            } else if (selectedType === 'account') {
+                accountFields.classList.remove('hidden');
+            } else if (selectedType === 'info') {
+                infoFields.classList.remove('hidden');
+            } else {
+                customFields.classList.remove('hidden'); 
+            }
+        }
+
+        formTabsContainer.addEventListener('change', (e) => {
+            if (e.target.name === 'note-type') toggleSpecificFields(e.target.value);
+        });
+
+        function openForm(isEdit = false) {
+            formContainer.classList.remove('hidden');
+            addNewContainer.classList.add('hidden');
+            formTitle.innerHTML = isEdit ? '✨ Cập Nhật Dữ Liệu' : '✨ Thêm Dữ Liệu Mới';
+            
+            requestAnimationFrame(() => {
+                formContainer.classList.remove('opacity-0', 'scale-95');
+                formContainer.classList.add('opacity-100', 'scale-100');
+            });
+
+            if (!isEdit) {
+                editingId = null;
+                form.reset();
+                clearImagePreview();
+                const defaultRadio = document.querySelector('input[name="note-type"][value="info"]');
+                if(defaultRadio) defaultRadio.checked = true;
+                toggleSpecificFields('info');
+                submitBtn.innerHTML = 'Lưu Thông Tin <span>💾</span>';
+            }
+        }
+
+        function closeForm() {
+            formContainer.classList.remove('opacity-100', 'scale-100');
+            formContainer.classList.add('opacity-0', 'scale-95');
+            
+            setTimeout(() => {
+                formContainer.classList.add('hidden');
+                addNewContainer.classList.remove('hidden');
+                
+                editingId = null;
+                form.reset();
+                clearImagePreview();
+                const defaultRadio = document.querySelector('input[name="note-type"][value="info"]');
+                if(defaultRadio) defaultRadio.checked = true;
+                toggleSpecificFields('info');
+                submitBtn.innerHTML = 'Lưu Thông Tin <span>💾</span>';
+            }, 300); 
+        }
+
+        showFormBtn.addEventListener('click', () => {
+            openForm(false);
+            setTimeout(() => titleInput.focus(), 300);
+        });
+        
+        closeFormBtn.addEventListener('click', closeForm);
+        cancelFormBtn.addEventListener('click', closeForm);
+
+        // ==========================================
+        // XỬ LÝ DÁN (PASTE) NGÀY THÁNG THÔNG MINH
+        // ==========================================
+        function handleDatePaste(e) {
+            const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+            if (!pasteData) return;
+            
+            const vnDateRegex = /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/;
+            const vnMatch = pasteData.match(vnDateRegex);
+            
+            if (vnMatch) {
+                e.preventDefault();
+                const day = vnMatch[1].padStart(2, '0');
+                const month = vnMatch[2].padStart(2, '0');
+                const year = vnMatch[3];
+                e.target.value = `${year}-${month}-${day}`;
+                return;
+            }
+
+            const isoRegex = /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/;
+            const isoMatch = pasteData.match(isoRegex);
+            if (isoMatch) {
+                e.preventDefault();
+                const year = isoMatch[1];
+                const month = isoMatch[2].padStart(2, '0');
+                const day = isoMatch[3].padStart(2, '0');
+                e.target.value = `${year}-${month}-${day}`;
+            }
+        }
+
+        dateReceivedInput.addEventListener('paste', handleDatePaste);
+        ngayHuongInput.addEventListener('paste', handleDatePaste);
+        lanNangSauInput.addEventListener('paste', handleDatePaste);
+        documentDateInput.addEventListener('paste', handleDatePaste);
+        customDateInput.addEventListener('paste', handleDatePaste);
+
+        // ==========================================
+        // LOGIC LỌC ĐỒNG BỘ & ADMIN MODAL
+        // ==========================================
+        function getCategoryTitleHtml(id) {
+            if (id === 'all') return '<span class="text-3xl">🌟</span> Tất cả';
+            const cat = getCategoryData(id);
+            return `<span class="text-3xl">${cat.icon}</span> ${escapeHtml(cat.name)}`;
+        }
+
+        function openSidebar() {
+            sidebarOverlay.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                sidebarOverlay.classList.remove('opacity-0');
+                sidebarMenu.classList.remove('-translate-x-full');
+            });
+        }
+
+        function closeSidebar() {
+            sidebarOverlay.classList.add('opacity-0');
+            sidebarMenu.classList.add('-translate-x-full');
+            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        }
+
+        menuBtn.addEventListener('click', openSidebar);
+        closeMenuBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        function setFilter(filterVal) {
+            currentFilter = filterVal;
+            renderAllTabsUI(); 
+            currentCategoryTitle.innerHTML = getCategoryTitleHtml(currentFilter);
+            renderCards(); 
+        }
+
+        mainDashboardTabs.addEventListener('click', (e) => {
+            const btn = e.target.closest('.main-filter-btn');
+            if (btn) setFilter(btn.getAttribute('data-filter'));
+        });
+
+        sidebarTabsContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.sidebar-filter-btn');
+            if (btn) {
+                setFilter(btn.getAttribute('data-filter'));
+                closeSidebar(); 
+            }
+        });
+
+        openAdminBtn.addEventListener('click', () => {
+            closeSidebar();
+            adminModal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                adminModal.classList.remove('opacity-0');
+                adminModal.querySelector('div').classList.remove('scale-95');
+                adminModal.querySelector('div').classList.add('scale-100');
+            });
+        });
+
+        function closeAdminModal() {
+            adminModal.classList.add('opacity-0');
+            adminModal.querySelector('div').classList.remove('scale-100');
+            adminModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => adminModal.classList.add('hidden'), 300);
+        }
+        closeAdminBtn.addEventListener('click', closeAdminModal);
+
+        addTabForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const icon = document.getElementById('new-tab-icon').value.trim();
+            const name = document.getElementById('new-tab-name').value.trim();
+            const color = document.getElementById('new-tab-color').value;
+
+            if(!icon || !name) return;
+
+            const id = 'custom_' + Date.now();
+            try {
+                await addDoc(categoriesCollection, {
+                    id: id,
+                    name: name,
+                    icon: icon,
+                    color: color,
+                    createdAt: serverTimestamp()
+                });
+                addTabForm.reset();
+                showToast("🎉 Đã tạo Tab thành công!");
+            } catch (error) {
+                alert("Lỗi khi thêm Tab mới!");
+            }
+        });
+
+        customTabsList.addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.delete-tab-btn');
+            if (deleteBtn) {
+                if (confirm("Bạn có chắc chắn muốn xóa Tab này không? Dữ liệu bên trong vẫn được giữ lại nhưng sẽ hiện ở mục 'Khác'.")) {
+                    const dbId = deleteBtn.getAttribute('data-id');
+                    const tabDoc = customCategories.find(c => c.id === dbId);
+                    if(tabDoc) {
+                        await deleteDoc(doc(db, 'danh_muc', tabDoc.dbId));
+                        if(currentFilter === dbId) setFilter('all');
+                    }
+                }
+            }
+        });
+
+        // ==========================================
+        // LOGIC LỌC THEO CHỦ ĐỀ (Dropdown)
+        // ==========================================
+        function updateTopicFilterDropdown() {
+            const currentVal = topicFilter.value;
+            const uniqueTopics = new Set();
+            
+            allData.forEach(item => {
+                if (item.title) uniqueTopics.add(item.title.trim());
+            });
+
+            const predefined = ["Chuyên môn", "Chủ nhiệm", "Tuyển sinh 10", "Lương", "Giấy tờ", "Đảng", "Khác"];
+            let html = '<option value="all">📁 Tất cả chủ đề</option>';
+            
+            predefined.forEach(topic => {
+                html += `<option value="${topic}">${topic}</option>`;
+                uniqueTopics.delete(topic); 
+            });
+
+            const customTopics = Array.from(uniqueTopics).sort();
+            if(customTopics.length > 0) {
+                html += `<optgroup label="Chủ đề khác">`;
+                customTopics.forEach(topic => {
+                    html += `<option value="${escapeHtml(topic)}">${escapeHtml(topic)}</option>`;
+                });
+                html += `</optgroup>`;
+            }
+
+            topicFilter.innerHTML = html;
+            
+            if (currentVal !== 'all' && [...topicFilter.options].some(opt => opt.value === currentVal)) {
+                topicFilter.value = currentVal;
+            } else {
+                topicFilter.value = 'all';
+            }
+        }
+
+        topicFilter.addEventListener('change', () => {
+            renderCards();
+        });
+
+
+        // ==========================================
+        // LOGIC HÌNH ẢNH (Upload & Preview)
+        // ==========================================
+        triggerUploadBtn.addEventListener('click', () => imageInput.click());
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) handleImageSelection(e.target.files[0]);
+        });
+
+        document.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    handleImageSelection(item.getAsFile());
+                }
+            }
+        });
+
+        function handleImageSelection(file) {
+            selectedImageFile = file;
+            existingImageUrl = null; 
+            const reader = new FileReader();
+            reader.onload = (e) => showImagePreview(e.target.result);
+            reader.readAsDataURL(file);
+        }
+
+        function showImagePreview(src) {
+            imagePreview.src = src;
+            imagePreviewContainer.classList.remove('hidden');
+            imagePlaceholder.classList.add('hidden');
+        }
+
+        function clearImagePreview() {
+            selectedImageFile = null;
+            existingImageUrl = null;
+            imageInput.value = "";
+            imagePreview.src = "";
+            imagePreviewContainer.classList.add('hidden');
+            imagePlaceholder.classList.remove('hidden');
+        }
+
+        removeImageBtn.addEventListener('click', clearImagePreview);
+
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'thongtincanhan'); 
+            try {
+                const response = await fetch('https://api.cloudinary.com/v1_1/damxt8noh/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                return data.secure_url;
+            } catch (error) {
+                console.error("Lỗi khi tải ảnh lên Cloudinary:", error);
+                throw error;
+            }
+        }
+
+        // ==========================================
+        // LOGIC MODAL XEM CHI TIẾT & LIGHTBOX
+        // ==========================================
+        function openModal(data, timeString, badgeHtml) {
+            modalTitle.innerText = data.title || "Không có tiêu đề";
+            modalBadge.innerHTML = badgeHtml;
+            modalContentText.innerText = data.text || "";
+            modalTime.innerText = `🕒 ${timeString}`;
+            
+            if (data.type === 'salary') {
+                document.getElementById('modal-he-so').innerText = data.heSo || '-';
+                document.getElementById('modal-bac').innerText = data.bac || '-';
+                document.getElementById('modal-ngay-huong').innerText = formatDateVN(data.ngayHuong) || '-';
+                document.getElementById('modal-lan-nang-sau').innerText = formatDateVN(data.lanNangSau) || '-';
+                modalSalaryInfo.classList.remove('hidden');
+            } else {
+                modalSalaryInfo.classList.add('hidden');
+            }
+
+            if (data.type === 'account') {
+                document.getElementById('modal-account-username').innerText = data.accountUsername || '-';
+                document.getElementById('modal-account-password').innerText = data.accountPassword || '-';
+                if (data.accountNotes) {
+                    document.getElementById('modal-account-notes').innerText = data.accountNotes;
+                    modalAccountNotesContainer.classList.remove('hidden');
+                } else {
+                    modalAccountNotesContainer.classList.add('hidden');
+                }
+                modalAccountInfo.classList.remove('hidden');
+            } else {
+                modalAccountInfo.classList.add('hidden');
+            }
+
+            if (data.imageUrl) {
+                modalImage.src = data.imageUrl;
+                modalImage.classList.remove('hidden');
+            } else {
+                modalImage.src = "";
+                modalImage.classList.add('hidden');
+            }
+            
+            viewModal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                viewModal.classList.remove('opacity-0');
+                viewModal.querySelector('div').classList.remove('scale-95');
+                viewModal.querySelector('div').classList.add('scale-100');
+            });
+        }
+
+        function closeModalView() {
+            viewModal.classList.add('opacity-0');
+            viewModal.querySelector('div').classList.remove('scale-100');
+            viewModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => viewModal.classList.add('hidden'), 300); 
+        }
+
+        closeModalBtnView.addEventListener('click', closeModalView); 
+        viewModal.addEventListener('click', (e) => { if (e.target === viewModal) closeModalView(); });
+
+        copyBtn.addEventListener('click', () => {
+            const tempTextArea = document.createElement("textarea");
+            tempTextArea.value = modalContentText.innerText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("📋 Đã copy nội dung thành công!");
+            } catch (err) { alert("Không thể copy, vui lòng copy thủ công!"); }
+            document.body.removeChild(tempTextArea);
+        });
+
+        function openLightbox(src) {
+            lightboxImage.src = src;
+            lightboxModal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                lightboxModal.classList.remove('opacity-0');
+                lightboxImage.classList.remove('scale-95');
+                lightboxImage.classList.add('scale-100');
+            });
+        }
+
+        function closeLightbox() {
+            lightboxModal.classList.add('opacity-0');
+            lightboxImage.classList.remove('scale-100');
+            lightboxImage.classList.add('scale-95');
+            setTimeout(() => lightboxModal.classList.add('hidden'), 300);
+        }
+
+        closeLightboxBtn.addEventListener('click', closeLightbox);
+        lightboxModal.addEventListener('click', (e) => {
+            if (e.target === lightboxModal) closeLightbox();
+        });
+        
+        modalImage.addEventListener('click', () => {
+            if (modalImage.src) openLightbox(modalImage.src);
+        });
+        modalImage.classList.add('cursor-pointer', 'hover:opacity-90', 'transition-opacity');
+
+
+        // ==========================================
+        // LOGIC RENDER DANH SÁCH (CARDS)
+        // ==========================================
+        function showToast(message = "🎉 Đã lưu thành công!") {
+            document.getElementById('toast-msg').innerText = message;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-100px)';
+            }, 3000);
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim(); 
+            renderCards(); 
+        });
+
+        function renderCards() {
+            cardsContainer.innerHTML = ''; 
+            const searchLower = searchQuery.toLowerCase();
+            const currentTopicFilter = topicFilter.value;
+            
+            let filteredData = allData.filter(item => {
+                const matchTab = currentFilter === 'all' || item.type === currentFilter;
+                const matchSearch = (item.title || "").toLowerCase().includes(searchLower) || (item.text || "").toLowerCase().includes(searchLower);
+                
+                let matchTopic = true;
+                if (currentTopicFilter !== 'all') {
+                    matchTopic = (item.title || "").includes(currentTopicFilter);
+                }
+
+                return matchTab && matchSearch && matchTopic;
+            });
+
+            // Sắp xếp dữ liệu
+            filteredData.sort((a, b) => {
+                if (a.pinned !== b.pinned) return b.pinned ? 1 : -1;
+
+                // Ưu tiên Date từ cao xuống
+                const dateA = a.type === 'salary' ? (a.ngayHuong || "") : (a.type === 'document' ? (a.documentDate || "") : (a.customDate || a.dateReceived || ""));
+                const dateB = b.type === 'salary' ? (b.ngayHuong || "") : (b.type === 'document' ? (b.documentDate || "") : (b.customDate || b.dateReceived || ""));
+                if (dateA !== dateB) return dateA < dateB ? 1 : -1;
+
+                const timeA = a.createdAt ? (typeof a.createdAt.toMillis === 'function' ? a.createdAt.toMillis() : 0) : 0;
+                const timeB = b.createdAt ? (typeof b.createdAt.toMillis === 'function' ? b.createdAt.toMillis() : 0) : 0;
+                return timeB - timeA;
+            });
+
+            if(filteredData.length === 0) {
+                cardsContainer.innerHTML = `
+                    <div class="col-span-full text-center text-gray-500 mt-10 bg-white/50 p-10 rounded-3xl border border-dashed border-gray-300">
+                        <span class="text-4xl block mb-3">🔍</span>
+                        <p class="text-xl">Không tìm thấy kết quả nào phù hợp!</p>
+                    </div>`;
+                return;
+            }
+
+            let index = 0; 
+
+            filteredData.forEach((data) => {
+                const noteId = data.id;
+                const titleHighlighted = highlightText(data.title, searchQuery);
+                const contentHighlighted = highlightText(data.text, searchQuery);
+                
+                const likes = data.likes || 0;
+                const type = data.type || "info"; 
+                const pinned = data.pinned || false; 
+                
+                let timeString = "Vừa xong";
+                if (data.createdAt) {
+                    const date = data.createdAt.toDate();
+                    timeString = date.toLocaleDateString('vi-VN') + ' • ' + date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                }
+
+                const categoryObj = getCategoryData(type);
+                const catColor = categoryObj.color;
+                const catIcon = categoryObj.icon;
+                const catName = escapeHtml(categoryObj.name);
+
+                let badgeHtml = `<span class="px-3 py-1 bg-${catColor}-100 rounded-full text-xs font-bold text-${catColor}-700 shadow-sm border border-white">${catIcon} ${catName}</span>`;
+                let extraDataHtml = '';
+
+                if (type === 'salary') {
+                    const strHuong = formatDateVN(data.ngayHuong);
+                    const strNangSau = formatDateVN(data.lanNangSau);
+                    extraDataHtml = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-[15px] font-semibold text-gray-700 bg-white/60 p-4 rounded-2xl mb-4 border border-white shadow-sm">
+                            <div class="flex items-center gap-2"><span class="text-xl">📈</span> Hệ số: <span class="text-emerald-700 font-bold">${escapeHtml(data.heSo)}</span></div>
+                            <div class="flex items-center gap-2"><span class="text-xl">⭐</span> Bậc: <span class="text-emerald-700 font-bold">${escapeHtml(data.bac)}</span></div>
+                            <div class="flex items-center gap-2"><span class="text-xl">🗓️</span> Hưởng: <span class="text-emerald-700 font-bold">${strHuong}</span></div>
+                            <div class="flex items-center gap-2"><span class="text-xl">⏭️</span> Nâng sau: <span class="text-emerald-700 font-bold">${strNangSau}</span></div>
+                        </div>
+                    `;
+                } else if (type === 'account') {
+                    const tkHtml = data.accountUsername ? escapeHtml(data.accountUsername) : '...';
+                    const mkHtml = data.accountPassword ? escapeHtml(data.accountPassword) : '...';
+                    const ghiChuHtml = data.accountNotes ? `<p class="mb-3 text-[14px] italic text-blue-700 bg-blue-50/70 p-3 rounded-xl border border-blue-100">📝 ${escapeHtml(data.accountNotes)}</p>` : '';
+                    
+                    extraDataHtml = `
+                        <div class="mb-3">${badgeHtml}</div>
+                        <div class="grid grid-cols-1 gap-y-3 text-[15px] font-semibold text-gray-700 bg-white/60 p-4 rounded-2xl mb-3 border border-white shadow-sm">
+                            <div class="flex items-center gap-2 overflow-hidden"><span class="text-xl shrink-0">👤</span> <span class="truncate">TK: <span class="text-blue-700 font-bold">${tkHtml}</span></span></div>
+                            <div class="flex items-center gap-2 overflow-hidden"><span class="text-xl shrink-0">🔒</span> <span class="truncate">MK: <span class="text-blue-700 font-bold">${mkHtml}</span></span></div>
+                        </div>
+                        ${ghiChuHtml}
+                    `;
+                } else if (type === 'document') {
+                    const dateHtml = data.documentDate ? `<span class="px-3 py-1 bg-green-100 rounded-full text-xs font-bold text-green-700 shadow-sm border border-white">🗓️ ${formatDateVN(data.documentDate)}</span>` : '';
+                    extraDataHtml = `<div class="mb-3 flex flex-wrap gap-2">${badgeHtml}${dateHtml}</div>`;
+                } else if (type === 'info') {
+                    const schoolYearHtml = data.schoolYear ? `<span class="px-3 py-1 bg-yellow-100 rounded-full text-xs font-bold text-yellow-700 shadow-sm border border-white">🎓 ${escapeHtml(data.schoolYear)}</span>` : '';
+                    const dateReceivedHtml = data.dateReceived ? `<span class="px-3 py-1 bg-green-100 rounded-full text-xs font-bold text-green-700 shadow-sm border border-white">🗓️ ${formatDateVN(data.dateReceived)}</span>` : '';
+                    extraDataHtml = `<div class="mb-3 flex flex-wrap gap-2">${badgeHtml}${schoolYearHtml}${dateReceivedHtml}</div>`;
+                } else {
+                    const customDateHtml = data.customDate ? `<span class="px-3 py-1 bg-blue-100 rounded-full text-xs font-bold text-blue-700 shadow-sm border border-white">🗓️ ${formatDateVN(data.customDate)}</span>` : '';
+                    extraDataHtml = `<div class="mb-3 flex flex-wrap gap-2">${badgeHtml}${customDateHtml}</div>`;
+                }
+
+                const imageHtml = data.imageUrl ? `
+                    <div class="relative group/image mb-4 cursor-pointer image-lightbox-trigger" data-src="${data.imageUrl}">
+                        <img src="${data.imageUrl}" alt="Đính kèm" class="w-full h-40 object-cover rounded-2xl shadow-sm border border-gray-100 transition-all duration-300 group-hover/image:opacity-90">
+                        <div class="absolute inset-0 bg-black/30 hidden group-hover/image:flex items-center justify-center rounded-2xl transition-all duration-300">
+                            <span class="text-white bg-black/60 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 backdrop-blur-sm shadow-lg transform scale-90 group-hover/image:scale-100 transition-transform">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                                Xem ảnh lớn
+                            </span>
+                        </div>
+                    </div>` : '';
+
+                const colSpanClass = 'sm:col-span-2 lg:col-span-3';
+                
+                const card = document.createElement('div');
+                card.className = `${colSpanClass} pastel-${index % 6} rounded-3xl p-7 shadow-sm card-hover flex flex-col h-full ${pinned ? 'border-2 border-teal-400 shadow-md' : 'border border-black/5'} relative group`;
+                index++;
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 mb-3">
+                        <h3 class="font-bold text-xl leading-snug line-clamp-2 pr-10">${titleHighlighted}</h3>
+                        <button class="pin-btn absolute top-5 right-5 p-2 rounded-full transition-all duration-300 ${pinned ? 'text-teal-600 bg-white shadow-sm scale-110' : 'text-gray-400 bg-white/40 hover:bg-white hover:text-teal-600 hover:scale-110'} active:scale-95" data-id="${noteId}" data-pinned="${pinned}" title="${pinned ? 'Bỏ ghim' : 'Ghim lên đầu'}">
+                            <svg class="w-5 h-5 ${pinned ? 'fill-current' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 11.414V8a5 5 0 00-10 0v3.414l-1.586 1.586A2 2 0 006 16h12a2 2 0 001.414-3.414L17 11.414zM12 16v4"></path></svg>
+                        </button>
+                    </div>
+                    ${type === 'salary' ? `<div class="mb-3">${badgeHtml}</div>` : ''}
+                    ${extraDataHtml}
+                    ${imageHtml}
+                    <p class="mb-5 whitespace-pre-wrap flex-grow text-base opacity-90 line-clamp-[6] font-medium leading-relaxed">${contentHighlighted}</p>
+                    <div class="flex flex-wrap justify-between items-center mt-auto pt-4 border-t border-black/10 gap-2">
+                        <span class="text-xs opacity-70 font-bold uppercase tracking-wide flex items-center gap-1">🕒 ${timeString}</span>
+                        <div class="flex items-center gap-1.5">
+                            <button class="view-btn p-2 bg-white/40 hover:bg-white/70 text-gray-600 hover:text-blue-600 rounded-full transition-all active:scale-90 shadow-sm" data-id="${noteId}" title="Xem chi tiết">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            </button>
+                            <button class="edit-btn p-2 bg-white/40 hover:bg-white/70 text-gray-600 hover:text-teal-600 rounded-full transition-all active:scale-90 shadow-sm" data-id="${noteId}" title="Chỉnh sửa">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button class="delete-btn p-2 bg-white/40 hover:bg-white/70 text-gray-600 hover:text-red-600 rounded-full transition-all active:scale-90 shadow-sm" data-id="${noteId}" title="Xóa">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                            <div class="w-px h-5 bg-black/10 mx-1"></div>
+                            <button class="like-btn flex items-center gap-1.5 bg-white/40 hover:bg-white/70 px-3 py-1.5 rounded-full transition-all active:scale-90 shadow-sm" data-id="${noteId}">
+                                <svg class="w-4 h-4 text-rose-500 transition-transform duration-300 ${likes > 0 ? 'fill-current scale-110' : 'fill-none stroke-current'}" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                                <span class="font-bold text-sm text-gray-800">${likes}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        cardsContainer.addEventListener('click', async (e) => {
+            const viewBtn = e.target.closest('.view-btn');
+            const editBtn = e.target.closest('.edit-btn');
+            const deleteBtn = e.target.closest('.delete-btn');
+            const pinBtn = e.target.closest('.pin-btn');
+            const likeBtn = e.target.closest('.like-btn');
+            const lightboxTrigger = e.target.closest('.image-lightbox-trigger');
+
+            if (lightboxTrigger) {
+                openLightbox(lightboxTrigger.getAttribute('data-src'));
+            }
+
+            if (viewBtn) {
+                const noteId = viewBtn.getAttribute('data-id');
+                const noteToView = allData.find(item => item.id === noteId);
+                if (noteToView) {
+                    const date = noteToView.createdAt ? noteToView.createdAt.toDate() : new Date();
+                    
+                    const categoryObj = getCategoryData(noteToView.type);
+                    const catColor = categoryObj.color;
+                    let badgeData = `<span class="px-3 py-1 bg-${catColor}-100 rounded-full text-xs font-bold text-${catColor}-600">${categoryObj.icon} ${escapeHtml(categoryObj.name)}</span>`;
+                    
+                    if (noteToView.type === 'document') {
+                        const dateBadge = noteToView.documentDate ? `<span class="px-3 py-1 bg-green-100 rounded-full text-xs font-bold text-green-700 shadow-sm border border-white">🗓️ ${formatDateVN(noteToView.documentDate)}</span>` : '';
+                        badgeData += ' ' + dateBadge;
+                    } else if (noteToView.type === 'info') {
+                        const schoolYearBadge = noteToView.schoolYear ? `<span class="px-3 py-1 bg-yellow-100 rounded-full text-xs font-bold text-yellow-700 shadow-sm border border-white">🎓 ${escapeHtml(noteToView.schoolYear)}</span>` : '';
+                        const dateReceivedBadge = noteToView.dateReceived ? `<span class="px-3 py-1 bg-green-100 rounded-full text-xs font-bold text-green-700 shadow-sm border border-white">🗓️ ${formatDateVN(noteToView.dateReceived)}</span>` : '';
+                        badgeData += ' ' + schoolYearBadge + ' ' + dateReceivedBadge;
+                    } else if (noteToView.type !== 'salary' && noteToView.type !== 'account') {
+                        const customDateBadge = noteToView.customDate ? `<span class="px-3 py-1 bg-blue-100 rounded-full text-xs font-bold text-blue-700 shadow-sm border border-white">🗓️ ${formatDateVN(noteToView.customDate)}</span>` : '';
+                        badgeData += ' ' + customDateBadge;
+                    }
+
+                    openModal(noteToView, date.toLocaleDateString('vi-VN') + ' • ' + date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}), badgeData);
+                }
+            }
+
+            if (editBtn) {
+                const noteId = editBtn.getAttribute('data-id');
+                const noteToEdit = allData.find(item => item.id === noteId);
+                if (noteToEdit) {
+                    editingId = noteToEdit.id; 
+                    openForm(true);
+
+                    const typeVal = noteToEdit.type || 'info';
+                    
+                    const radioCheck = document.querySelector(`input[name="note-type"][value="${typeVal}"]`);
+                    if(radioCheck) radioCheck.checked = true;
+                    toggleSpecificFields(typeVal);
+
+                    titleInput.value = noteToEdit.title || '';
+                    contentInput.value = noteToEdit.text || '';
+                    
+                    schoolYearInput.value = noteToEdit.schoolYear || '';
+                    dateReceivedInput.value = noteToEdit.dateReceived || '';
+                    heSoInput.value = noteToEdit.heSo || '';
+                    bacInput.value = noteToEdit.bac || '';
+                    ngayHuongInput.value = noteToEdit.ngayHuong || '';
+                    lanNangSauInput.value = noteToEdit.lanNangSau || '';
+                    documentDateInput.value = noteToEdit.documentDate || '';
+                    customDateInput.value = noteToEdit.customDate || '';
+                    
+                    accountUsernameInput.value = noteToEdit.accountUsername || '';
+                    accountPasswordInput.value = noteToEdit.accountPassword || '';
+                    accountNotesInput.value = noteToEdit.accountNotes || '';
+
+                    if (noteToEdit.imageUrl) {
+                        existingImageUrl = noteToEdit.imageUrl;
+                        showImagePreview(noteToEdit.imageUrl);
+                    } else {
+                        clearImagePreview();
+                    }
+
+                    submitBtn.innerHTML = 'Cập nhật <span>🔄</span>';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+
+            if (deleteBtn) {
+                if (confirm("Bạn có chắc chắn muốn xóa dữ liệu này không?")) {
+                    await deleteDoc(doc(db, 'thongtin', deleteBtn.getAttribute('data-id'))); 
+                    showToast("🗑️ Đã xóa thành công!");
+                }
+            }
+
+            if (pinBtn) {
+                const isPinned = pinBtn.getAttribute('data-pinned') === 'true';
+                const svg = pinBtn.querySelector('svg');
+                svg.classList.add('scale-125');
+                setTimeout(() => svg.classList.remove('scale-125'), 200);
+                await updateDoc(doc(db, 'thongtin', pinBtn.getAttribute('data-id')), { pinned: !isPinned });
+            }
+
+            if (likeBtn) {
+                const svg = likeBtn.querySelector('svg');
+                svg.classList.add('scale-150', 'fill-current');
+                setTimeout(() => svg.classList.remove('scale-150'), 200);
+                await updateDoc(doc(db, 'thongtin', likeBtn.getAttribute('data-id')), { likes: increment(1) });
+            }
+        });
+
+        // ==========================================
+        // FIREBASE LISTENER (TẢI DỮ LIỆU)
+        // ==========================================
+        function initFirebaseData() {
+            const q = query(notesCollection, orderBy('createdAt', 'desc'));
+            onSnapshot(q, (snapshot) => {
+                allData = [];
+                snapshot.forEach((docSnap) => allData.push({ id: docSnap.id, ...docSnap.data() }));
+                
+                updateTopicFilterDropdown();
+                renderCards(); 
+            }, (error) => {
+                cardsContainer.innerHTML = '<div class="col-span-full text-center text-red-500 mt-10">❌ Lỗi kết nối Firestore.</div>';
+            });
+        }
+
+        // ==========================================
+        // LOGIC LƯU DỮ LIỆU
+        // ==========================================
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleVal = titleInput.value.trim();
+            const contentVal = contentInput.value.trim();
+            
+            const checkedRadio = document.querySelector('input[name="note-type"]:checked');
+            const typeVal = checkedRadio ? checkedRadio.value : 'info';
+            
+            if (!titleVal || !contentVal) return;
+
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = editingId ? 'Đang cập nhật... ⏳' : 'Đang xử lý ảnh & lưu... ⏳';
+            submitBtn.disabled = true;
+
+            try {
+                let finalImageUrl = existingImageUrl;
+                if (selectedImageFile) finalImageUrl = await uploadToCloudinary(selectedImageFile);
+
+                const docData = {
+                    title: titleVal, 
+                    text: contentVal, 
+                    type: typeVal,
+                    imageUrl: finalImageUrl,
+                };
+
+                // Reset field chéo
+                docData.schoolYear = '';
+                docData.dateReceived = '';
+                docData.documentDate = '';
+                docData.customDate = '';
+                docData.heSo = '';
+                docData.bac = '';
+                docData.ngayHuong = '';
+                docData.lanNangSau = '';
+                docData.accountUsername = '';
+                docData.accountPassword = '';
+                docData.accountNotes = '';
+
+                if (typeVal === 'salary') {
+                    docData.heSo = heSoInput.value.trim();
+                    docData.bac = bacInput.value.trim();
+                    docData.ngayHuong = ngayHuongInput.value;
+                    docData.lanNangSau = lanNangSauInput.value;
+                } else if (typeVal === 'document') {
+                    docData.documentDate = documentDateInput.value;
+                } else if (typeVal === 'info') {
+                    docData.schoolYear = schoolYearInput.value.trim();
+                    docData.dateReceived = dateReceivedInput.value;
+                } else if (typeVal === 'account') {
+                    docData.accountUsername = accountUsernameInput.value.trim();
+                    docData.accountPassword = accountPasswordInput.value.trim();
+                    docData.accountNotes = accountNotesInput.value.trim();
+                } else {
+                    docData.customDate = customDateInput.value; // Cho tab tùy chọn
+                }
+
+                if (editingId) {
+                    await updateDoc(doc(db, 'thongtin', editingId), docData);
+                    showToast("🎉 Đã cập nhật thành công!");
+                } else {
+                    docData.createdAt = serverTimestamp();
+                    docData.likes = 0;
+                    docData.pinned = false;
+                    await addDoc(notesCollection, docData);
+                    showToast("🎉 Đã lưu thành công!");
+                }
+                
+                closeForm();
+
+            } catch (error) {
+                console.error(error);
+                alert("Đã xảy ra lỗi khi lưu thông tin. Vui lòng thử lại.");
+            } finally {
+                submitBtn.innerHTML = originalContent;
+                submitBtn.disabled = false;
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XÁC NHẬN THÔNG TIN TIỀN LƯƠNG</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Thư viện SheetJS để xuất file .xlsx -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+            min-height: 100vh;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        #toast {
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        #toast.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0fdfa; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #99f6e4; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5eead4; 
+        }
+
+        /* Overlay loading */
+        #globalLoader {
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body class="text-slate-700 pb-20 flex flex-col items-center overflow-x-hidden">
+
+    <!-- Loading Overlay -->
+    <div id="globalLoader" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center opacity-0 pointer-events-none">
+        <svg class="animate-spin h-10 w-10 text-teal-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <span class="text-teal-700 font-bold tracking-wide">Đang đồng bộ dữ liệu...</span>
+    </div>
+
+    <!-- Header Section -->
+    <header class="w-full bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-teal-100 p-2.5 rounded-xl text-teal-600">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <h1 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
+                    XÁC NHẬN THÔNG TIN TIỀN LƯƠNG
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="refreshBtn" onclick="fetchData()" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold transition-all text-sm whitespace-nowrap">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+                <button id="deleteAllBtn" class="hidden flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2.5 rounded-xl font-bold shadow-sm hover:shadow-md transition-all text-sm whitespace-nowrap">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Xóa kỳ này
+                </button>
+                <button id="exportExcelBtn" class="hidden flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm hover:shadow-md transition-all text-sm whitespace-nowrap">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Xuất Thống Kê
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="w-full max-w-3xl mx-auto px-4 mt-8 flex-grow flex flex-col gap-8">
+        
+        <!-- Khu vực Chọn Tháng -->
+        <div class="bg-white p-4 md:p-5 rounded-[1.5rem] shadow-sm border border-slate-200 flex justify-between items-center z-10 relative">
+            <div class="flex items-center gap-4">
+                <div class="bg-teal-50 p-3 rounded-2xl text-teal-600 hidden sm:block">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <div>
+                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Kỳ lương khảo sát</p>
+                    <div class="flex items-center relative">
+                        <select id="globalMonthSelect" class="bg-transparent font-black text-2xl text-teal-700 outline-none appearance-none cursor-not-allowed pr-6 transition-all" disabled>
+                            <option value="Tháng 1">Tháng 1</option>
+                            <option value="Tháng 2">Tháng 2</option>
+                            <option value="Tháng 3">Tháng 3</option>
+                            <option value="Tháng 4">Tháng 4</option>
+                            <option value="Tháng 5">Tháng 5</option>
+                            <option value="Tháng 6">Tháng 6</option>
+                            <option value="Tháng 7">Tháng 7</option>
+                            <option value="Tháng 8">Tháng 8</option>
+                            <option value="Tháng 9">Tháng 9</option>
+                            <option value="Tháng 10">Tháng 10</option>
+                            <option value="Tháng 11">Tháng 11</option>
+                            <option value="Tháng 12">Tháng 12</option>
+                        </select>
+                        <svg id="monthSelectArrow" class="w-5 h-5 text-teal-500 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </div>
+            </div>
+            <button id="unlockMonthBtn" class="p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-slate-400 transition-all group" title="Mở khóa chọn tháng (Chỉ Admin/Kế toán)">
+                <svg id="lockIcon" class="w-5 h-5 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </button>
+        </div>
+
+        <!-- Form Khảo Sát -->
+        <div class="mt-[-1rem]">
+            <div class="bg-white p-6 rounded-[1.5rem] shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+                    <span class="text-teal-500">📝</span> Phiếu Xác Nhận
+                </h2>
+                <p class="text-xs text-slate-500 mb-5">Vui lòng kiểm tra email tiền lương trước khi gửi phản hồi.</p>
+                
+                <form id="salaryForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-600 mb-1">Họ và tên <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <select id="empName" required
+                                class="w-full pl-4 pr-10 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white focus:ring-2 focus:ring-teal-200 outline-none transition-all font-medium appearance-none cursor-pointer">
+                                <option value="" disabled selected hidden>-- Chọn họ và tên --</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-600 mb-2">Trạng thái xác nhận <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="confirmStatus" value="Đã xác nhận đúng" class="peer sr-only" required>
+                                <div class="p-5 flex flex-col items-center justify-center gap-1 rounded-[1.25rem] border-[1.5px] border-slate-200 bg-white text-slate-600 group-hover:border-emerald-300 peer-checked:bg-emerald-50/80 peer-checked:border-emerald-500 peer-checked:text-emerald-700 transition-all hover:shadow-sm">
+                                    <span class="text-[32px] drop-shadow-sm leading-none mb-1">✅</span>
+                                    <span class="font-bold text-[15px]">Đã đúng</span>
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer group">
+                                <input type="radio" name="confirmStatus" value="Cần điều chỉnh" class="peer sr-only">
+                                <div class="p-5 flex flex-col items-center justify-center gap-1 rounded-[1.25rem] border-[1.5px] border-slate-200 bg-white text-slate-600 group-hover:border-amber-300 peer-checked:bg-amber-50/80 peer-checked:border-amber-500 peer-checked:text-amber-700 transition-all hover:shadow-sm">
+                                    <span class="text-[32px] drop-shadow-sm leading-none mb-1">⚠️</span>
+                                    <span class="font-bold text-[15px]">Cần điều chỉnh</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div id="adjustmentNotice" class="hidden mt-5 p-4 bg-rose-50 border border-rose-200 rounded-[1rem] flex items-start gap-3 transition-all">
+                            <span class="text-xl leading-none mt-0.5">📞</span>
+                            <p class="text-[13px] sm:text-sm font-semibold text-rose-800 leading-snug">
+                                Vui lòng liên hệ trực tiếp Zalo: <strong class="text-rose-900 text-[15px] block sm:inline mt-1 sm:mt-0 tracking-wide">0974 573 151</strong> (gặp Thi) để báo cáo và tiến hành điều chỉnh.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-4">
+                        <button type="reset" title="Nhập lại từ đầu"
+                            class="px-5 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        </button>
+                        <button type="submit" id="submitBtn"
+                            class="flex-1 py-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-md hover:shadow-lg hover:shadow-teal-500/30 transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            Gửi Xác Nhận
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Danh Sách & Tìm Kiếm -->
+        <div class="flex flex-col gap-6">
+            
+            <div id="publicStats" class="flex flex-col gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-blue-50/80 border-[1.5px] border-blue-200 rounded-3xl p-5 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <span class="text-[36px] mb-2 drop-shadow-sm leading-none">👥</span>
+                        <p class="text-[14px] font-bold text-blue-600 mb-1.5">Đã gửi</p>
+                        <p class="text-[34px] font-black text-blue-700 tracking-tight leading-none" id="statTotal">0/0</p>
+                    </div>
+
+                    <div class="bg-green-50/80 border-[1.5px] border-green-200 rounded-3xl p-5 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <span class="text-[36px] mb-2 drop-shadow-sm leading-none">💚</span>
+                        <p class="text-[14px] font-bold text-green-600 mb-1.5">Đã đúng</p>
+                        <p class="text-[34px] font-black text-green-700 tracking-tight leading-none" id="statCorrect">0</p>
+                    </div>
+
+                    <div class="bg-yellow-50/80 border-[1.5px] border-yellow-200 rounded-3xl p-5 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <span class="text-[36px] mb-2 drop-shadow-sm leading-none">⏳</span>
+                        <p class="text-[14px] font-bold text-yellow-600 mb-1.5">Chưa gửi</p>
+                        <p class="text-[34px] font-black text-yellow-700 tracking-tight leading-none" id="statPending">0</p>
+                    </div>
+
+                    <div class="bg-pink-50/80 border-[1.5px] border-pink-200 rounded-3xl p-5 flex flex-col items-center justify-center text-center transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                        <span class="text-[36px] mb-2 drop-shadow-sm leading-none">📝</span>
+                        <p class="text-[14px] font-bold text-pink-600 mb-1.5">Cần chỉnh</p>
+                        <p class="text-[34px] font-black text-pink-700 tracking-tight leading-none" id="statAdjust">0</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center w-full mt-4">
+                    <button id="togglePendingBtn" class="flex items-center gap-2.5 bg-white border-[1.5px] border-slate-200 rounded-full px-7 py-3 shadow-sm hover:shadow-md hover:border-slate-300 transition-all text-slate-600 font-bold text-[15px] group">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        <span class="mt-0.5 tracking-wide">Xem danh sách chưa xác nhận ( <span id="pendingCountBtn" class="text-slate-800">0</span> )</span>
+                    </button>
+                    
+                    <div id="pendingListContainer" class="w-full mt-5 bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-200 hidden opacity-0 transition-opacity duration-300">
+                        <div id="pendingList" class="flex flex-wrap justify-center gap-2">
+                            <!-- Render via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lock Screen -->
+            <div id="adminLockScreen" class="bg-white p-8 rounded-[1.5rem] shadow-sm border border-slate-200 text-center flex flex-col items-center justify-center min-h-[300px]">
+                <div class="w-20 h-20 bg-teal-50 text-teal-400 rounded-full flex items-center justify-center mb-5">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">Thông Tin Được Bảo Mật</h3>
+                <p class="text-slate-500 mb-6 max-w-sm text-sm">Cán bộ, giáo viên và nhân viên chỉ gửi xác nhận. Danh sách chi tiết phản hồi chỉ dành cho Kế toán / Quản trị viên.</p>
+                <button id="showAdminLoginBtn" class="px-6 py-3 bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold rounded-xl transition-all flex items-center gap-2 text-sm border border-teal-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    Khu vực Kế toán (Cần MK)
+                </button>
+            </div>
+
+            <!-- Admin Area -->
+            <div id="adminContent" class="hidden flex-col gap-6">
+                <div class="bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-200">
+                    <div class="relative w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="searchInput" placeholder="Tìm tên nhân viên..."
+                            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 focus:bg-white outline-none transition-all text-sm font-medium">
+                    </div>
+                </div>
+
+                <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-10">
+                    <!-- Cards render here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Password Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 text-center relative">
+            <div class="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🔒</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Yêu cầu bảo mật</h3>
+            <p class="text-slate-500 mb-5 text-sm">Vui lòng nhập mật khẩu Quản trị/Kế toán để tiếp tục.</p>
+            
+            <input type="password" id="actionPassword" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 outline-none text-center font-bold tracking-[0.3em] mb-5 text-lg" placeholder="••••••••••">
+            
+            <div class="flex gap-3">
+                <button id="cancelPasswordBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmPasswordBtn" class="flex-1 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition-all">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 relative">
+            <h3 class="text-xl font-bold text-slate-800 mb-5 flex items-center gap-2">
+                <span class="text-teal-500">✏️</span> Cập Nhật Thông Tin
+            </h3>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Họ và tên:</label>
+                    <div class="relative">
+                        <select id="editName" class="w-full pl-4 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 outline-none font-semibold appearance-none cursor-pointer">
+                            <option value="" disabled hidden>-- Chọn họ và tên --</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Kỳ lương:</label>
+                    <div class="relative">
+                        <select id="editMonth" class="w-full pl-4 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 outline-none font-semibold appearance-none cursor-pointer">
+                            <option value="Tháng 1">Tháng 1</option>
+                            <option value="Tháng 2">Tháng 2</option>
+                            <option value="Tháng 3">Tháng 3</option>
+                            <option value="Tháng 4">Tháng 4</option>
+                            <option value="Tháng 5">Tháng 5</option>
+                            <option value="Tháng 6">Tháng 6</option>
+                            <option value="Tháng 7">Tháng 7</option>
+                            <option value="Tháng 8">Tháng 8</option>
+                            <option value="Tháng 9">Tháng 9</option>
+                            <option value="Tháng 10">Tháng 10</option>
+                            <option value="Tháng 11">Tháng 11</option>
+                            <option value="Tháng 12">Tháng 12</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Trạng thái:</label>
+                    <div class="relative">
+                        <select id="editStatus" class="w-full pl-4 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-teal-500 outline-none font-semibold appearance-none cursor-pointer">
+                            <option value="Đã xác nhận đúng">Đã xác nhận đúng</option>
+                            <option value="Cần điều chỉnh">Cần điều chỉnh</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="cancelEditBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmEditBtn" class="flex-1 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition-all">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 text-center relative">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🗑️</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Xác nhận xóa?</h3>
+            <p class="text-slate-500 mb-6 text-sm">Bản ghi xác nhận này sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn không?</p>
+            
+            <div class="flex gap-3">
+                <button id="cancelDeleteBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmDeleteBtn" class="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all">Xóa luôn</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete ALL Modal -->
+    <div id="deleteAllModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[1.5rem] shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 text-center relative">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">⚠️</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Xóa sạch dữ liệu?</h3>
+            <p class="text-slate-500 mb-6 text-sm">Toàn bộ khảo sát lương của <strong id="deleteAllMonthName" class="text-red-500">tháng này</strong> sẽ bị xóa vĩnh viễn. Không thể khôi phục!</p>
+            
+            <div class="flex gap-3">
+                <button id="cancelDeleteAllBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmDeleteAllBtn" class="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-all">Xóa tất cả</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-1/2 left-1/2 bg-slate-800/95 backdrop-blur-sm text-white px-6 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-3 z-[100] pointer-events-none">
+        <span class="text-2xl" id="toastIcon">✅</span>
+        <span class="font-bold text-base tracking-wide" id="toastMsg">Thao tác thành công!</span>
+    </div>
+
+    <!-- Script kết nối Google Apps Script (GAS Backend) -->
+    <script>
+        // ==========================================
+        // ĐIỀN LINK GOOGLE APPS SCRIPT WEB APP Ở ĐÂY
+        // ==========================================
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyiLnRCA_nuw2NXsfI4aK7mEU_k0xKZDgPbUl1940x5CXAXvQj02jRBDc9sciUzFTuK4w/exec";
+
+        let allEmployees = []; // Mảng danh sách nhân viên sẽ lấy động từ Google Sheets
+
+        // Lấy tháng thực tế hiện tại
+        const currentRealMonth = "Tháng " + (new Date().getMonth() + 1);
+        let selectedMonth = currentRealMonth;
+        
+        const globalMonthSelect = document.getElementById('globalMonthSelect');
+        const unlockMonthBtn = document.getElementById('unlockMonthBtn');
+        const monthSelectArrow = document.getElementById('monthSelectArrow');
+        if (globalMonthSelect) {
+            globalMonthSelect.value = selectedMonth;
+        }
+
+        // Biến state
+        let globalRecords = [];
+        let currentSearchTerm = '';
+        let currentEditId = null;
+        let currentDeleteId = null;
+
+        let isAdminAuthenticated = false;
+        let pendingAction = null; 
+        let pendingId = null;
+
+        // --- FETCH DỮ LIỆU TỪ GOOGLE SHEETS ---
+        async function fetchData() {
+            showGlobalLoader(true);
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Cập nhật danh sách nhân viên động
+                    if (result.employees && result.employees.length > 0) {
+                        allEmployees = result.employees;
+                        populateEmployeeSelects();
+                    }
+                    
+                    // Sắp xếp mới nhất lên đầu
+                    globalRecords = result.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    filterAndUpdateUI();
+                } else {
+                    console.error("Lỗi lấy dữ liệu:", result.error);
+                    showToast("Lỗi từ máy chủ: " + result.error, "❌");
+                }
+            } catch (error) {
+                console.error("Lỗi kết nối:", error);
+                alert("Lỗi kết nối (Failed to fetch).\n\nVui lòng kiểm tra trên Google Apps Script:\n1. Bấm nút Deploy -> Manage deployments\n2. Chọn Edit (Cây bút)\n3. Đảm bảo cấu hình là:\n   - Execute as: Me\n   - Who has access: Anyone (Tuyệt đối không chọn Anyone with Google account)\n4. Bấm Deploy để lưu.");
+                showToast("Lỗi kết nối máy chủ!", "❌");
+            } finally {
+                showGlobalLoader(false);
+            }
+        }
+
+        // --- GỌI API (POST) LÊN GOOGLE SHEETS ---
+        async function callGAS(action, data) {
+            showGlobalLoader(true);
+            try {
+                const payload = { action: action, data: data };
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                if(result.success) {
+                    await fetchData(); // Tải lại dữ liệu sau khi cập nhật thành công
+                    return true;
+                } else {
+                    console.error(result);
+                    alert("Có lỗi xảy ra: " + result.message);
+                    return false;
+                }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                alert("Không thể gửi dữ liệu (Lỗi CORS hoặc Mạng)!\n\nVui lòng đảm bảo Google Apps Script đã Deploy với tuỳ chọn 'Who has access: Anyone'.");
+                return false;
+            } finally {
+                showGlobalLoader(false);
+            }
+        }
+
+        // --- XỬ LÝ GIAO DIỆN & EVENTS ---
+
+        function populateEmployeeSelects() {
+            const empNameSelect = document.getElementById('empName');
+            const editNameSelect = document.getElementById('editName');
+            
+            if(!empNameSelect || !editNameSelect) return;
+
+            // Giữ lại option mặc định đầu tiên
+            empNameSelect.innerHTML = '<option value="" disabled selected hidden>-- Chọn họ và tên --</option>';
+            editNameSelect.innerHTML = '<option value="" disabled hidden>-- Chọn họ và tên --</option>';
+
+            allEmployees.forEach(name => {
+                empNameSelect.innerHTML += `<option value="${name}">${name}</option>`;
+                editNameSelect.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+        }
+
+        function showGlobalLoader(show) {
+            const loader = document.getElementById('globalLoader');
+            if (show) {
+                loader.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                loader.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        if (globalMonthSelect) {
+            globalMonthSelect.addEventListener('change', (e) => {
+                selectedMonth = e.target.value;
+                filterAndUpdateUI();
+            });
+        }
+
+        if (unlockMonthBtn) {
+            unlockMonthBtn.addEventListener('click', () => {
+                if (isAdminAuthenticated) {
+                    globalMonthSelect.focus();
+                    return;
+                }
+                pendingAction = 'unlockMonth';
+                showPasswordModal();
+            });
+        }
+
+        const togglePendingBtn = document.getElementById('togglePendingBtn');
+        const pendingListContainer = document.getElementById('pendingListContainer');
+        if(togglePendingBtn) {
+            togglePendingBtn.addEventListener('click', () => {
+                const isHidden = pendingListContainer.classList.contains('hidden');
+                if(isHidden) {
+                    pendingListContainer.classList.remove('hidden');
+                    setTimeout(() => pendingListContainer.classList.remove('opacity-0'), 10);
+                } else {
+                    pendingListContainer.classList.add('opacity-0');
+                    setTimeout(() => pendingListContainer.classList.add('hidden'), 300);
+                }
+            });
+        }
+
+        const radios = document.querySelectorAll('input[name="confirmStatus"]');
+        const adjustmentNotice = document.getElementById('adjustmentNotice');
+        radios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if(e.target.value === 'Cần điều chỉnh') {
+                    adjustmentNotice?.classList.remove('hidden');
+                } else {
+                    adjustmentNotice?.classList.add('hidden');
+                }
+            });
+        });
+
+        // 1. GỬI PHẢN HỒI (ADD)
+        const form = document.getElementById('salaryForm');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if(form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('empName').value.trim();
+                const status = document.querySelector('input[name="confirmStatus"]:checked').value;
+                
+                const currentMonthRecords = globalRecords.filter(r => (r.salaryMonth || "Tháng 6") === selectedMonth);
+                const hasSubmitted = currentMonthRecords.some(r => r.empName === name);
+                
+                if (hasSubmitted) {
+                    showToast(`Tên này đã xác nhận trong kỳ ${selectedMonth}. Mỗi người chỉ gửi 1 lần mỗi tháng!`, "⚠️");
+                    return;
+                }
+
+                const originalBtnHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang xử lý...`;
+                submitBtn.disabled = true;
+
+                const success = await callGAS('ADD', {
+                    empName: name,
+                    salaryMonth: selectedMonth,
+                    status: status
+                });
+
+                if (success) {
+                    form.reset();
+                    adjustmentNotice?.classList.add('hidden');
+                    showToast(`Đã gửi xác nhận cho kỳ ${selectedMonth}!`, "🎉");
+                }
+
+                submitBtn.innerHTML = originalBtnHtml;
+                submitBtn.disabled = false;
+            });
+        }
+
+        // 2. TÌM KIẾM
+        const searchInput = document.getElementById('searchInput');
+        if(searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentSearchTerm = e.target.value.toLowerCase().trim();
+                filterAndUpdateUI();
+            });
+        }
+
+        function filterAndUpdateUI() {
+            const currentMonthRecords = globalRecords.filter(r => (r.salaryMonth || "Tháng 6") === selectedMonth);
+            updateStats(currentMonthRecords);
+            
+            if (isAdminAuthenticated) {
+                renderCards(currentMonthRecords);
+            }
+        }
+
+        function updateStats(data) {
+            let countCorrect = 0;
+            let countAdjust = 0;
+            let submittedNames = new Set();
+
+            data.forEach(item => {
+                if(item.status === 'Đã xác nhận đúng') countCorrect++;
+                if(item.status === 'Cần điều chỉnh') countAdjust++;
+                if(item.empName) submittedNames.add(item.empName.trim());
+            });
+
+            const empSelect = document.getElementById('empName');
+            if (empSelect) {
+                Array.from(empSelect.options).forEach(opt => {
+                    if (opt.value && submittedNames.has(opt.value)) {
+                        opt.disabled = true;
+                        opt.style.display = 'none';
+                    } else if (opt.value) {
+                        opt.disabled = false;
+                        opt.style.display = '';
+                        opt.text = opt.value;
+                    }
+                });
+            }
+
+            document.getElementById('statTotal').innerText = `${submittedNames.size}/${allEmployees.length}`;
+            document.getElementById('statCorrect').innerText = countCorrect;
+            document.getElementById('statAdjust').innerText = countAdjust;
+
+            const pendingNames = allEmployees.filter(name => !submittedNames.has(name));
+            
+            document.getElementById('statPending').innerText = pendingNames.length;
+            document.getElementById('pendingCountBtn').innerText = pendingNames.length;
+
+            const pendingListEl = document.getElementById('pendingList');
+            if(pendingListEl) {
+                if(pendingNames.length === 0) {
+                    pendingListEl.innerHTML = '<span class="text-sm text-emerald-500 font-bold flex items-center gap-1">✅ Tuyệt vời! Tất cả đã hoàn thành xác nhận!</span>';
+                } else {
+                    pendingListEl.innerHTML = pendingNames.map(name => 
+                        `<span class="px-3 py-1.5 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all hover:bg-slate-100 cursor-default">${name}</span>`
+                    ).join('');
+                }
+            }
+        }
+
+        function renderCards(data) {
+            const cardsContainer = document.getElementById('cardsContainer');
+            if(!cardsContainer) return;
+
+            let filteredData = data;
+            if (currentSearchTerm) {
+                filteredData = data.filter(item => 
+                    (item.empName && item.empName.toLowerCase().includes(currentSearchTerm))
+                );
+            }
+
+            if (filteredData.length === 0) {
+                cardsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-[1.5rem] border border-slate-200 border-dashed">
+                        <span class="text-4xl block mb-3">📭</span>
+                        <p class="text-slate-500 font-bold">Chưa có dữ liệu phản hồi cho ${selectedMonth}!</p>
+                    </div>`;
+                return;
+            }
+
+            cardsContainer.innerHTML = '';
+
+            filteredData.forEach(item => {
+                const isCorrect = item.status === 'Đã xác nhận đúng';
+                const statusClass = isCorrect ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200';
+                const statusIcon = isCorrect ? '✅' : '⚠️';
+
+                const cardHTML = `
+                    <div class="bg-white p-5 rounded-[1.25rem] card-hover transition-all duration-300 border border-slate-200 relative flex flex-col justify-between h-full group">
+                        <div>
+                            <div class="flex justify-between items-start gap-2 mb-3">
+                                <div>
+                                    <h3 class="font-extrabold text-lg text-slate-800 leading-tight">${item.empName}</h3>
+                                </div>
+                            </div>
+                            <div class="inline-flex items-center gap-1.5 mb-3 text-sm font-bold border px-3 py-1.5 rounded-xl ${statusClass}">
+                                <span>${statusIcon}</span> ${item.status}
+                            </div>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between pt-3 border-t border-slate-100">
+                            <span class="text-[11px] text-slate-400 font-medium">
+                                🕒 ${formatTime(item.createdAt)}
+                            </span>
+                            <div class="flex gap-2">
+                                <button onclick="handleProtectedAction('edit', '${item.id}')" title="Sửa" class="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                                <button onclick="handleProtectedAction('delete', '${item.id}')" title="Xóa" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cardsContainer.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        // --- BẢO MẬT ADMIN ---
+        function showPasswordModal() {
+            const pwdModal = document.getElementById('passwordModal');
+            const actionPassword = document.getElementById('actionPassword');
+            if(!pwdModal || !actionPassword) return;
+
+            actionPassword.value = '';
+            pwdModal.classList.remove('hidden');
+            setTimeout(() => {
+                pwdModal.classList.remove('opacity-0');
+                pwdModal.querySelector('div').classList.remove('scale-95');
+                actionPassword.focus();
+            }, 10);
+        }
+
+        const closePasswordModal = () => {
+            const pwdModal = document.getElementById('passwordModal');
+            if(!pwdModal) return;
+            pwdModal.classList.add('opacity-0');
+            pwdModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => pwdModal.classList.add('hidden'), 300);
+            pendingAction = null;
+            pendingId = null;
+        };
+
+        document.getElementById('showAdminLoginBtn')?.addEventListener('click', () => {
+            pendingAction = 'view';
+            showPasswordModal();
+        });
+
+        window.handleProtectedAction = (action, id) => {
+            if (isAdminAuthenticated) {
+                if (action === 'edit') window.openEditModal(id);
+                if (action === 'delete') window.openDeleteModal(id);
+            } else {
+                pendingAction = action;
+                pendingId = id;
+                showPasswordModal();
+            }
+        };
+
+        document.getElementById('cancelPasswordBtn')?.addEventListener('click', closePasswordModal);
+
+        const verifyPassword = () => {
+            const pwdInput = document.getElementById('actionPassword');
+            if (pwdInput && pwdInput.value === '0788095095') {
+                isAdminAuthenticated = true;
+                
+                document.getElementById('adminLockScreen')?.classList.add('hidden');
+                document.getElementById('adminContent')?.classList.remove('hidden');
+                document.getElementById('adminContent')?.classList.add('flex');
+                document.getElementById('exportExcelBtn')?.classList.remove('hidden');
+                document.getElementById('deleteAllBtn')?.classList.remove('hidden');
+                
+                const action = pendingAction;
+                const id = pendingId;
+                closePasswordModal();
+                
+                setTimeout(() => {
+                    if (action === 'unlockMonth') {
+                        showToast('Đã mở khóa thay đổi Kỳ lương!', '🔓');
+                        if (globalMonthSelect) {
+                            globalMonthSelect.disabled = false;
+                            globalMonthSelect.classList.remove('cursor-not-allowed');
+                            globalMonthSelect.classList.add('cursor-pointer', 'border-b-2', 'border-teal-500', 'pb-1');
+                        }
+                        if (monthSelectArrow) monthSelectArrow.classList.remove('opacity-0');
+                        if (unlockMonthBtn) {
+                            unlockMonthBtn.innerHTML = `<svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>`;
+                            unlockMonthBtn.title = "Đã mở khóa";
+                        }
+                    } else {
+                        showToast('Xác thực kế toán thành công!', '🔓');
+                    }
+                    
+                    if (action === 'view' || action === 'unlockMonth') {
+                        filterAndUpdateUI(); 
+                    } else if (action === 'edit') {
+                        window.openEditModal(id);
+                    } else if (action === 'delete') {
+                        window.openDeleteModal(id);
+                    }
+                }, 300);
+            } else {
+                showToast('Mật khẩu không chính xác!', '❌');
+                if (pwdInput) {
+                    pwdInput.value = '';
+                    pwdInput.focus();
+                }
+            }
+        };
+
+        document.getElementById('confirmPasswordBtn')?.addEventListener('click', verifyPassword);
+        document.getElementById('actionPassword')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyPassword();
+        });
+
+        // --- SỬA ---
+        const editModal = document.getElementById('editModal');
+        window.openEditModal = (id) => {
+            const record = globalRecords.find(s => s.id === id);
+            if(!record || !editModal) return;
+            currentEditId = id;
+            
+            document.getElementById('editName').value = record.empName || '';
+            document.getElementById('editMonth').value = record.salaryMonth || currentRealMonth;
+            document.getElementById('editStatus').value = record.status || 'Đã xác nhận đúng';
+            
+            editModal.classList.remove('hidden');
+            setTimeout(() => {
+                editModal.classList.remove('opacity-0');
+                editModal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeEditModal = () => {
+            if(!editModal) return;
+            editModal.classList.add('opacity-0');
+            editModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => editModal.classList.add('hidden'), 300);
+            currentEditId = null;
+        };
+
+        document.getElementById('cancelEditBtn')?.addEventListener('click', closeEditModal);
+        document.getElementById('confirmEditBtn')?.addEventListener('click', async () => {
+            if(!currentEditId) return;
+            const newName = document.getElementById('editName').value.trim();
+            const newMonth = document.getElementById('editMonth').value.trim();
+            const newStatus = document.getElementById('editStatus').value.trim();
+            
+            if(!newName || !newMonth) {
+                showToast("Vui lòng nhập đủ thông tin!", "❌");
+                return;
+            }
+
+            const success = await callGAS('EDIT', {
+                id: currentEditId,
+                empName: newName,
+                salaryMonth: newMonth,
+                status: newStatus
+            });
+
+            if (success) {
+                showToast("Cập nhật thành công!", "✏️");
+                closeEditModal();
+            }
+        });
+
+        // --- XÓA ---
+        const deleteModal = document.getElementById('deleteModal');
+        window.openDeleteModal = (id) => {
+            currentDeleteId = id;
+            if(!deleteModal) return;
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteModal.classList.remove('opacity-0');
+                deleteModal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeDeleteModal = () => {
+            if(!deleteModal) return;
+            deleteModal.classList.add('opacity-0');
+            deleteModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => deleteModal.classList.add('hidden'), 300);
+            currentDeleteId = null;
+        };
+
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', closeDeleteModal);
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
+            if(!currentDeleteId) return;
+            const success = await callGAS('DELETE', { id: currentDeleteId });
+            if (success) {
+                showToast("Đã xóa bản ghi!", "🗑️");
+                closeDeleteModal();
+            }
+        });
+
+        // --- XÓA TẤT CẢ ---
+        const deleteAllModal = document.getElementById('deleteAllModal');
+        window.openDeleteAllModal = () => {
+            if(!deleteAllModal) return;
+            document.getElementById('deleteAllMonthName').innerText = selectedMonth;
+            deleteAllModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteAllModal.classList.remove('opacity-0');
+                deleteAllModal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeDeleteAllModal = () => {
+            if(!deleteAllModal) return;
+            deleteAllModal.classList.add('opacity-0');
+            deleteAllModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => deleteAllModal.classList.add('hidden'), 300);
+        };
+
+        document.getElementById('deleteAllBtn')?.addEventListener('click', () => {
+            const dataToDelete = globalRecords.filter(r => (r.salaryMonth || "Tháng 6") === selectedMonth);
+            if(dataToDelete.length === 0) {
+                showToast(`Chưa có dữ liệu nào trong ${selectedMonth} để xóa!`, "⚠️");
+                return;
+            }
+            window.openDeleteAllModal();
+        });
+
+        document.getElementById('cancelDeleteAllBtn')?.addEventListener('click', closeDeleteAllModal);
+        document.getElementById('confirmDeleteAllBtn')?.addEventListener('click', async () => {
+            const success = await callGAS('DELETE_ALL', { salaryMonth: selectedMonth });
+            if (success) {
+                showToast(`Đã xóa sạch dữ liệu ${selectedMonth}!`, "🗑️");
+                closeDeleteAllModal();
+            }
+        });
+
+        // --- XUẤT EXCEL ---
+        document.getElementById('exportExcelBtn')?.addEventListener('click', () => {
+            const dataToExport = globalRecords.filter(r => (r.salaryMonth || "Tháng 6") === selectedMonth);
+
+            if(dataToExport.length === 0) {
+                showToast(`Chưa có dữ liệu cho ${selectedMonth} để xuất!`, "⚠️");
+                return;
+            }
+
+            const excelData = dataToExport.map(item => {
+                return {
+                    "Kỳ lương": item.salaryMonth || "Tháng 6",
+                    "Họ và tên": item.empName || '',
+                    "Trạng thái": item.status || '',
+                    "Thời gian xác nhận": formatTime(item.createdAt)
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "XacNhanLuong");
+
+            const wscols = [ {wch: 15}, {wch: 30}, {wch: 25}, {wch: 25} ];
+            worksheet['!cols'] = wscols;
+
+            XLSX.writeFile(workbook, `ThongKe_${selectedMonth.replace(' ', '')}_${new Date().getTime()}.xlsx`);
+            showToast("Đã tải xuống file Excel!", "📊");
+        });
+
+        // --- TIỆN ÍCH ---
+        function showToast(message, icon) {
+            const toastIconEl = document.getElementById('toastIcon');
+            const toastMsgEl = document.getElementById('toastMsg');
+            
+            if(toastIconEl) toastIconEl.innerText = icon;
+            if(toastMsgEl) toastMsgEl.innerText = message;
+            
+            const toast = document.getElementById('toast');
+            if(toast) {
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        }
+
+        // HÀM XỬ LÝ THỜI GIAN MỚI (DÀNH CHO GOOGLE SHEETS)
+        function formatTime(dateString) {
+            if (!dateString) return "Vừa gửi";
+            try {
+                // Parse chuỗi ngày chuẩn ISO từ Google Sheets
+                const date = new Date(dateString);
+                
+                // Nếu bị lỗi (Invalid Date)
+                if (isNaN(date.getTime())) {
+                    return String(dateString);
+                }
+
+                const hours = String(date.getHours()).padStart(2, '0');
+                const mins = String(date.getMinutes()).padStart(2, '0');
+                const secs = String(date.getSeconds()).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                
+                // Trả về định dạng: 14:04:56 - 29/06/2026
+                return `${hours}:${mins}:${secs} - ${day}/${month}/${year}`;
+            } catch(e) {
+                return String(dateString);
+            }
+        }
+
+        // Tự động fetch dữ liệu khi mở trang
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+        });
+    </script>
+</body>
+</html>

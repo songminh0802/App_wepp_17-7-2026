@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản lý File</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Inter & Dancing Script -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .font-dancing { font-family: 'Dancing Script', cursive; }
+        
+        /* Hiệu ứng mượt cho Sidebar và Modal */
+        .transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+        .sidebar-open { transform: translateX(0); }
+        .sidebar-closed { transform: translateX(-100%); }
+        
+        /* Card Hover Effects */
+        .edu-card {
+            transition: all 0.3s ease;
+        }
+        .edu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Ẩn các section SPA mặc định */
+        .spa-view { display: none; }
+        .spa-view.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Định dạng nội dung HTML hiển thị */
+        .prose a { color: #db2777; text-decoration: underline; }
+        .prose ul { list-style-type: disc; padding-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        .prose h3 { font-weight: 700; font-size: 1.125rem; margin-bottom: 0.75rem; }
+        .prose p { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800">
+
+    <!-- ========================================== -->
+    <!-- UI LAYOUT: NAVBAR & SIDEBAR                -->
+    <!-- ========================================== -->
+    
+    <!-- Navbar -->
+    <header class="bg-pink-600 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="btn-hamburger" class="text-white hover:text-pink-200 focus:outline-none text-2xl">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h1 class="text-xl font-bold tracking-wide cursor-pointer flex items-center" onclick="navigate('home')">
+                    <i class="fa-solid fa-folder-tree mr-2"></i> Hệ thống Quản lý File
+                </h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-2xl z-50 sidebar-closed transition-transform flex flex-col">
+        <div class="p-5 border-b flex justify-between items-center bg-pink-50">
+            <h2 class="font-bold text-pink-800 text-lg">Menu Hệ Thống</h2>
+            <button id="btn-close-sidebar" class="text-slate-500 hover:text-red-500 text-xl">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="navigate('home')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-pink-50 text-slate-700 hover:text-pink-700 transition">
+                <i class="fa-solid fa-home w-6"></i> Trang chủ Thư mục
+            </button>
+            
+            <button id="nav-admin-btn" onclick="checkAdminAccess()" class="w-full text-left px-4 py-3 rounded-lg hover:bg-pink-50 text-slate-700 hover:text-pink-700 transition">
+                <i class="fa-solid fa-cogs w-6"></i> Quản trị File
+            </button>
+        </nav>
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- UI LAYOUT: MAIN CONTENT (SPA VIEWS)        -->
+    <!-- ========================================== -->
+    
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- === VIEW: TRANG CHỦ (HOME) === -->
+        <section id="view-home" class="spa-view active">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-slate-800 mb-3">Hệ thống Lưu trữ & Quản lý File Tập trung</h2>
+                <p class="text-lg text-slate-500 max-w-2xl mx-auto">Nền tảng giúp quản lý, phân loại và truy cập các thư mục, tài liệu nội bộ một cách khoa học và bảo mật.</p>
+            </div>
+
+            <!-- Lưới hiển thị Thẻ (Thư mục gốc) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8" id="cards-container">
+                <!-- Nội dung sẽ được load động bằng JS -->
+            </div>
+            <div id="home-empty-state" class="text-center py-10 hidden">
+                <i class="fa-regular fa-folder-open text-5xl text-slate-300 mb-3"></i>
+                <p class="text-slate-500">Chưa có thư mục nào. Hãy vào <a href="#" onclick="navigate('admin')" class="text-pink-600 hover:underline">Quản trị viên</a> để tạo cấu trúc.</p>
+            </div>
+        </section>
+
+
+        <!-- === VIEW: DYNAMIC FOLDER (Hiển thị các Thẻ con của 1 Thư mục) === -->
+        <section id="view-folder" class="spa-view">
+            <div class="mb-6">
+                <button onclick="navigate('home')" class="text-pink-600 hover:text-pink-800 flex items-center gap-2 mb-4 font-medium transition">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại Danh sách
+                </button>
+                <h2 id="folder-title" class="text-2xl font-bold text-slate-800"></h2>
+                <p id="folder-desc" class="text-slate-500 mt-1"></p>
+            </div>
+
+            <!-- Lưới hiển thị Thẻ con -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8" id="folder-cards-container">
+                <!-- HTML chèn bằng JS -->
+            </div>
+            
+            <div id="folder-empty-state" class="text-center py-10 hidden">
+                <i class="fa-solid fa-folder-minus text-5xl text-slate-300 mb-3"></i>
+                <p class="text-slate-500">Thư mục này hiện rỗng, chưa có tệp tin hay thư mục con nào.</p>
+            </div>
+        </section>
+
+        <!-- === VIEW: CONTENT (Hiển thị nội dung chi tiết của Thẻ con) === -->
+        <section id="view-content" class="spa-view">
+            <div class="mb-6">
+                <button id="btn-back-to-folder" class="text-pink-600 hover:text-pink-800 flex items-center gap-2 mb-4 font-medium transition">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại Thư mục
+                </button>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 id="content-title" class="text-2xl font-bold text-slate-800"></h2>
+                        <p id="content-desc" class="text-slate-500 mt-1"></p>
+                    </div>
+                    <button id="btn-edit-content" class="text-slate-400 hover:text-pink-600 transition" title="Chỉnh sửa nội dung file">
+                        <i class="fa-solid fa-pen-to-square text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-slate-100">
+                <div id="content-html-display" class="prose max-w-none text-slate-600">
+                    <!-- HTML content goes here -->
+                </div>
+            </div>
+        </section>
+
+
+        <!-- === VIEW: QUẢN TRỊ (ADMIN) === -->
+        <section id="view-admin" class="spa-view">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-server mr-2 text-pink-600"></i>Quản lý Cấu trúc File (Thư mục / Tệp)</h2>
+            </div>
+
+            <!-- Tab Content: Cards -->
+            <div id="tab-cards" class="admin-tab-content">
+                <div class="mb-4 flex justify-end">
+                    <button onclick="openCardModal()" class="bg-pink-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-pink-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Thêm Thư mục / Tệp mới
+                    </button>
+                </div>
+                <div class="bg-white shadow-sm rounded-lg border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-40">Thao tác</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cấu trúc / Tên File</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Mô tả / Liên kết ngoài</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-cards-tbody" class="bg-white divide-y divide-slate-200">
+                                <!-- Cards đổ từ Firestore -->
+                                <tr><td colspan="3" class="px-6 py-4 text-center text-sm text-slate-500">Đang tải dữ liệu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODALS (CARD EDIT)                         -->
+    <!-- ========================================== -->
+
+    <!-- Card Form Modal (Add/Edit) -->
+    <div id="card-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 id="card-modal-title" class="text-lg font-bold text-slate-800">Thêm Mục Mới</h3>
+                <button onclick="closeCardModal()" class="text-slate-400 hover:text-red-500 transition">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+            <form id="card-form" class="flex flex-col overflow-hidden">
+                <!-- Vùng cuộn nhập liệu -->
+                <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                    <input type="hidden" id="card-id">
+                    
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Biểu tượng</label>
+                            <input type="text" id="card-emoji" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-center text-xl focus:ring-2 focus:ring-pink-500" placeholder="📁">
+                        </div>
+                        <div class="col-span-3">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tên Thư mục / Tệp tin *</label>
+                            <input type="text" id="card-title" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500" placeholder="VD: Tài liệu nội bộ 2026">
+                        </div>
+                    </div>
+
+                    <!-- Thư mục cha -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nằm trong Thư mục (Cha)</label>
+                        <select id="card-parent" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 bg-slate-50">
+                            <option value="">-- Cấp cao nhất (Thư mục gốc) --</option>
+                            <!-- Render danh sách thư mục gốc vào đây -->
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả ngắn</label>
+                        <textarea id="card-desc" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500" placeholder="Mô tả tệp tin / thư mục này..."></textarea>
+                    </div>
+                    
+                    <div class="flex items-center mt-2 pt-2">
+                        <input type="checkbox" id="card-newtab" class="w-4 h-4 text-pink-600 border-slate-300 rounded focus:ring-pink-500">
+                        <label for="card-newtab" class="ml-2 block text-sm text-slate-700">Tệp này là một liên kết (Tự động chọn nếu tải file lên)</label>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <input type="text" id="card-link" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500" placeholder="Dán link hoặc tải file ở bên dưới...">
+                        
+                        <!-- Upload Cloudinary UI -->
+                        <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 border-dashed">
+                            <label class="cursor-pointer bg-white px-3 py-2 border border-slate-300 rounded shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 transition flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-up text-pink-600"></i> Tải file lên Cloud
+                                <input type="file" id="card-file-upload" class="hidden">
+                            </label>
+                            <span id="upload-status" class="text-sm text-slate-500 italic">Chưa chọn file</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer cố định -->
+                <div class="px-6 py-4 bg-slate-50 border-t flex justify-end gap-3 shrink-0">
+                    <button type="button" onclick="closeCardModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition">Hủy</button>
+                    <button type="submit" id="btn-save-card" class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Content Form Modal (Sửa nội dung Tab) -->
+    <div id="content-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 id="content-modal-title" class="text-lg font-bold text-slate-800">Chỉnh sửa nội dung</h3>
+                <button onclick="closeContentModal()" class="text-slate-400 hover:text-red-500 transition">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+            <form id="content-form" class="flex flex-col overflow-hidden">
+                <!-- Vùng cuộn nhập liệu -->
+                <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                    <input type="hidden" id="content-tab-id">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Nội dung văn bản / HTML của File</label>
+                        <textarea id="content-html" rows="10" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-pink-500 outline-none font-mono text-sm" placeholder="Nhập nội dung ở đây..."></textarea>
+                    </div>
+                </div>
+                <!-- Footer cố định -->
+                <div class="px-6 py-4 bg-slate-50 border-t flex justify-end gap-3 shrink-0">
+                    <button type="button" onclick="closeContentModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition">Hủy</button>
+                    <button type="submit" id="btn-save-content" class="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition flex items-center gap-2">
+                        <i class="fa-solid fa-save"></i> Cập nhật
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- FOOTER                                     -->
+    <!-- ========================================== -->
+    <footer class="mt-auto py-6 text-center border-t border-slate-200 bg-white relative z-40">
+        <p class="text-slate-500 text-lg font-dancing tracking-wider">
+            © 2026 Designed with <span class="text-red-500">❤️</span> Thầy Cường dạy Toán
+        </p>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT: FIREBASE & LOGIC               -->
+    <!-- ========================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, updateDoc, deleteDoc, addDoc, onSnapshot, query, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Cấu hình Database cũ được giữ nguyên
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- 2. GLOBAL STATE ---
+        let allCards = [];
+        let allTabContents = {};
+
+        // Thay đổi TÊN COLLECTION THEO YÊU CẦU:
+        const MAIN_COLLECTION = "quanlyfile";
+        const CONTENT_COLLECTION = "quanlyfile_contents";
+
+        // Cấu hình Cloudinary
+        const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/damxt8noh/auto/upload';
+        const CLOUDINARY_PRESET = 'quanlyfilemau';
+
+        // --- 3. UI INTERACTION LOGIC ---
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const btnBurger = document.getElementById('btn-hamburger');
+        const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('sidebar-closed');
+            if (isClosed) {
+                sidebar.classList.remove('sidebar-closed');
+                sidebar.classList.add('sidebar-open');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('sidebar-closed');
+                sidebar.classList.remove('sidebar-open');
+                overlay.classList.add('hidden');
+            }
+        }
+        btnBurger.addEventListener('click', toggleSidebar);
+        btnCloseSidebar.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
+
+        // SPA Navigation
+        window.navigate = function(viewId) {
+            document.querySelectorAll('.spa-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            if(window.innerWidth < 1024 && !sidebar.classList.contains('sidebar-closed')) {
+                toggleSidebar(); 
+            }
+        };
+
+        // Truy cập thẳng vào trang Quản trị (Đã bỏ mật khẩu)
+        window.checkAdminAccess = function() {
+            navigate('admin');
+        };
+
+        // Danh sách Themes (Giao diện)
+        const cardThemes = [
+            { blob: 'bg-purple-200', iconBg: 'bg-gradient-to-br from-purple-400 to-purple-500', textColor: 'text-purple-600', barBg: 'bg-purple-300' },
+            { blob: 'bg-emerald-100', iconBg: 'bg-gradient-to-br from-emerald-400 to-emerald-500', textColor: 'text-emerald-600', barBg: 'bg-emerald-300' },
+            { blob: 'bg-orange-100', iconBg: 'bg-gradient-to-br from-orange-400 to-orange-500', textColor: 'text-orange-500', barBg: 'bg-orange-300' },
+            { blob: 'bg-blue-100', iconBg: 'bg-gradient-to-br from-blue-400 to-blue-500', textColor: 'text-blue-600', barBg: 'bg-blue-300' },
+            { blob: 'bg-rose-100', iconBg: 'bg-gradient-to-br from-rose-400 to-rose-500', textColor: 'text-rose-500', barBg: 'bg-rose-300' }
+        ];
+
+        // Logic đi vào Thư mục (Mở View Động)
+        window.navigateToFolder = function(folderId) {
+            const folder = allCards.find(c => c.id === folderId);
+            if (!folder) return;
+
+            // Nếu folder này trỏ ra link ngoài, mở link luôn
+            if (folder.link && folder.link.trim() !== '') {
+                window.open(folder.link, folder.newTab ? '_blank' : '_self');
+                return;
+            }
+
+            document.getElementById('folder-title').innerHTML = `<i class="fa-regular fa-folder-open mr-2 text-pink-600"></i>${folder.title}`;
+            document.getElementById('folder-desc').innerText = folder.desc || '';
+            
+            const children = allCards.filter(c => c.parentId === folderId);
+            
+            const cardsContainer = document.getElementById('folder-cards-container');
+            const emptyState = document.getElementById('folder-empty-state');
+            
+            if (children.length === 0) {
+                cardsContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                let cardsHtml = '';
+                
+                children.forEach((child, index) => {
+                    const theme = cardThemes[index % cardThemes.length];
+                    
+                    let clickAction = `MapsToContent('${child.id}')`;
+                    let actionText = 'Mở tệp tin';
+                    if (child.link && child.link.trim() !== '') {
+                        clickAction = `window.open('${child.link}', '${child.newTab ? '_blank' : '_self'}')`;
+                        actionText = 'Mở liên kết file';
+                    }
+                    
+                    cardsHtml += `
+                        <div onclick="${clickAction}" class="bg-white rounded-[2rem] shadow-sm hover:shadow-md border border-slate-50 p-6 sm:p-8 relative overflow-hidden flex flex-col text-left group cursor-pointer transition-all duration-300 hover:-translate-y-1 min-h-[260px]">
+                            <div class="absolute -top-12 -right-12 w-56 h-56 rounded-full ${theme.blob} opacity-50 blur-[40px] z-0 transition-transform group-hover:scale-110 duration-500"></div>
+
+                            <div class="w-16 h-16 rounded-2xl ${theme.iconBg} text-white flex items-center justify-center text-3xl mb-6 relative z-10 shadow-inner">
+                                ${child.emoji || '📄'}
+                            </div>
+
+                            <h3 class="text-[1.15rem] font-black text-slate-800 uppercase tracking-tight mb-2 relative z-10 leading-snug line-clamp-3">
+                                ${child.title}
+                            </h3>
+
+                            <div class="flex-1 relative z-10">
+                                <p class="text-sm text-slate-500 line-clamp-2 mt-1">${child.desc || ''}</p>
+                            </div>
+
+                            <div class="w-full h-1.5 bg-slate-100 rounded-full mb-4 mt-6 relative z-10 overflow-hidden">
+                                <div class="h-full rounded-full w-2/5 ${theme.barBg}"></div>
+                            </div>
+
+                            <div class="text-sm font-bold ${theme.textColor} flex items-center relative z-10">
+                                ${actionText} <i class="fa-solid fa-arrow-right ml-1.5 transition-transform group-hover:translate-x-1.5"></i>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                cardsContainer.innerHTML = cardsHtml;
+            }
+
+            navigate('folder');
+        };
+
+        // Logic Mở màn hình Nội dung Chi tiết File
+        window.navigateToContent = function(childId) {
+            const child = allCards.find(c => c.id === childId);
+            if (!child) return;
+
+            // Gắn sự kiện nút Quay lại trỏ về Thư mục cha
+            const backBtn = document.getElementById('btn-back-to-folder');
+            backBtn.onclick = () => navigateToFolder(child.parentId);
+            
+            document.getElementById('content-title').innerText = child.title;
+            document.getElementById('content-desc').innerText = child.desc || '';
+            
+            const htmlData = allTabContents[child.id] ? allTabContents[child.id].html : '<p class="italic text-slate-400">Tệp này chưa có nội dung. Nhấn vào biểu tượng bút góc phải phía trên để thêm nội dung.</p>';
+            
+            const displayArea = document.getElementById('content-html-display');
+            displayArea.innerHTML = htmlData;
+            displayArea.setAttribute('data-current-id', child.id); // Lưu lại ID để update realtime
+            
+            document.getElementById('btn-edit-content').onclick = () => openContentModal(child.id);
+
+            navigate('content');
+        };
+
+        // Modals Logic
+        const cardModal = document.getElementById('card-modal');
+        
+        // Danh sách Emoji tự động
+        const defaultEmojis = ['📁', '📂', '📄', '📊', '📈', '📋', '📝', '🗂️', '🗃️', '📑', '💼', '📦', '📌', '📎', '🔗', '🌐', '🛡️', '⚙️', '📸', '🎥'];
+        
+        window.openCardModal = (id=null, parentId='') => {
+            document.getElementById('card-form').reset();
+            document.getElementById('card-id').value = id || '';
+            document.getElementById('card-parent').value = parentId;
+            document.getElementById('upload-status').innerText = 'Chưa chọn file'; // Reset status text
+            
+            if (id) {
+                const card = allCards.find(c => c.id === id);
+                if (card) {
+                    document.getElementById('card-emoji').value = card.emoji || '';
+                    document.getElementById('card-title').value = card.title || '';
+                    document.getElementById('card-desc').value = card.desc || '';
+                    document.getElementById('card-link').value = card.link || '';
+                    document.getElementById('card-newtab').checked = card.newTab || false;
+                    document.getElementById('card-parent').value = card.parentId || '';
+                }
+                document.getElementById('card-modal-title').innerText = "Sửa Tệp/Thư mục";
+            } else {
+                const randomEmoji = defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
+                document.getElementById('card-emoji').value = randomEmoji;
+                document.getElementById('card-modal-title').innerText = "Thêm Mục Mới";
+            }
+            cardModal.classList.remove('hidden');
+        }
+        window.closeCardModal = () => { cardModal.classList.add('hidden'); document.getElementById('card-form').reset(); }
+
+        const contentModal = document.getElementById('content-modal');
+        
+        window.openContentModal = (tabId) => {
+            const tab = allCards.find(c => c.id === tabId);
+            if (!tab) return;
+            
+            document.getElementById('content-tab-id').value = tabId;
+            document.getElementById('content-modal-title').innerText = `Chỉnh sửa nội dung file: ${tab.title}`;
+            
+            // Lấy từ cache
+            const currentHtml = allTabContents[tabId] ? allTabContents[tabId].html : '';
+            document.getElementById('content-html').value = currentHtml;
+            contentModal.classList.remove('hidden');
+        }
+        window.closeContentModal = () => { contentModal.classList.add('hidden'); }
+
+
+        // --- CHỨC NĂNG UPLOAD LÊN CLOUDINARY ---
+        document.getElementById('card-file-upload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const statusText = document.getElementById('upload-status');
+            const linkInput = document.getElementById('card-link');
+            const btnSave = document.getElementById('btn-save-card');
+            const isNewTab = document.getElementById('card-newtab');
+
+            // Cập nhật UI hiển thị trạng thái đang tải
+            statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-pink-600"></i> Đang tải lên...';
+            btnSave.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_PRESET);
+
+            try {
+                // Gọi API upload của Cloudinary (auto resource type để nhận mọi loại file)
+                const res = await fetch(CLOUDINARY_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (data.secure_url) {
+                    // Cập nhật URL vào ô input và tự check nút tick liên kết
+                    linkInput.value = data.secure_url;
+                    isNewTab.checked = true;
+                    statusText.innerHTML = '<i class="fa-solid fa-check text-green-600"></i> Tải lên thành công!';
+                } else {
+                    throw new Error(data.error?.message || 'Lỗi không xác định từ Cloudinary');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                statusText.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500"></i> Lỗi: ${error.message}`;
+            } finally {
+                btnSave.disabled = false;
+                e.target.value = ''; // Xóa value để có thể upload lại cùng một file nếu cần
+            }
+        });
+
+
+        // --- 5. FIRESTORE CRUD CARDS ---
+        function renderAdminCardRow(card, level = 0) {
+            const isChild = level > 0;
+            const paddingStyle = isChild ? `style="padding-left: 2rem;"` : '';
+            const prefix = isChild ? `<span class="text-slate-300 mr-2">↳</span>` : '';
+            const icon = isChild ? '📄' : '📁';
+            const emoji = card.emoji || icon;
+            
+            return `
+                <tr class="${isChild ? 'bg-slate-50/50' : ''}">
+                    <td class="px-6 py-4 whitespace-nowrap text-left text-sm font-medium w-40">
+                        <button onclick="openCardModal('${card.id}')" class="text-pink-600 hover:text-pink-900 mr-3"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
+                        <button onclick="deleteCard('${card.id}')" class="text-red-600 hover:text-red-900"><i class="fa-solid fa-trash"></i> Xóa</button>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center" ${paddingStyle}>
+                            ${prefix}
+                            <div class="text-xl mr-3">${emoji}</div>
+                            <div class="text-sm ${isChild ? 'text-slate-600' : 'font-bold text-pink-700'}">${card.title}</div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-slate-700">${card.desc || '<i class="text-slate-400">Không có</i>'}</div>
+                        ${card.link ? `<div class="text-xs text-blue-500 truncate mt-1 max-w-[200px] sm:max-w-xs md:max-w-md"><i class="fa-solid fa-link mr-1"></i>${card.link}</div>` : ''}
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Lắng nghe dữ liệu Tree từ MAIN_COLLECTION (quanlyfile)
+        onSnapshot(query(collection(db, MAIN_COLLECTION)), (snapshot) => {
+            allCards = [];
+            snapshot.forEach(doc => {
+                allCards.push({ id: doc.id, ...doc.data() });
+            });
+            
+            const rootCards = allCards.filter(c => !c.parentId);
+            
+            // 1. Cập nhật bảng Admin
+            let adminHtml = '';
+            const parentSelect = document.getElementById('card-parent');
+            const currentSelectedParent = parentSelect.value;
+            
+            // Reset Dropdown Cha
+            parentSelect.innerHTML = '<option value="">-- Cấp cao nhất (Thư mục gốc) --</option>';
+
+            if (rootCards.length === 0) {
+                adminHtml = '<tr><td colspan="3" class="px-6 py-4 text-center text-sm text-slate-500">Hệ thống đang trống.</td></tr>';
+            } else {
+                rootCards.forEach(root => {
+                    // Thêm vào Dropdown
+                    parentSelect.innerHTML += `<option value="${root.id}">${root.emoji || '📁'} ${root.title}</option>`;
+                    
+                    // Thêm Root vào Bảng Admin
+                    adminHtml += renderAdminCardRow(root, 0);
+                    
+                    // Tìm và thêm các Child của Root này vào Bảng Admin
+                    const children = allCards.filter(c => c.parentId === root.id);
+                    children.forEach(child => {
+                        adminHtml += renderAdminCardRow(child, 1);
+                    });
+                });
+            }
+            document.getElementById('admin-cards-tbody').innerHTML = adminHtml;
+            parentSelect.value = currentSelectedParent; // Giữ lại lựa chọn đang dở
+            
+            // 2. Cập nhật Trang chủ
+            const homeContainer = document.getElementById('cards-container');
+            const emptyState = document.getElementById('home-empty-state');
+            
+            if (rootCards.length === 0) {
+                homeContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                let homeHtml = '';
+                rootCards.forEach((card, index) => {
+                    const theme = cardThemes[index % cardThemes.length];
+
+                    homeHtml += `
+                        <div onclick="navigateToFolder('${card.id}')" class="bg-white rounded-[2rem] shadow-sm hover:shadow-md border border-slate-50 p-6 sm:p-8 relative overflow-hidden flex flex-col text-left group cursor-pointer transition-all duration-300 hover:-translate-y-1 min-h-[260px]">
+                            <div class="absolute -top-12 -right-12 w-56 h-56 rounded-full ${theme.blob} opacity-50 blur-[40px] z-0 transition-transform group-hover:scale-110 duration-500"></div>
+
+                            <div class="w-16 h-16 rounded-2xl ${theme.iconBg} text-white flex items-center justify-center text-3xl mb-6 relative z-10 shadow-inner">
+                                ${card.emoji || '📁'}
+                            </div>
+
+                            <h3 class="text-[1.15rem] font-black text-slate-800 uppercase tracking-tight mb-2 relative z-10 leading-snug line-clamp-3">
+                                ${card.title}
+                            </h3>
+
+                            <div class="flex-1 relative z-10">
+                                <p class="text-sm text-slate-500 line-clamp-2 mt-1">${card.desc || ''}</p>
+                            </div>
+
+                            <div class="w-full h-1.5 bg-slate-100 rounded-full mb-4 mt-6 relative z-10 overflow-hidden">
+                                <div class="h-full rounded-full w-1/3 ${theme.barBg}"></div>
+                            </div>
+
+                            <div class="text-sm font-bold ${theme.textColor} flex items-center relative z-10">
+                                Mở thư mục <i class="fa-solid fa-arrow-right ml-1.5 transition-transform group-hover:translate-x-1.5"></i>
+                            </div>
+                        </div>
+                    `;
+                });
+                homeContainer.innerHTML = homeHtml;
+            }
+        });
+
+        // Xử lý Form Lưu Thẻ
+        document.getElementById('card-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnSave = document.getElementById('btn-save-card');
+            btnSave.disabled = true; btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+            
+            const id = document.getElementById('card-id').value;
+            const parentId = document.getElementById('card-parent').value;
+            
+            let emojiVal = document.getElementById('card-emoji').value.trim();
+            if (!emojiVal) {
+                emojiVal = defaultEmojis[Math.floor(Math.random() * defaultEmojis.length)];
+            }
+            
+            const cardData = {
+                emoji: emojiVal,
+                title: document.getElementById('card-title').value,
+                desc: document.getElementById('card-desc').value,
+                link: document.getElementById('card-link').value,
+                newTab: document.getElementById('card-newtab').checked,
+                parentId: parentId
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, MAIN_COLLECTION, id), cardData);
+                } else {
+                    await addDoc(collection(db, MAIN_COLLECTION), cardData);
+                }
+                closeCardModal();
+            } catch (error) {
+                alert("Lỗi khi lưu: " + error.message);
+            } finally {
+                btnSave.disabled = false; btnSave.innerHTML = '<i class="fa-solid fa-save"></i> Lưu';
+            }
+        });
+
+        window.deleteCard = async (id) => {
+            // Cảnh báo nếu thư mục có chứa thư mục con
+            const hasChildren = allCards.some(c => c.parentId === id);
+            if (hasChildren) {
+                alert("Bạn phải xóa tất cả các mục con bên trong thư mục này trước khi xóa nó!");
+                return;
+            }
+
+            if(confirm("Bạn có chắc chắn muốn xóa file/thư mục này?")) {
+                try {
+                    await deleteDoc(doc(db, MAIN_COLLECTION, id));
+                } catch(e) { alert("Lỗi khi xóa: " + e.message); }
+            }
+        };
+
+        // --- 6. FIRESTORE CRUD NỘI DUNG TAB (CONTENTS) ---
+        // Lấy từ CONTENT_COLLECTION (quanlyfile_contents)
+        onSnapshot(query(collection(db, CONTENT_COLLECTION)), (snapshot) => {
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                allTabContents[docSnap.id] = data; // Cache lại
+                
+                // Cập nhật DOM ngay lập tức nếu đang mở View Nội dung đó
+                const displayArea = document.getElementById('content-html-display');
+                if (displayArea && displayArea.getAttribute('data-current-id') === docSnap.id) {
+                    displayArea.innerHTML = data.html;
+                }
+            });
+        });
+
+        document.getElementById('content-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnSave = document.getElementById('btn-save-content');
+            btnSave.disabled = true; 
+            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+            
+            const tabId = document.getElementById('content-tab-id').value;
+            const newHtml = document.getElementById('content-html').value;
+
+            try {
+                await setDoc(doc(db, CONTENT_COLLECTION, tabId), { html: newHtml }, { merge: true });
+                closeContentModal();
+            } catch (error) {
+                alert("Lỗi khi lưu nội dung: " + error.message);
+            } finally {
+                btnSave.disabled = false; 
+                btnSave.innerHTML = '<i class="fa-solid fa-save"></i> Cập nhật';
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1851 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng Quay May Mắn và Trắc Nghiệm</title>
+    <!-- 1. Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 2. Tải thư viện icon Lucide -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <!-- BỔ SUNG: 3. Tải thư viện âm thanh Tone.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    
+    <style>
+        /* CSS tùy chỉnh cho font chữ và một số hiệu ứng */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        
+        /* Ẩn các view và modal ban đầu */
+        #quiz-page,
+        #winner-modal,
+        #question-modal,
+        #zalo-modal,
+        #json-generator-modal, /* BỔ SUNG modal mới */
+        #help-modal { 
+            display: none;
+        }
+
+        /* Hiệu ứng cho modal */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        /* HIỆU ỨNG NÚT BẤM (ĐÃ SỬA LỖI CLICK TRIỆT ĐỂ) */
+        .btn-press {
+            transition: all 0.05s ease-in-out;
+            border-bottom-width: 4px;
+        }
+        .btn-press:active {
+            transform: translateY(2px); /* Dịch chuyển nút xuống 2px (chỉ transform) */
+            border-bottom-width: 2px; /* Giảm viền dưới để tạo hiệu ứng lún */
+            /* ĐÃ XÓA: margin-top: 2px; (Đây là dòng code gây lỗi) */
+        }
+        .btn-press:hover {
+            transform: scale(1.02); /* Thêm hiệu ứng hover ấn tượng */
+        }
+        
+        /* Nút Quay ấn tượng hơn */
+        #spin-btn:not(:disabled) {
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.7); } /* blue-700 */
+            70% { box-shadow: 0 0 0 10px rgba(29, 78, 216, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
+        }
+        
+        /* CSS cho vòng quay và tên học sinh */
+        #wheel {
+            transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        .student-name {
+            position: absolute;
+            transform-origin: 50% 50%; 
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            max-width: 40%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* CSS cho Bảng Xếp Hạng */
+        #leaderboard-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        #leaderboard-list li:nth-child(odd) {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+        #leaderboard-list li:hover {
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        #leaderboard-list .rank-1 { font-weight: bold; color: #ef4444; } /* red-500 */
+        #leaderboard-list .rank-2 { font-weight: bold; color: #f97316; } /* orange-500 */
+        #leaderboard-list .rank-3 { font-weight: bold; color: #3b82f6; } /* blue-500 */
+        
+        /* CSS cho Confetti */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            pointer-events: none; /* Cho phép click xuyên qua */
+        }
+        
+        /* BỔ SUNG: CSS cho Nút Hướng Dẫn nổi */
+        #show-help-modal-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            animation: pulse-animation 3s infinite; /* Dùng chung hiệu ứng cho nổi bật */
+        }
+        
+        /* BỔ SUNG: CSS cho nội dung Hướng dẫn */
+        #help-modal-content h2 {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* text-gray-800 */
+            margin-top: 1.5rem; /* mt-6 */
+            margin-bottom: 0.75rem; /* mb-3 */
+            padding-bottom: 0.5rem; /* pb-2 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+        }
+        #help-modal-content h3 {
+            font-size: 1.1rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: #3b82f6; /* text-blue-600 */
+            margin-top: 1rem; /* mt-4 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        #help-modal-content p, #help-modal-content li {
+            font-size: 0.95rem; /* ~text-sm */
+            color: #4b5563; /* text-gray-600 */
+            line-height: 1.6;
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        #help-modal-content ul {
+            list-style-type: disc;
+            padding-left: 1.5rem; /* pl-6 */
+        }
+        #help-modal-content code {
+            background-color: #e5e7eb; /* bg-gray-200 */
+            color: #be123c; /* text-rose-700 */
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="p-4 lg:p-8">
+
+    <!-- Canvas cho Confetti -->
+    <canvas id="confetti-canvas"></canvas>
+    
+    <!-- BỔ SUNG: Nút Hướng Dẫn Nổi -->
+    <button id="show-help-modal-btn" class="btn-press w-16 h-16 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-xl hover:bg-blue-700 transition border-blue-800">
+        <i data-lucide="help-circle" class="w-8 h-8"></i>
+    </button>
+
+    <!-- =========== View 1: Vòng Quay (Mặc định) =========== -->
+    <div id="wheel-view" class="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 min-h-screen">
+        
+        <!-- Panel Trái: Danh Sách Lớp và Bảng Xếp Hạng -->
+        <div class="w-full lg:w-1/4 bg-white p-4 rounded-lg shadow-lg flex flex-col space-y-3">
+            
+
+
+            <!-- Danh sách lớp -->
+            <div>
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="users" class="text-blue-600"></i>
+                    <h2 class="text-xl font-bold text-gray-800">Danh sách Lớp</h2>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">
+                    Dán danh sách học sinh vào đây (mỗi tên một dòng).
+                </p>
+                <textarea
+                    id="student-textarea"
+                    class="w-full h-48 border border-gray-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition mt-2"
+                    rows="10"
+                    placeholder="Nguyễn Văn A&#10;Trần Thị B&#10;Lê Văn C..."
+                ></textarea>
+                
+                <!-- BỔ SUNG: Nút Import/Export Danh Sách Học Sinh -->
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <button id="import-students-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-teal-500 text-white font-bold py-2 px-3 rounded-lg shadow-md hover:bg-teal-600 transition border-teal-700 text-sm">
+                        <i data-lucide="upload-cloud"></i>
+                        <span>Nhập DS học sinh</span>
+                    </button>
+                    <button id="export-students-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-orange-500 text-white font-bold py-2 px-3 rounded-lg shadow-md hover:bg-orange-600 transition border-orange-700 text-sm">
+                        <i data-lucide="download-cloud"></i>
+                        <span>Xuất DS học sinh</span>
+                    </button>
+                </div>
+                <input type="file" id="import-student-file-input" accept=".json" class="hidden" />
+            </div>
+            
+            <hr class="border-gray-200" />
+
+            <!-- Bảng Xếp Hạng -->
+            <div class="flex-grow flex flex-col min-h-0">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="bar-chart-3" class="text-green-600"></i>
+                        <h2 class="text-xl font-bold text-gray-800">Bảng Xếp Hạng</h2>
+                    </div>
+                    <button id="clear-leaderboard-btn" class="text-xs text-red-500 hover:text-red-700 font-medium flex items-center space-x-1">
+                        <i data-lucide="trash" class="w-3 h-3"></i>
+                        <span>Xóa BXH</span>
+                    </button>
+                </div>
+                <div id="leaderboard-container" class="flex-grow max-h-64 overflow-y-auto pr-2">
+                    <ul id="leaderboard-list" class="text-sm text-gray-700 space-y-1">
+                        <!-- Bảng xếp hạng sẽ được JS chèn vào đây -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Giữa: Vòng Quay -->
+        <div class="w-full lg:w-1/2 flex flex-col items-center justify-center p-4">
+            <h1 class="text-3xl font-extrabold text-gray-800 mb-6 uppercase tracking-wider" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1)">
+                Vòng Quay May Mắn
+            </h1>
+            
+            <div class="relative flex items-center justify-center">
+                <!-- Kim chỉ (Pointer) -->
+                <div 
+                    class="absolute -top-4 left-1/2 -translate-x-1/2 z-20" 
+                    style="width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 30px solid #E74C3C; filter: drop-shadow(0px -2px 2px rgba(0,0,0,0.3))"
+                ></div>
+
+                <!-- Vòng quay -->
+                <div
+                    id="wheel-container"
+                    class="relative w-96 h-96 md:w-[500px] md:h-[500px] rounded-full border-8 border-white shadow-2xl overflow-hidden"
+                >
+                    <div id="wheel" class="w-full h-full relative">
+                        <!-- Tên học sinh sẽ được JS chèn vào đây -->
+                    </div>
+                </div>
+                
+                <!-- Tâm vòng quay -->
+                <div class="absolute w-12 h-12 bg-white rounded-full border-4 border-gray-300 shadow-inner z-10"></div>
+            </div>
+            
+            <!-- Trạng thái quay -->
+            <div id="spin-status" class="mt-6 h-8 text-xl font-semibold text-blue-600 animate-pulse">
+                <!-- Trạng thái (ví dụ: Đang quay...) sẽ được JS chèn vào đây -->
+            </div>
+        </div>
+
+        <!-- Panel Phải: Menu Điều Khiển -->
+        <div class="w-full lg:w-1/4 bg-white p-4 rounded-lg shadow-lg space-y-4">
+            <!-- Tiêu đề MENU -->
+            <div class="text-center text-3xl font-bold text-white p-3 rounded-lg" style="background: linear-gradient(135deg, #FF8C00, #FFA500); text-shadow: 2px 2px 4px rgba(0,0,0,0.2); border-bottom: 4px solid #CD6600">
+                MENU
+            </div>
+            
+            <!-- Nút điều hướng -->
+            <button id="go-to-quiz-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition border-green-700">
+                <i data-lucide="gamepad-2"></i>
+                <span>Tới Trò Chơi</span>
+            </button>
+
+            <!-- Nút Reset -->
+            <button id="reset-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-red-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-red-600 transition border-red-700">
+                <i data-lucide="rotate-ccw"></i>
+                <span>Reset game</span>
+            </button>
+
+            <!-- Thông tin số lượng -->
+            <div class="bg-gray-100 p-3 rounded-lg text-center">
+                <p class="text-sm font-semibold text-gray-700">
+                    Số học sinh còn lại: 
+                    <span id="student-count" class="text-lg font-bold text-blue-600 ml-2">
+                        0 / 0
+                    </span>
+                </p>
+            </div>
+
+            <!-- Các tùy chọn -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <label for="no-repeat-checkbox" class="text-sm font-medium text-gray-700 flex items-center">
+                        <i data-lucide="smile" class="w-4 h-4 mr-2 text-green-500"></i>
+                        Gọi tên không lặp lại
+                    </label>
+                    <input
+                        id="no-repeat-checkbox"
+                        type="checkbox"
+                        class="h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        checked
+                    />
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <label for="spin-duration-input" class="text-sm font-medium text-gray-700 flex items-center">
+                        <i data-lucide="settings" class="w-4 h-4 mr-2 text-gray-500"></i>
+                        Thời gian quay (s)
+                    </label>
+                    <input
+                        id="spin-duration-input"
+                        type="number"
+                        min="1"
+                        max="20"
+                        class="w-16 text-center border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        value="6"
+                    />
+                </div>
+            </div>
+
+            <!-- Chế độ chơi -->
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                <label class="text-sm font-medium text-gray-700 flex items-center">
+                    <i data-lucide="list-checks" class="w-4 h-4 mr-2 text-gray-500"></i>
+                    Chế độ chơi
+                </label>
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <input id="mode-all" type="radio" name="game-mode" value="all" class="h-4 w-4 text-blue-600 border-gray-300" checked>
+                        <label for="mode-all" class="ml-2 block text-sm text-gray-700">Trả lời TẤT CẢ câu hỏi</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="mode-random" type="radio" name="game-mode" value="random" class="h-4 w-4 text-blue-600 border-gray-300">
+                        <label for="mode-random" class="ml-2 block text-sm text-gray-700">Trả lời SỐ CÂU ngẫu nhiên</label>
+                    </div>
+                    <!-- Input số lượng câu hỏi (chỉ bật khi mode 'random' được chọn) -->
+                    <div class="pl-6">
+                         <label for="random-question-count" class="block text-xs font-medium text-gray-500">
+                          Nhập số lượng câu:
+                        </label>
+                        <input
+                            id="random-question-count"
+                            type="number"
+                            min="1"
+                            class="w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:opacity-70"
+                            value="1"
+                            disabled 
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Nút Quay chính -->
+            <button id="spin-btn" class="btn-press w-full text-2xl font-bold py-4 px-4 rounded-lg shadow-xl text-white transition bg-blue-600 hover:bg-blue-700 border-blue-800 disabled:opacity-50 disabled:cursor-not-allowed">
+                QUAY
+            </button>
+            
+
+
+            <!-- NÂNG CẤP: Quản lý câu hỏi -->
+            <hr class="my-4 border-gray-200" />
+            
+            <div class="space-y-3">
+                 <h3 class="text-lg font-bold text-gray-800 text-center">Quản lý câu hỏi</h3>
+                 <p id="question-count-info" class="text-sm text-center text-gray-600">Đang có 0 câu hỏi.</p>
+                 
+                 <!-- Danh sách câu hỏi -->
+                 <div id="question-list-ui" class="max-h-60 overflow-y-auto space-y-2 pr-2">
+                     <!-- Câu hỏi sẽ được JS chèn vào đây -->
+                 </div>
+                 
+                 <!-- Nút thêm mới -->
+                 <button id="add-new-question-btn" class="btn-press w-full flex items-center justify-center space-x-2 mt-2 bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-gray-700 transition border-gray-800">
+                     <i data-lucide="plus-circle"></i>
+                     <span>Thêm Câu Hỏi Mới</span>
+                 </button>
+                 
+                 <!-- BỔ SUNG: Nút Import/Export -->
+                 <div class="grid grid-cols-2 gap-2 mt-2">
+                     <button id="import-questions-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-teal-500 text-white font-bold py-2 px-3 rounded-lg shadow-md hover:bg-teal-600 transition border-teal-700 text-sm">
+                         <i data-lucide="upload-cloud"></i>
+                         <span>Import .json</span>
+                     </button>
+                     <button id="export-questions-btn" class="btn-press w-full flex items-center justify-center space-x-2 bg-orange-500 text-white font-bold py-2 px-3 rounded-lg shadow-md hover:bg-orange-600 transition border-orange-700 text-sm">
+                         <i data-lucide="download-cloud"></i>
+                         <span>Export .json</span>
+                     </button>
+                 </div>
+                 <input type="file" id="import-file-input" accept=".json" class="hidden" />
+                 
+                 <!-- BỔ SUNG: Nút Tạo Ngân Hàng Câu Hỏi -->
+                 <button id="show-json-generator-btn" class="btn-press w-full flex items-center justify-center space-x-2 mt-2 bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-indigo-600 transition border-indigo-700 text-sm">
+                     <i data-lucide="file-json-2"></i>
+                     <span>Tạo NH Câu hỏi (từ Text)</span>
+                 </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =========== View 2: Màn Hình Trắc Nghiệm =========== -->
+    <div id="quiz-page" class="w-full max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+        <!-- Nội dung Quiz sẽ được JS chèn vào đây -->
+    </div>
+    
+
+    
+    <!-- =========== Modal: Chúc Mừng =========== -->
+    <div id="winner-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative transform transition-all">
+            <button id="winner-modal-close-btn" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            
+            <!-- Icon giống hình ảnh -->
+            <div class="w-24 h-24 bg-yellow-300 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg relative">
+                <svg class="w-12 h-12 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 2v7.31M14 9.31V2"/>
+                    <path d="M10 13.79s-1.53 1.6-4.39 1.6A5.6 5.6 0 0 1 0 9.79V8h10v5.79Z"/>
+                    <path d="M14 13.79s1.53 1.6 4.39 1.6A5.6 5.6 0 0 0 24 9.79V8h-10v5.79Z"/>
+                </svg>
+                <span class="absolute text-yellow-500" style="top: 20px; left: 25px;">●</span>
+                <span class="absolute text-red-500" style="top: 30px; left: 15px; font-size: 0.6rem;">●</span>
+                <span class="absolute text-blue-500" style="top: 15px; left: 65px; font-size: 0.8rem;">●</span>
+            </div>
+            
+            <h2 class="text-xl font-semibold text-gray-600">Xin chúc mừng!</h2>
+            <p id="winner-name" class="text-4xl font-extrabold text-blue-600 my-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1)">
+                <!-- Tên người thắng -->
+            </p>
+            <p class="text-base text-gray-500 mb-8">
+                đã được chọn!
+            </p>
+
+            <div class="flex flex-col space-y-3">
+                <button id="winner-modal-go-quiz-btn" class="btn-press w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition border-green-700">
+                    Bắt đầu Trắc nghiệm
+                </button>
+                <button id="winner-modal-close-btn-2" class="w-full bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- =========== Modal: Thêm/Sửa Câu Hỏi =========== -->
+    <div id="question-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <form id="question-form" class="bg-white rounded-lg shadow-2xl p-6 max-w-lg w-full space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="question-modal-title" class="text-xl font-bold text-gray-800">Thêm Câu Hỏi Mới</h3>
+                <button id="question-modal-close-btn" type="button" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Input ẩn để lưu ID khi sửa -->
+            <input type="hidden" id="question-id-input" />
+            
+            <div>
+                <label for="question-text-input" class="block text-sm font-medium text-gray-700 mb-1">
+                  Câu hỏi
+                </label>
+                <textarea
+                  id="question-text-input"
+                  rows="3"
+                  class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  required
+                ></textarea>
+            </div>
+            
+            <!-- 4 đáp án -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="option-input-0" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 1</label>
+                    <input id="option-input-0" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm" required />
+                </div>
+                <div>
+                    <label for="option-input-1" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 2</label>
+                    <input id="option-input-1" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm" required />
+                </div>
+                <div>
+                    <label for="option-input-2" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 3</label>
+                    <input id="option-input-2" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm" required />
+                </div>
+                <div>
+                    <label for="option-input-3" class="block text-sm font-medium text-gray-700 mb-1">Đáp án 4</label>
+                    <input id="option-input-3" type="text" class="option-input w-full border-gray-300 rounded-md shadow-sm" required />
+                </div>
+            </div>
+            
+            <div>
+                <label for="correct-answer-select" class="block text-sm font-medium text-gray-700 mb-1">
+                  Đáp án đúng là
+                </label>
+                <select
+                  id="correct-answer-select"
+                  class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="0">Đáp án 1</option>
+                  <option value="1">Đáp án 2</option>
+                  <option value="2">Đáp án 3</option>
+                  <option value="3">Đáp án 4</option>
+                </select>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                 <button
+                  id="question-modal-cancel-btn"
+                  type="button"
+                  class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  class="btn-press bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition border-blue-800"
+                >
+                  Lưu Câu Hỏi
+                </button>
+            </div>
+        </form>
+    </div>
+    
+
+    
+    <!-- BỔ SUNG: Modal Tạo Ngân Hàng Câu Hỏi (JSON Generator) -->
+    <div id="json-generator-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-3xl w-full space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">Tạo Ngân Hàng Câu Hỏi từ Text</h3>
+                <button id="json-generator-close-btn" type="button" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-600">
+                Dán câu hỏi theo định dạng mẫu. Hệ thống sẽ tự động tìm đáp án có chứa `( đáp án đúng)`.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 h-[50vh]">
+                <!-- Vùng nhập Text -->
+                <div class="flex flex-col">
+                    <label for="text-input-area" class="block text-sm font-medium text-gray-700 mb-1">
+                      Nhập Text tại đây:
+                    </label>
+                    <textarea
+                      id="text-input-area"
+                      class="w-full h-full flex-grow border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                      placeholder="Câu 1: 1+2 =??&#10;&#9;A. 4&#10;&#9;B. 6&#10;&#9;C. 3 ( đáp án đúng)&#10;&#9;D. 5&#10;&#10;Câu 2: 5+7 =??&#10;&#9;A. 4&#10;&#9;B. 12 ( đáp án đúng)&#10;&#9;C. 6&#10;&#9;D. 3"
+                    ></textarea>
+                </div>
+                
+                <!-- Vùng hiển thị JSON -->
+                <div class="flex flex-col">
+                    <label for="json-output-area" class="block text-sm font-medium text-gray-700 mb-1">
+                      Kết quả JSON:
+                    </label>
+                    <textarea
+                      id="json-output-area"
+                      class="w-full h-full flex-grow border-gray-300 rounded-md shadow-sm bg-gray-100 font-mono text-sm"
+                      readonly
+                      placeholder="Kết quả JSON sẽ hiện ở đây..."
+                    ></textarea>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center space-x-3">
+                 <button
+                  id="convert-to-json-btn"
+                  type="button"
+                  class="btn-press w-1/2 flex items-center justify-center space-x-2 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition border-blue-800"
+                >
+                  <i data-lucide="arrow-right-left"></i>
+                  <span>Chuyển sang JSON</span>
+                </button>
+                <button
+                  id="download-json-btn"
+                  type="button"
+                  class="btn-press w-1/2 flex items-center justify-center space-x-2 bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition border-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled
+                >
+                  <i data-lucide="download"></i>
+                  <span>Tải file JSON</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BỔ SUNG: Modal Hướng Dẫn Sử Dụng -->
+    <div id="help-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-3xl w-full relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <i data-lucide="book-open" class="text-blue-600 mr-3"></i>
+                    Hướng Dẫn Sử Dụng
+                </h3>
+                <button id="help-modal-close-btn" type="button" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Nội dung hướng dẫn -->
+            <div id="help-modal-content" class="h-[70vh] overflow-y-auto pr-4">
+                <h2>I. Cách sử dụng cơ bản</h2>
+                <ul>
+                    <li><b>Bước 1: Nhập Danh sách Lớp</b>
+                        <p>Dán danh sách học sinh của Thầy vào ô "Danh sách Lớp" ở panel bên trái (mỗi tên một dòng).</p>
+                    </li>
+                    <li><b>Bước 2: Cài đặt</b>
+                        <p>Ở panel bên phải, Thầy có thể chọn "Gọi tên không lặp lại" (để học sinh đã quay không bị quay lại) và "Thời gian quay".</p>
+                    </li>
+                     <li><b>Bước 3: Quay số</b>
+                        <p>Bấm nút "QUAY" màu xanh to ở panel phải. Vòng quay sẽ chạy và tự động chọn ra một học sinh.</p>
+                    </li>
+                     <li><b>Bước 4: Bắt đầu Trắc nghiệm</b>
+                        <p>Một cửa sổ "Xin chúc mừng" sẽ hiện ra. Thầy bấm "Bắt đầu Trắc nghiệm" để đưa học sinh đó vào phần trả lời câu hỏi.</p>
+                    </li>
+                    <li><b>Bước 5: Bảng Xếp Hạng</b>
+                        <p>Sau khi học sinh trả lời xong, điểm và thời gian sẽ được tự động lưu vào "Bảng Xếp Hạng" ở panel trái.</p>
+                    </li>
+                </ul>
+
+                <h2>II. Quản lý Ngân Hàng Câu Hỏi</h2>
+                <p>Đây là phần quan trọng nhất. Thầy có 3 cách để thêm câu hỏi vào ứng dụng:</p>
+                
+                <h3>Cách 1: Thêm thủ công (Thêm từng câu)</h3>
+                <ol class="list-decimal pl-6">
+                    <li>Ở panel phải, bấm nút <code>Thêm Câu Hỏi Mới</code>.</li>
+                    <li>Một cửa sổ sẽ hiện ra. Thầy nhập nội dung câu hỏi, 4 đáp án.</li>
+                    <li>Chọn đáp án đúng ở mục "Đáp án đúng là".</li>
+                    <li>Bấm <code>Lưu Câu Hỏi</code>.</li>
+                    <li>Thầy có thể <b>Sửa</b> / <b>Xóa</b> câu hỏi ngay tại danh sách bên dưới.</li>
+                </ol>
+                
+                <h3>Cách 2: Tạo file JSON từ Text (Khuyến khích)</h3>
+                <p>Đây là cách tiện lợi nhất để Thầy soạn hàng loạt câu hỏi bên file Word/Text rồi đưa vào.</p>
+                <ol class="list-decimal pl-6">
+                    <li>Ở panel phải, bấm nút <code>Tạo NH Câu hỏi (từ Text)</code>.</li>
+                    <li>Một cửa sổ sẽ hiện ra. Thầy dán nội dung đã soạn vào ô "Nhập Text tại đây".</li>
+                    <li><b>Quan trọng:</b> Thầy phải soạn đúng định dạng mẫu. (Xem ví dụ bên dưới).</li>
+                    <li>Bấm nút <code>Chuyển sang JSON</code>.</li>
+                    <li>Nếu thành công, Thầy bấm <code>Tải file JSON</code> để lưu ngân hàng câu hỏi này về máy.</li>
+                    <li>Sau đó Thầy dùng Cách 3 (bên dưới) để "Import" file vừa tải về vào ứng dụng.</li>
+                </ol>
+                <p><b>Ví dụ định dạng Text mẫu:</b></p>
+                <pre class="bg-gray-100 p-3 rounded-md text-sm text-gray-700 overflow-x-auto">Câu 1: 1+2 =??
+    A. 4
+    B. 6
+    C. 3 ( đáp án đúng)
+    D. 5
+
+Câu 2: 5+7 =??
+    A. 4
+    B. 12 ( đáp án đúng)
+    C. 6
+    D. 3</pre>
+
+                <h3>Cách 3: Import file .json (Nạp ngân hàng câu hỏi)</h3>
+                <p>Khi Thầy đã có sẵn file <code>.json</code> (từ Cách 2 hoặc từ người khác), Thầy dùng cách này để nạp vào:</p>
+                <ol class="list-decimal pl-6">
+                    <li>Ở panel phải, bấm nút <code>Import .json</code>.</li>
+                    <li>Chọn file <code>.json</code> mà Thầy đã lưu trên máy.</li>
+                    <li>Ứng dụng sẽ tự động nạp toàn bộ câu hỏi từ file đó.</li>
+                </ol>
+                
+                <h3>Cách 4: Sao lưu và Di chuyển</h3>
+                <ul>
+                    <li><b>Export .json:</b> Bấm nút này để xuất (tải về) toàn bộ câu hỏi *hiện tại* ra file <code>.json</code>.</li>
+                    <li><b>Tải về file HTML:</b> Bấm nút này để tải về *toàn bộ ứng dụng* (file .html). File này sẽ <b>lưu lại cả danh sách học sinh và các câu hỏi Thầy đã thêm</b>. Thầy có thể gửi file này cho đồng nghiệp để sử dụng.</li>
+                </ul>
+          
+             <div class="flex justify-end pt-4 border-t border-gray-200">
+                 <button
+                  id="help-modal-close-btn-2"
+                  type="button"
+                  class="btn-press bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition border-blue-800"
+                >
+                  Đã hiểu
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========== Toàn bộ Logic JavaScript =========== -->
+    <script>
+        // Chờ cho toàn bộ nội dung HTML được tải xong
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- 0. BỔ SUNG: KHỞI TẠO ÂM THANH ---
+            let audioInitialized = false;
+            let tickSynth, winnerSynth, correctSynth, wrongSynth;
+            
+            // Hàm khởi tạo âm thanh (chạy một lần duy nhất)
+            function initializeAudio() {
+                if (audioInitialized) return;
+                // Chỉ khởi tạo nếu Tone.js đã tải
+                if (typeof Tone === 'undefined') {
+                    console.warn("Tone.js chưa tải xong, không thể khởi tạo âm thanh.");
+                    return;
+                }
+                
+                try {
+                    Tone.start(); // Yêu cầu Tone.js khởi động
+                    
+                    // Âm thanh 'tích' của vòng quay
+                    tickSynth = new Tone.MembraneSynth({
+                        octaves: 10,
+                        pitchDecay: 0.05,
+                        envelope: { attack: 0.001, decay: 0.2, sustain: 0 }
+                    }).toDestination();
+
+                    // Âm thanh chiến thắng (fanfare)
+                    winnerSynth = new Tone.PolySynth(Tone.Synth, {
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 }
+                    }).toDestination();
+
+                    // Âm thanh trả lời đúng
+                    correctSynth = new Tone.PolySynth(Tone.Synth, {
+                         envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.2 }
+                    }).toDestination();
+
+                    // Âm thanh trả lời sai
+                    wrongSynth = new Tone.PolySynth(Tone.FMSynth, {
+                        harmonicity: 1.2,
+                        modulationIndex: 10,
+                        envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.3 }
+                    }).toDestination();
+                    
+                    audioInitialized = true;
+                } catch (e) {
+                    console.error("Không thể khởi tạo âm thanh:", e);
+                }
+            }
+            
+            // Các hàm phát âm thanh
+            function playTickSound(note = "C2", velocity = 1) {
+                if (!audioInitialized) return;
+                tickSynth.triggerAttack(note, Tone.now(), velocity);
+            }
+            
+            function playWinnerSound() {
+                if (!audioInitialized) return;
+                const now = Tone.now();
+                winnerSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", now);
+                winnerSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", now + 0.3);
+            }
+            
+            function playCorrectSound() {
+                if (!audioInitialized) return;
+                correctSynth.triggerAttackRelease(["C5", "E5", "G5"], "16n", Tone.now());
+            }
+            
+            function playWrongSound() {
+                if (!audioInitialized) return;
+                wrongSynth.triggerAttackRelease(["C3", "D#3"], "4n", Tone.now());
+            }
+            
+            let tickInterval = null; // Biến để điều khiển tiếng "tích"
+
+            // --- 1. KHỞI TẠO STATE (TRẠNG THÁI) CỦA ỨNG DỤNG ---
+            let masterStudentList = [];
+            let availableStudents = [];
+            
+            // Dữ liệu mặc định
+            let initialQuizData = [
+              {
+                id: 1,
+                question: "Nguyễn Ái Quốc gửi bản 'Yêu sách của nhân dân An Nam' đến Hội nghị Véc-xai vào năm nào?",
+                options: ["1917", "1918", "1919", "1920"],
+                correctAnswer: "1919"
+              },
+              {
+                id: 2,
+                question: "Đâu là thủ đô của nước Việt Nam?",
+                options: ["Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Hải Phòng"],
+                correctAnswer: "Hà Nội"
+              }
+            ];
+            
+            let quizData = []; // Sẽ được tải từ localStorage
+            
+            let rotation = 0;
+            let isSpinning = false;
+            let noRepeat = true;
+            let spinDuration = 6;
+            let selectedStudent = null;
+            let currentView = 'wheel'; // 'wheel' | 'quiz'
+            
+            // State cho quiz
+            let currentQuizQuestions = []; 
+            let gameMode = 'all'; 
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let quizFinished = false;
+            
+            // State cho Bảng Xếp Hạng
+            let leaderboardData = []; // Sẽ được tải từ localStorage
+            let quizStartTime = 0; 
+
+            // --- 2. LẤY CÁC THÀNH PHẦN DOM (ELEMENTS) ---
+            const wheelView = document.getElementById('wheel-view');
+            const quizPage = document.getElementById('quiz-page');
+            const confettiCanvas = document.getElementById('confetti-canvas'); 
+            
+            // Panel Trái
+            const studentTextarea = document.getElementById('student-textarea');
+            const leaderboardList = document.getElementById('leaderboard-list');
+            const clearLeaderboardBtn = document.getElementById('clear-leaderboard-btn');
+            // BỔ SUNG:
+            const importStudentsBtn = document.getElementById('import-students-btn');
+            const exportStudentsBtn = document.getElementById('export-students-btn');
+            const importStudentFileInput = document.getElementById('import-student-file-input');
+            
+            // Panel Giữa
+            const wheelContainer = document.getElementById('wheel-container');
+            const wheel = document.getElementById('wheel');
+            const spinStatus = document.getElementById('spin-status');
+            
+            // Panel Phải
+            const goToQuizBtn = document.getElementById('go-to-quiz-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const studentCountEl = document.getElementById('student-count');
+            const noRepeatCheckbox = document.getElementById('no-repeat-checkbox');
+            const spinDurationInput = document.getElementById('spin-duration-input');
+            const spinBtn = document.getElementById('spin-btn');
+            const gameModeRadios = document.querySelectorAll('input[name="game-mode"]'); 
+            const randomQuestionCountInput = document.getElementById('random-question-count'); // BỔ SUNG
+
+            // Panel Phải - Quản lý câu hỏi
+            const questionListUI = document.getElementById('question-list-ui');
+            const addNewQuestionBtn = document.getElementById('add-new-question-btn');
+            const questionCountInfo = document.getElementById('question-count-info');
+            const importQuestionsBtn = document.getElementById('import-questions-btn'); 
+            const exportQuestionsBtn = document.getElementById('export-questions-btn'); 
+            const importFileInput = document.getElementById('import-file-input'); 
+            const showJsonGeneratorBtn = document.getElementById('show-json-generator-btn');
+
+
+            // Modal Chúc Mừng
+            const winnerModal = document.getElementById('winner-modal');
+            const winnerName = document.getElementById('winner-name');
+            const winnerModalCloseBtn = document.getElementById('winner-modal-close-btn');
+            const winnerModalCloseBtn2 = document.getElementById('winner-modal-close-btn-2');
+            const winnerModalGoQuizBtn = document.getElementById('winner-modal-go-quiz-btn');
+            
+            // Modal Câu Hỏi
+            const questionModal = document.getElementById('question-modal');
+            const questionForm = document.getElementById('question-form');
+            const questionModalTitle = document.getElementById('question-modal-title');
+            const questionIdInput = document.getElementById('question-id-input');
+            const questionTextInput = document.getElementById('question-text-input');
+            const optionInputs = document.querySelectorAll('.option-input');
+            const correctAnswerSelect = document.getElementById('correct-answer-select');
+            const questionModalCloseBtn = document.getElementById('question-modal-close-btn');
+            const questionModalCancelBtn = document.getElementById('question-modal-cancel-btn');
+            
+            
+            // BỔ SUNG: Modal JSON Generator
+            const jsonGeneratorModal = document.getElementById('json-generator-modal');
+            const jsonGeneratorCloseBtn = document.getElementById('json-generator-close-btn');
+            const textInputArea = document.getElementById('text-input-area');
+            const jsonOutputArea = document.getElementById('json-output-area');
+            const convertToJsonBtn = document.getElementById('convert-to-json-btn');
+            const downloadJsonBtn = document.getElementById('download-json-btn');
+            
+            // BỔ SUNG: Modal Hướng Dẫn
+            const helpModal = document.getElementById('help-modal');
+            const showHelpModalBtn = document.getElementById('show-help-modal-btn');
+            const helpModalCloseBtn = document.getElementById('help-modal-close-btn');
+            const helpModalCloseBtn2 = document.getElementById('help-modal-close-btn-2');
+
+
+            // --- 3. CÁC HÀM TIỆN ÍCH (UTILITY FUNCTIONS) ---
+
+            // Hàm hiển thị view (màn hình)
+            function showView(viewName) {
+                currentView = viewName;
+                if (viewName === 'wheel') {
+                    wheelView.style.display = 'flex';
+                    quizPage.style.display = 'none';
+                } else if (viewName === 'quiz') {
+                    wheelView.style.display = 'none';
+                    quizPage.style.display = 'block';
+                    startQuiz(); // Bắt đầu quiz khi chuyển view
+                }
+            }
+
+            // Hàm hiển thị/ẩn modal
+            function showModal(modalElement) {
+                modalElement.style.display = 'flex';
+            }
+            function hideModal(modalElement) {
+                modalElement.style.display = 'none';
+            }
+            
+            // BỔ SUNG: Hàm xáo trộn mảng (Fisher-Yates)
+            function shuffleArray(array) {
+                let shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+            
+            // Hàm vẽ lại vòng quay (tên và màu sắc)
+            function renderWheel() {
+                wheel.innerHTML = ''; // Xóa tên cũ
+                if (availableStudents.length === 0) {
+                    wheel.style.background = '#ddd';
+                    return;
+                }
+
+                // Dải màu
+                const colors = [
+                    '#FF6B6B', '#FFD166', '#06D6A0', '#118AB2', '#073B4C',
+                    '#E07A5F', '#3D405B', '#81B29A', '#F2CC8F', '#F4F1DE',
+                    '#9B5DE5', '#F15BB5', '#FEE440', '#00BBF9', '#00F5D4'
+                ];
+                
+                const segmentAngleDeg = 360 / availableStudents.length;
+                const segmentAngleRad = (Math.PI * 2) / availableStudents.length;
+                let gradientColors = [];
+
+                availableStudents.forEach((student, index) => {
+                    // 1. Tạo màu cho vòng quay
+                    const color = colors[index % colors.length];
+                    gradientColors.push(`${color} ${segmentAngleDeg * index}deg ${segmentAngleDeg * (index + 1)}deg`);
+                    
+                    // 2. Thêm tên học sinh
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'student-name';
+                    nameEl.textContent = student;
+                    
+                    // Tính toán góc
+                    const angleDeg = (segmentAngleDeg * index) + (segmentAngleDeg / 2);
+                    const angleRad = (segmentAngleRad * index) + (segmentAngleRad / 2);
+                    
+                    // Bán kính 35% từ tâm
+                    const x = Math.sin(angleRad) * 35 + 50; 
+                    const y = -Math.cos(angleRad) * 35 + 50;
+                    
+                    nameEl.style.top = `${y}%`;
+                    nameEl.style.left = `${x}%`;
+                    nameEl.style.transform = `translate(-50%, -50%) rotate(${angleDeg + 90}deg)`;
+                    
+                    // Lấy kích thước của wheel-container
+                    const wheelSize = wheelContainer.clientWidth;
+                    const fontSize = Math.max(8, Math.min(14, wheelSize / 35)); // Điều chỉnh cỡ chữ
+                    nameEl.style.fontSize = `${fontSize}px`;
+                    
+                    wheel.appendChild(nameEl);
+                });
+
+                wheel.style.background = `conic-gradient(${gradientColors.join(', ')})`;
+            }
+
+            // Hàm cập nhật danh sách học sinh
+            function updateStudentLists() {
+                const inputText = studentTextarea.value;
+                masterStudentList = inputText.split('\n').filter(name => name.trim() !== '');
+                
+                availableStudents = [...masterStudentList]; 
+                
+                updateUI(); // Cập nhật giao diện (vẽ lại vòng quay, cập nhật số đếm)
+                saveDataToLocalStorage(); // BỔ SUNG: Lưu danh sách học sinh mới
+            }
+
+
+            // Hàm cập nhật giao diện (số đếm, nút bấm)
+            function updateUI() {
+                studentCountEl.textContent = `${availableStudents.length} / ${masterStudentList.length}`;
+                spinBtn.disabled = isSpinning || availableStudents.length === 0;
+                
+                if (availableStudents.length === 0 && masterStudentList.length > 0) {
+                    spinBtn.textContent = "Hết học sinh";
+                } else if (availableStudents.length === 0 && masterStudentList.length === 0) {
+                    spinBtn.textContent = "Nhập DS";
+                    spinBtn.disabled = true;
+                }
+                else {
+                    spinBtn.textContent = "QUAY";
+                }
+                
+                renderWheel();
+            }
+            
+            // Hàm vẽ Bảng Xếp Hạng
+            function renderLeaderboard() {
+                leaderboardList.innerHTML = ''; // Xóa cũ
+                
+                if (leaderboardData.length === 0) {
+                    leaderboardList.innerHTML = `<li class="text-sm text-gray-500 italic text-center">Chưa có ai trả lời.</li>`;
+                    return;
+                }
+                
+                // Sắp xếp: 1. Điểm cao nhất, 2. Thời gian thấp nhất
+                leaderboardData.sort((a, b) => {
+                    if (a.score !== b.score) {
+                        return b.score - a.score; // Điểm cao hơn xếp trước
+                    }
+                    return a.time - b.time; // Cùng điểm, thời gian nhanh hơn xếp trước
+                });
+                
+                leaderboardData.forEach((entry, index) => {
+                    const li = document.createElement('li');
+                    
+                    let rankClass = 'text-gray-600';
+                    if (index === 0) rankClass = 'rank-1';
+                    else if (index === 1) rankClass = 'rank-2';
+                    else if (index === 2) rankClass = 'rank-3';
+
+                    li.innerHTML = `
+                        <span class="flex items-center">
+                            <span class="font-bold w-6 text-left ${rankClass}">#${index + 1}</span>
+                            <span class="font-medium truncate" title="${entry.name}">${entry.name}</span>
+                        </span>
+                        <span class="font-bold text-gray-800 ml-2 whitespace-nowrap">
+                            ${entry.score}/${entry.totalQuestions}
+                            <span class="font-normal text-gray-500 text-xs">(${entry.time.toFixed(2)}s)</span>
+                        </span>
+                    `;
+                    leaderboardList.appendChild(li);
+                });
+            }
+            
+            // Hàm Xóa Bảng Xếp Hạng
+            function handleClearLeaderboard() {
+                leaderboardData = [];
+                renderLeaderboard();
+                saveDataToLocalStorage(); // BỔ SUNG: Lưu thay đổi
+            }
+
+            // --- 4. CÁC HÀM XỬ LÝ LOGIC CHÍNH ---
+            
+            // Xử lý quay
+            function handleSpin() {
+                if (isSpinning || availableStudents.length === 0) return;
+                
+                // Khởi tạo âm thanh (chỉ chạy 1 lần)
+                initializeAudio();
+
+                isSpinning = true;
+                spinStatus.textContent = 'Đang quay...';
+                spinBtn.disabled = true;
+                studentTextarea.disabled = true; // Vô hiệu hóa khi đang quay
+                
+                // Bắt đầu phát âm thanh "tích"
+                if (tickInterval) clearInterval(tickInterval);
+                let tickSpeed = 150; // Tốc độ ban đầu
+                tickInterval = setInterval(() => {
+                    playTickSound("C2", 0.5 + Math.random() * 0.5);
+                    // Tăng tốc độ "tích"
+                    clearInterval(tickInterval);
+                    tickSpeed = Math.max(50, tickSpeed * 0.95); // Nhanh dần
+                    tickInterval = setInterval(() => playTickSound("C2", 0.5 + Math.random() * 0.5), tickSpeed);
+                }, tickSpeed);
+                
+
+                const winnerIndex = Math.floor(Math.random() * availableStudents.length);
+                selectedStudent = availableStudents[winnerIndex];
+
+                const segmentAngle = 360 / availableStudents.length;
+                const targetBaseAngle = 360 - (winnerIndex * segmentAngle);
+                const randomOffset = (Math.random() - 0.5) * segmentAngle * 0.8;
+                const extraSpins = 360 * 5;
+                const currentRotation = rotation % 360;
+                const finalRotation = Math.ceil(rotation / 360) * 360 + extraSpins + targetBaseAngle + randomOffset - currentRotation;
+                
+                rotation += finalRotation;
+                
+                wheel.style.transitionDuration = `${spinDuration}s`;
+                wheel.style.transform = `rotate(${rotation}deg)`;
+
+                // Tạo hiệu ứng "tích" chậm dần ở giây cuối
+                setTimeout(() => {
+                    clearInterval(tickInterval);
+                    tickSpeed = 300; // Tốc độ chậm
+                    tickInterval = setInterval(() => playTickSound("C2", 1), tickSpeed);
+                }, (spinDuration - 1.5) * 1000); // 1.5 giây cuối
+
+                // Dừng hẳn
+                setTimeout(() => {
+                    isSpinning = false;
+                    studentTextarea.disabled = false; // Mở lại
+                    spinStatus.textContent = '';
+                    
+                    // Dừng âm thanh "tích"
+                    if (tickInterval) clearInterval(tickInterval);
+                    
+                    // Phát âm thanh chiến thắng
+                    playWinnerSound();
+                    
+                    // Bắn pháo giấy
+                    triggerConfetti();
+                    
+                    winnerName.textContent = selectedStudent;
+                    showModal(winnerModal);
+
+                    if (noRepeat) {
+                        availableStudents.splice(winnerIndex, 1);
+                    }
+                    
+                    rotation = rotation % 360; // Chuẩn hóa góc quay
+                    updateUI();
+                }, spinDuration * 1000 + 200);
+            }
+
+            // Xử lý Reset
+            function handleReset() {
+                if (isSpinning) return;
+                availableStudents = [...masterStudentList];
+                selectedStudent = null;
+                rotation = 0; // Reset cả góc quay
+                wheel.style.transitionDuration = '0s';
+                wheel.style.transform = `rotate(${rotation}deg)`;
+                updateUI();
+            }
+
+
+            
+            // BỔ SUNG: Hàm Lưu/Tải Dữ liệu từ LocalStorage
+            function saveDataToLocalStorage() {
+                try {
+                    localStorage.setItem('vongQuayStudentList', studentTextarea.value); // BỔ SUNG
+                    localStorage.setItem('vongQuayQuizData', JSON.stringify(quizData));
+                    localStorage.setItem('vongQuayLeaderboardData', JSON.stringify(leaderboardData));
+                } catch (e) {
+                    console.error("Lỗi khi lưu vào localStorage:", e);
+                }
+            }
+            
+            // SỬA ĐỔI: Hàm Tải Dữ Liệu khi khởi động (Ưu tiên localStorage)
+            function loadDataOnStart() {
+                // 1. Thử tải từ LocalStorage trước (ưu tiên cao nhất)
+                let loadedFromStorage = false;
+                const localStudentList = localStorage.getItem('vongQuayStudentList');
+                const localQuizData = localStorage.getItem('vongQuayQuizData');
+                const localLeaderboardData = localStorage.getItem('vongQuayLeaderboardData');
+                
+                if(localStudentList) {
+                    studentTextarea.value = localStudentList;
+                    loadedFromStorage = true;
+                }
+                if(localQuizData) {
+                    quizData = JSON.parse(localQuizData);
+                    loadedFromStorage = true;
+                }
+                if(localLeaderboardData) {
+                    leaderboardData = JSON.parse(localLeaderboardData);
+                    loadedFromStorage = true;
+                }
+
+                // 2. Nếu không có gì trong localStorage, thử tải từ thẻ script (file đã download)
+                if (!loadedFromStorage) {
+                    const dataScript = document.getElementById('app-data-storage');
+                    if (dataScript) {
+                        try {
+                            const data = JSON.parse(dataScript.textContent);
+                            if (data.studentList) {
+                                studentTextarea.value = data.studentList;
+                            }
+                            if (data.quizData) {
+                                quizData = data.quizData;
+                            }
+                            if (data.leaderboardData) {
+                                leaderboardData = data.leaderboardData;
+                            }
+                        } catch (e) {
+                             console.error("Lỗi parse data từ thẻ script:", e);
+                        }
+                    }
+                }
+                
+                // 3. Nếu vẫn không có dữ liệu (file gốc, lần đầu mở), dùng mặc định
+                if (quizData.length === 0) {
+                    quizData = initialQuizData;
+                }
+                // Sửa logic: Chỉ đặt default nếu textarea thực sự rỗng sau khi thử load
+                if (studentTextarea.value.trim() === '') {
+                     studentTextarea.value = "Phạm Thanh Tú\nTrần Thuỳ Dương\nVũ Mai Phương\nBùi Hoàng Hải\nPhạm Hải Yến\nNguyễn Gia Bảo\nTrần Anh Quân\nNguyễn Minh Anh\nTần Gia Hân\nLê Hồng Long\nPhạm Phú Hưng\nĐào Gia Bảo\nNguyễn Hà Linh";
+                }
+                
+                // 4. Sau khi tải xong, lưu lại vào localStorage để đồng bộ
+                saveDataToLocalStorage();
+            }
+            
+            // --- 5. LOGIC QUẢN LÝ CÂU HỎI (NÂNG CẤP) ---
+
+            // Hàm hiển thị danh sách câu hỏi
+            function renderQuestionList() {
+                questionListUI.innerHTML = ''; // Xóa danh sách cũ
+                
+                if (quizData.length === 0) {
+                    questionListUI.innerHTML = `<li class="text-sm text-gray-500 italic text-center">Chưa có câu hỏi nào.</li>`;
+                }
+                
+                quizData.forEach(q => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center p-2 bg-gray-50 rounded border border-gray-200';
+                    li.innerHTML = `
+                        <span class="text-sm text-gray-700 truncate pr-2" title="${q.question}">${q.question}</span>
+                        <div class="flex-shrink-0 space-x-2">
+                            <button class="edit-question-btn p-1 text-blue-500 hover:text-blue-700" data-id="${q.id}">
+                                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                            </button>
+                            <button class="delete-question-btn p-1 text-red-500 hover:text-red-700" data-id="${q.id}">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                    questionListUI.appendChild(li);
+                });
+                
+                // Cập nhật số lượng câu hỏi
+                questionCountInfo.textContent = `Đang có ${quizData.length} câu hỏi.`;
+                
+                // Kích hoạt lại icon
+                lucide.createIcons();
+                
+                // Gán sự kiện cho các nút Sửa/Xóa mới
+                document.querySelectorAll('.edit-question-btn').forEach(btn => {
+                    btn.onclick = (e) => handleEditQuestion(e.currentTarget.dataset.id);
+                });
+                document.querySelectorAll('.delete-question-btn').forEach(btn => {
+                    btn.onclick = (e) => handleDeleteQuestion(e.currentTarget.dataset.id);
+                });
+            }
+            
+            // Hàm mở form để Thêm Mới
+            function handleAddNewQuestion() {
+                questionForm.reset(); // Xóa sạch form
+                questionIdInput.value = ''; // Xóa ID (quan trọng)
+                questionModalTitle.textContent = 'Thêm Câu Hỏi Mới';
+                showModal(questionModal);
+            }
+            
+            // Hàm mở form để Sửa
+            function handleEditQuestion(id) {
+                const question = quizData.find(q => q.id == id);
+                if (!question) return;
+
+                questionIdInput.value = question.id;
+                questionTextInput.value = question.question;
+                optionInputs.forEach((input, index) => {
+                    input.value = question.options[index] || '';
+                });
+                
+                const correctIndex = question.options.indexOf(question.correctAnswer);
+                correctAnswerSelect.value = correctIndex >= 0 ? correctIndex : 0;
+                
+                questionModalTitle.textContent = 'Sửa Câu Hỏi';
+                showModal(questionModal);
+            }
+
+            // Hàm Xóa câu hỏi
+            function handleDeleteQuestion(id) {
+                // Thầy có thể thêm một hộp thoại xác nhận ở đây
+                // if (confirm('Thầy có chắc chắn muốn xóa câu hỏi này?')) { ... }
+                
+                quizData = quizData.filter(q => q.id != id);
+                renderQuestionList();
+                saveDataToLocalStorage(); // BỔ SUNG: Lưu thay đổi
+            }
+            
+            // Hàm xử lý khi Submit Form (Thêm hoặc Sửa)
+            function handleFormSubmit(e) {
+                e.preventDefault();
+                
+                const id = questionIdInput.value;
+                const options = Array.from(optionInputs).map(input => input.value.trim());
+                const correctAnswerIndex = parseInt(correctAnswerSelect.value, 10);
+                
+                const questionPayload = {
+                    question: questionTextInput.value.trim(),
+                    options: options,
+                    correctAnswer: options[correctAnswerIndex]
+                };
+
+                if (id) { // Sửa câu hỏi
+                    const index = quizData.findIndex(q => q.id == id);
+                    if (index !== -1) {
+                        quizData[index] = { ...quizData[index], ...questionPayload };
+                    }
+                } else { // Thêm câu hỏi mới
+                    questionPayload.id = Date.now(); // Tạo ID mới
+                    quizData.push(questionPayload);
+                }
+                
+                hideModal(questionModal);
+                renderQuestionList();
+                saveDataToLocalStorage(); // BỔ SUNG: Lưu thay đổi
+            }
+            
+            // BỔ SUNG: Các hàm Import/Export Danh Sách Học Sinh
+            function handleExportStudents() {
+                try {
+                    const students = studentTextarea.value.split('\n').filter(name => name.trim() !== '');
+                    const dataStr = JSON.stringify(students, null, 2); // Lưu dưới dạng mảng JSON
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'VongQuay_HocSinh.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                } catch (e) {
+                    console.error("Lỗi khi export file học sinh:", e);
+                }
+            }
+            
+            function handleImportStudents() {
+                importStudentFileInput.click();
+            }
+            
+            function handleStudentFileSelected(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (Array.isArray(importedData)) {
+                            // Chuyển mảng JSON (các chuỗi tên) thành text, mỗi tên một dòng
+                            studentTextarea.value = importedData.map(name => String(name).trim()).filter(name => name).join('\n');
+                            updateStudentLists(); // Cập nhật vòng quay
+                            saveDataToLocalStorage(); // Lưu vào local storage
+                        } else {
+                            console.error("File JSON học sinh không hợp lệ. Cần một mảng các tên.");
+                        }
+                    } catch (err) {
+                        console.error("Lỗi khi đọc file JSON học sinh:", err);
+                    }
+                };
+                reader.readAsText(file);
+                importStudentFileInput.value = ''; // Reset input
+            }
+
+
+            // BỔ SUNG: Các hàm Import/Export Câu Hỏi
+            function handleExportQuestions() {
+                try {
+                    const dataStr = JSON.stringify(quizData, null, 2); // Định dạng JSON cho đẹp
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'VongQuay_Questions.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                } catch (e) {
+                    console.error("Lỗi khi export file:", e);
+                }
+            }
+            
+            function handleImportQuestions() {
+                // Kích hoạt input file ẩn
+                importFileInput.click();
+            }
+            
+            function handleFileSelected(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        // Đơn giản là ghi đè
+                        if (Array.isArray(importedData)) {
+                            quizData = importedData;
+                            renderQuestionList();
+                            saveDataToLocalStorage(); // Lưu ngân hàng mới
+                        } else {
+                            console.error("File JSON không hợp lệ.");
+                        }
+                    } catch (err) {
+                        console.error("Lỗi khi đọc file JSON:", err);
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Reset input để có thể chọn lại file cũ
+                importFileInput.value = '';
+            }
+            
+            // BỔ SUNG: Hàm xử lý cho JSON Generator
+            
+            // SỬA LỖI: Hàm phân tích text (Parser) đã được làm mạnh mẽ hơn
+            function parseTextToJSON(rawText) {
+                const questions = [];
+                // Tách các câu hỏi bằng "Câu X:" (cho phép có khoảng trắng)
+                const questionBlocks = rawText.split(/Câu\s*\d+:/).filter(b => b.trim() !== '');
+                
+                questionBlocks.forEach((block, index) => {
+                    const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+                    if (lines.length < 2) return; // Cần ít nhất 1 câu hỏi và 1 đáp án
+
+                    const questionText = lines[0];
+                    const options = [];
+                    let correctAnswer = "";
+
+                    // Regex để tìm đáp án:
+                    // ^\s* : Bắt đầu bằng 0 hoặc nhiều khoảng trắng (tab)
+                    // ([A-D])\.\s* : Bắt đầu bằng A. B. C. D. (cho phép khoảng trắng)
+                    // (.*?) : Lấy nội dung đáp án (lười biếng)
+                    // (\(\s*đáp án đúng\s*\))? : Nhóm tùy chọn (không bắt buộc) cho "( đáp án đúng )" (cho phép khoảng trắng)
+                    // \s*$ : Kết thúc bằng 0 hoặc nhiều khoảng trắng
+                    const optionRegex = /^\s*([A-D])\.\s*(.*?)(\(\s*đáp án đúng\s*\))?\s*$/i;
+
+                    lines.slice(1).forEach(line => {
+                        const match = line.match(optionRegex);
+                        if (match) {
+                            const optionText = match[2].trim(); // Lấy nội dung đáp án
+                            options.push(optionText);
+                            
+                            const isCorrect = match[3] !== undefined; // Kiểm tra xem có cụm "( đáp án đúng)" không
+                            if (isCorrect) {
+                                correctAnswer = optionText;
+                            }
+                        }
+                    });
+                    
+                    // Chỉ thêm nếu câu hỏi hợp lệ
+                    if (questionText && options.length > 0 && correctAnswer) {
+                        questions.push({
+                            id: Date.now() + index,
+                            question: questionText,
+                            options: options,
+                            correctAnswer: correctAnswer
+                        });
+                    }
+                });
+                
+                return JSON.stringify(questions, null, 2); // Trả về chuỗi JSON được định dạng
+            }
+            
+            // Xử lý bấm nút Chuyển đổi
+            function handleConvertToJson() {
+                const rawText = textInputArea.value;
+                const jsonString = parseTextToJSON(rawText);
+                jsonOutputArea.value = jsonString;
+                
+                // Cho phép tải về nếu có nội dung
+                if (jsonString && jsonString !== "[]") {
+                    downloadJsonBtn.disabled = false;
+                } else {
+                    downloadJsonBtn.disabled = true;
+                }
+            }
+            
+            // Xử lý bấm nút Tải JSON
+            function handleDownloadJson() {
+                const jsonText = jsonOutputArea.value;
+                if (!jsonText || jsonText === "[]") return;
+                
+                 try {
+                    const blob = new Blob([jsonText], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'Generated_Questions.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                } catch (e) {
+                    console.error("Lỗi khi export file JSON:", e);
+                }
+            }
+
+
+            // --- 6. LOGIC TRẮC NGHIỆM (QUIZ) ---
+            
+            function startQuiz() {
+                currentQuestionIndex = 0;
+                score = 0;
+                quizFinished = false;
+                currentQuizQuestions = []; // Xóa câu hỏi của lượt trước
+                
+                if (!selectedStudent) {
+                    renderQuizError("Chưa có học sinh!", "Vui lòng quay lại Vòng quay để chọn một học sinh.");
+                    return;
+                }
+                
+                if (quizData.length === 0) {
+                     renderQuizError("Chưa có câu hỏi!", "Vui lòng quay lại và dùng form 'Quản lý câu hỏi' để thêm.");
+                    return;
+                }
+                
+                // Bắt đầu bấm giờ
+                quizStartTime = Date.now();
+
+                // BỔ SUNG: Logic chế độ chơi (Nâng cấp)
+                if (gameMode === 'random') {
+                    // Chế độ "Số câu ngẫu nhiên"
+                    let count = parseInt(randomQuestionCountInput.value, 10) || 1;
+                    
+                    // Đảm bảo không lấy nhiều hơn số câu hỏi có
+                    if (count < 1) count = 1;
+                    if (count > quizData.length) {
+                        count = quizData.length;
+                    }
+            
+                    // Xáo trộn toàn bộ mảng câu hỏi (dùng hàm shuffleArray)
+                    const shuffledQuizData = shuffleArray(quizData);
+                    
+                    // Lấy `count` câu hỏi đầu tiên từ mảng đã xáo trộn
+                    currentQuizQuestions = shuffledQuizData.slice(0, count);
+            
+                } else {
+                    // Chế độ "Tất cả câu hỏi" (gameMode === 'all')
+                    currentQuizQuestions = [...quizData]; // Lấy tất cả
+                }
+                
+                renderQuizQuestion();
+            }
+            
+            function renderQuizError(title, message) {
+                 quizPage.innerHTML = `
+                    <div class="w-full h-full flex flex-col items-center justify-center text-center">
+                        <i data-lucide="frown" class="w-24 h-24 text-red-500 mb-6"></i>
+                        <h1 class="text-3xl font-bold text-gray-800">${title}</h1>
+                        <p class="text-xl font-semibold text-red-600 mt-8">${message}</p>
+                        <button id="back-to-wheel-btn-err" class="mt-12 bg-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-600 transition border-blue-700 btn-press">
+                            <i data-lucide="chevron-left" class="inline-block mr-2"></i>
+                            Quay Lại Vòng Quay
+                        </button>
+                    </div>
+                 `;
+                 lucide.createIcons();
+                 document.getElementById('back-to-wheel-btn-err').onclick = () => showView('wheel');
+            }
+            
+            function renderQuizQuestion() {
+                if (quizFinished) {
+                    renderQuizResult();
+                    return;
+                }
+                
+                const question = currentQuizQuestions[currentQuestionIndex];
+                
+                quizPage.innerHTML = `
+                    <div class="flex justify-between items-center mb-6">
+                        <p class="text-lg font-semibold text-blue-600">
+                            Học sinh: <span class="font-bold text-2xl">${selectedStudent}</span>
+                        </p>
+                        <p class="text-lg font-semibold text-gray-700">
+                            Câu: <span class="font-bold text-2xl">${currentQuestionIndex + 1}</span> / ${currentQuizQuestions.length}
+                        </p>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-gray-800 mb-8 min-h-[6rem]">
+                        ${question.question}
+                    </h2>
+
+                    <div id="quiz-options-container" class="space-y-4 mb-8">
+                        ${question.options.map((option, index) => `
+                            <button
+                                class="quiz-option-btn w-full text-left p-4 rounded-lg shadow-sm border transition duration-200 text-lg font-medium bg-white text-gray-700 hover:bg-gray-100 btn-press"
+                                data-option="${option}"
+                            >
+                                ${option}
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    <div id="quiz-feedback-container" class="min-h-[100px] mt-4">
+                        <button
+                            id="quiz-submit-btn"
+                            class="w-full text-2xl font-bold py-4 px-4 rounded-lg shadow-xl text-white transition transform bg-blue-600 hover:bg-blue-700 border-blue-800 btn-press disabled:opacity-50"
+                            disabled
+                        >
+                            Kiểm tra
+                        </button>
+                    </div>
+                `;
+                
+                // Gán sự kiện cho các nút đáp án
+                let selectedAnswer = null;
+                const optionButtons = document.querySelectorAll('.quiz-option-btn');
+                const submitBtn = document.getElementById('quiz-submit-btn');
+                
+                optionButtons.forEach(btn => {
+                    btn.onclick = (e) => {
+                        // Khởi tạo âm thanh (nếu chưa)
+                        initializeAudio();
+                        
+                        // Bỏ chọn các nút khác
+                        optionButtons.forEach(b => b.classList.remove('bg-blue-500', 'text-white', 'ring-2', 'ring-blue-700'));
+                        // Chọn nút này
+                        btn.classList.add('bg-blue-500', 'text-white', 'ring-2', 'ring-blue-700');
+                        selectedAnswer = e.currentTarget.dataset.option;
+                        submitBtn.disabled = false;
+                    };
+                });
+                
+                submitBtn.onclick = () => handleSubmitAnswer(selectedAnswer, question.correctAnswer);
+            }
+            
+            function handleSubmitAnswer(selected, correct) {
+                const isCorrect = (selected === correct);
+                if (isCorrect) {
+                    score++;
+                    playCorrectSound(); // Phát âm thanh đúng
+                } else {
+                    playWrongSound(); // Phát âm thanh sai
+                }
+                
+                // Hiển thị kết quả
+                const feedbackContainer = document.getElementById('quiz-feedback-container');
+                feedbackContainer.innerHTML = `
+                    <div class="flex items-center p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                        <i data-lucide="${isCorrect ? 'check-circle' : 'x-circle'}" class="w-6 h-6 mr-3"></i>
+                        <span class="text-lg font-semibold">
+                            ${isCorrect ? "Chính xác!" : `Sai rồi! Đáp án đúng là: ${correct}`}
+                        </span>
+                    </div>
+                    <button
+                        id="quiz-next-btn"
+                        class="w-full text-xl font-bold py-4 px-4 rounded-lg shadow-xl text-white transition transform bg-green-600 hover:bg-green-700 border-green-800 btn-press"
+                    >
+                        ${currentQuestionIndex === currentQuizQuestions.length - 1 ? 'Xem Kết Quả' : 'Câu Tiếp Theo'}
+                    </button>
+                `;
+                lucide.createIcons();
+                
+                // Gán sự kiện cho nút "Tiếp theo"
+                document.getElementById('quiz-next-btn').onclick = () => {
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex >= currentQuizQuestions.length) {
+                        quizFinished = true;
+                    }
+                    renderQuizQuestion(); // Vẽ câu tiếp theo hoặc kết quả
+                };
+                
+                // Vô hiệu hóa các nút chọn
+                document.querySelectorAll('.quiz-option-btn').forEach(btn => {
+                    btn.disabled = true;
+                    const option = btn.dataset.option;
+                    // Tô màu đúng/sai
+                    if (option === correct) {
+                        btn.className = 'quiz-option-btn w-full text-left p-4 rounded-lg shadow-sm border text-lg font-medium bg-green-500 text-white ring-2 ring-green-700';
+                    } else if (option === selected && option !== correct) {
+                         btn.className = 'quiz-option-btn w-full text-left p-4 rounded-lg shadow-sm border text-lg font-medium bg-red-500 text-white ring-2 ring-red-700';
+                    } else {
+                         btn.className = 'quiz-option-btn w-full text-left p-4 rounded-lg shadow-sm border text-lg font-medium bg-gray-200 text-gray-500';
+                    }
+                });
+            }
+            
+            function renderQuizResult() {
+                // Dừng bấm giờ và tính toán
+                const quizEndTime = Date.now();
+                const totalTimeInSeconds = (quizEndTime - quizStartTime) / 1000;
+                
+                // Lưu kết quả vào Bảng Xếp Hạng
+                const resultEntry = {
+                    name: selectedStudent,
+                    score: score,
+                    time: totalTimeInSeconds,
+                    totalQuestions: currentQuizQuestions.length
+                };
+                leaderboardData.push(resultEntry);
+                renderLeaderboard(); // Cập nhật BXH
+                saveDataToLocalStorage(); // BỔ SUNG: Lưu BXH mới
+                
+                // Hiển thị kết quả (cập nhật để có thời gian)
+                quizPage.innerHTML = `
+                    <div class="w-full flex flex-col items-center justify-center text-center">
+                        <i data-lucide="award" class="w-32 h-32 text-yellow-500 mb-6"></i>
+                        <h1 class="text-3xl font-bold text-gray-800">Hoàn thành!</h1>
+                        <p class="text-xl text-gray-600 mt-4">
+                          Học sinh <span class="font-bold text-blue-600">${selectedStudent}</span>
+                        </p>
+                        <p class="text-2xl font-semibold text-gray-700 mt-2">
+                          Đã đạt được:
+                          <span class="text-4xl font-bold text-green-600 ml-3">
+                            ${score} / ${currentQuizQuestions.length}
+                          </span> điểm
+                        </p>
+                        <p class="text-xl text-gray-500 mt-2">
+                            (trong ${totalTimeInSeconds.toFixed(2)} giây)
+                        </p>
+                        <button
+                          id="back-to-wheel-btn-res"
+                          class="mt-12 bg-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-600 transition border-blue-700 btn-press"
+                        >
+                          <i data-lucide="chevron-left" class="inline-block mr-2"></i>
+                          Quay Lại Vòng Quay
+                        </button>
+                    </div>
+                `;
+                lucide.createIcons();
+                document.getElementById('back-to-wheel-btn-res').onclick = () => showView('wheel');
+            }
+            
+            // --- 7. BỔ SUNG: LOGIC HIỆU ỨNG PHÁO GIẤY (CONFETTI) ---
+            const confettiCtx = confettiCanvas.getContext('2d');
+            let confettiParticles = [];
+
+            function triggerConfetti() {
+                confettiParticles = []; // Xóa pháo giấy cũ
+                const particleCount = 200; // Số lượng
+                const colors = ['#FF6B6B', '#FFD166', '#06D6A0', '#118AB2', '#9B5DE5', '#F15BB5'];
+
+                // Bắn từ 2 bên
+                for (let i = 0; i < particleCount; i++) {
+                    const fromLeft = Math.random() < 0.5;
+                    confettiParticles.push({
+                        x: fromLeft ? 0 : confettiCanvas.width, // Bắt đầu từ 2 cạnh
+                        y: Math.random() * confettiCanvas.height, // Vị trí ngẫu nhiên
+                        vx: (fromLeft ? 1 : -1) * (4 + Math.random() * 4), // Hướng vào
+                        vy: -5 - Math.random() * 5, // Bắn lên
+                        size: 5 + Math.random() * 5,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        life: 120 // 120 khung hình (khoảng 2 giây)
+                    });
+                }
+                
+                // Bắt đầu vòng lặp vẽ
+                if (!confettiAnimationRunning) {
+                    animateConfetti();
+                }
+            }
+
+            let confettiAnimationRunning = false;
+            function animateConfetti() {
+                confettiAnimationRunning = true;
+                confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                
+                confettiParticles.forEach((p, index) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.15; // Trọng lực
+                    p.vx *= 0.99; // Giảm tốc
+                    p.life--;
+                    
+                    if (p.life <= 0) {
+                        confettiParticles.splice(index, 1);
+                    } else {
+                        confettiCtx.fillStyle = p.color;
+                        confettiCtx.globalAlpha = p.life / 120;
+                        confettiCtx.beginPath();
+                        confettiCtx.rect(p.x, p.y, p.size, p.size);
+                        confettiCtx.fill();
+                        confettiCtx.globalAlpha = 1.0;
+                    }
+                });
+
+                if (confettiParticles.length > 0) {
+                    requestAnimationFrame(animateConfetti);
+                } else {
+                    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                    confettiAnimationRunning = false;
+                }
+            }
+
+            // Hàm cập nhật kích thước canvas
+            function resizeConfettiCanvas() {
+                confettiCanvas.width = window.innerWidth;
+                confettiCanvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeConfettiCanvas);
+            resizeConfettiCanvas(); // Gọi lần đầu
+
+
+            // --- 8. GÁN CÁC SỰ KIỆN BAN ĐẦU (EVENT LISTENERS) ---
+            
+            // Panel Trái
+            studentTextarea.addEventListener('input', updateStudentLists);
+            clearLeaderboardBtn.addEventListener('click', handleClearLeaderboard); 
+            // BỔ SUNG:
+            importStudentsBtn.addEventListener('click', handleImportStudents);
+            exportStudentsBtn.addEventListener('click', handleExportStudents);
+            importStudentFileInput.addEventListener('change', handleStudentFileSelected);
+            
+            // Panel Phải
+            spinBtn.addEventListener('click', handleSpin);
+            resetBtn.addEventListener('click', handleReset);
+            goToQuizBtn.addEventListener('click', () => showView('quiz'));
+            
+            noRepeatCheckbox.addEventListener('change', (e) => {
+                noRepeat = e.target.checked;
+                handleReset();
+            });
+            spinDurationInput.addEventListener('change', (e) => {
+                spinDuration = parseInt(e.target.value, 10) || 6;
+            });
+            
+            // SỬA ĐỔI: Gán sự kiện cho Chế độ chơi (phức tạp hơn)
+            gameModeRadios.forEach(radio => {
+                 radio.addEventListener('change', (e) => {
+                     gameMode = e.target.value;
+                     // Bật/tắt ô nhập số lượng
+                     if (gameMode === 'random') {
+                         randomQuestionCountInput.disabled = false;
+                     } else {
+                         randomQuestionCountInput.disabled = true;
+                     }
+                 });
+            });
+            // (Không cần lưu vào state vì ta đọc trực tiếp từ input lúc startQuiz)
+            
+            // BỔ SUNG: Gán sự kiện cho Import/Export
+            importQuestionsBtn.addEventListener('click', handleImportQuestions);
+            exportQuestionsBtn.addEventListener('click', handleExportQuestions);
+            importFileInput.addEventListener('change', handleFileSelected);
+            
+            // BỔ SUNG: Gán sự kiện cho JSON Generator
+            showJsonGeneratorBtn.addEventListener('click', () => showModal(jsonGeneratorModal));
+            jsonGeneratorCloseBtn.addEventListener('click', () => hideModal(jsonGeneratorModal));
+            convertToJsonBtn.addEventListener('click', handleConvertToJson);
+            downloadJsonBtn.addEventListener('click', handleDownloadJson);
+
+            // Modal Chúc Mừng
+            winnerModalCloseBtn.addEventListener('click', () => hideModal(winnerModal));
+            winnerModalCloseBtn2.addEventListener('click', () => hideModal(winnerModal));
+            winnerModalGoQuizBtn.addEventListener('click', () => {
+                hideModal(winnerModal);
+                showView('quiz');
+            });
+            
+            // Modal Câu Hỏi
+            addNewQuestionBtn.addEventListener('click', handleAddNewQuestion);
+            questionForm.addEventListener('submit', handleFormSubmit);
+            questionModalCloseBtn.addEventListener('click', () => hideModal(questionModal));
+            questionModalCancelBtn.addEventListener('click', () => hideModal(questionModal));
+            
+            
+            // BỔ SUNG: Modal Hướng Dẫn
+            showHelpModalBtn.addEventListener('click', () => showModal(helpModal));
+            helpModalCloseBtn.addEventListener('click', () => hideModal(helpModal));
+            helpModalCloseBtn2.addEventListener('click', () => hideModal(helpModal));
+
+            // --- 9. KHỞI CHẠY ỨNG DỤNG ---
+            loadDataOnStart(); // Tải dữ liệu (Ưu tiên localStorage)
+            
+            // Giữ lại danh sách mẫu nếu chưa có gì
+            // (Đã chuyển logic này vào loadDataOnStart)
+            
+            updateStudentLists(); // Tải danh sách học sinh lần đầu
+            renderQuestionList(); // Tải danh sách câu hỏi lần đầu
+            renderLeaderboard(); // Tải bảng xếp hạng lần đầu
+            
+            // Kích hoạt các icon lần đầu
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

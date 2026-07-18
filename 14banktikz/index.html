@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngân Hàng LaTeXtikZ ✨</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome cho Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- MathJax để render LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Custom CSS cho Font và Layout -->
+    <style>
+        body { font-family: 'Nunito', sans-serif; }
+        .font-script { font-family: 'Dancing Script', cursive; }
+
+        /* Ẩn thanh cuộn cho đẹp */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Scrollbar riêng cho Code Block */
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800 min-h-screen relative pb-24">
+
+    <!-- Toast Notification (Thông báo) -->
+    <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full opacity-0 z-[250] flex items-center gap-3">
+        <i class="fas fa-check-circle text-xl"></i>
+        <span class="font-semibold">Đã lưu thành công! 🎉</span>
+    </div>
+
+    <!-- Nút Hamburger Menu Nổi -->
+    <button id="menu-btn" class="fixed top-6 left-6 z-[90] bg-white/90 backdrop-blur-sm border border-gray-200 p-3.5 rounded-2xl shadow-lg text-blue-600 hover:text-purple-600 hover:bg-blue-50 transform hover:scale-105 transition-all duration-300">
+        <i class="fas fa-bars text-2xl"></i>
+    </button>
+
+    <!-- Overlay mờ khi mở Menu -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[95] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Sidebar Menu Chính -->
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-80 max-w-[80vw] bg-white z-[100] shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col rounded-r-3xl border-r border-gray-100">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50 rounded-tr-3xl shrink-0">
+            <h2 class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                <i class="fas fa-compass text-blue-500 mr-2"></i> Menu
+            </h2>
+            <button id="close-sidebar" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none bg-white w-8 h-8 flex items-center justify-center rounded-full shadow-sm border border-gray-200">&times;</button>
+        </div>
+        
+        <div class="p-6 flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar">
+            <!-- Khu vực User -->
+            <div class="bg-emerald-50 rounded-2xl p-4 flex items-center gap-4 mb-4 border border-emerald-100">
+                <div class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold shadow-inner">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-emerald-600 font-semibold">Xin chào,</p>
+                    <p class="text-sm font-bold text-gray-800">Thầy/Cô</p>
+                </div>
+            </div>
+
+            <!-- Nút Trang chủ -->
+            <a href="#" class="flex items-center gap-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-xl transition-colors font-semibold" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); document.getElementById('close-sidebar').click();">
+                <i class="fas fa-home w-5 text-center"></i> Trang chủ
+            </a>
+
+            <!-- Nút Thêm Bài Tập Mới -->
+            <a href="#" id="menu-add-btn" class="flex items-center gap-3 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-4 py-3 rounded-xl transition-colors font-bold">
+                <i class="fas fa-plus-circle w-5 text-center text-lg"></i> Thêm mới câu hỏi
+            </a>
+
+            <!-- Nút Thêm Hình Vẽ Mới -->
+            <a href="#" id="menu-draw-btn" class="flex items-center gap-3 text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-4 py-3 rounded-xl transition-colors font-bold">
+                <i class="fas fa-paint-brush w-5 text-center text-lg"></i> Vẽ hình
+            </a>
+        </div>
+        
+        <div class="p-4 bg-slate-50 border-t border-gray-100 text-center shrink-0 rounded-br-3xl">
+            <p class="font-script text-xl text-gray-500">Ngân hàng TikZ</p>
+        </div>
+    </div>
+
+    <!-- NỘI DUNG CHÍNH -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-24">
+        
+        <!-- Header -->
+        <div class="text-center mb-12 mt-2">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-teal-600 mb-4 inline-block">
+                ✨ Ngân Hàng LaTeXtikZ 🧮
+            </h1>
+            <p class="text-gray-500 text-lg font-medium mb-8">Tìm kiếm, lưu trữ và đồng bộ ngân hàng câu hỏi & hình vẽ toán học.</p>
+            
+            <!-- Các Tab thao tác chính đưa ra ngoài trang chủ -->
+            <div class="flex flex-wrap justify-center items-center gap-4">
+                <button id="main-add-btn" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white px-6 py-3.5 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 font-bold flex items-center gap-2 text-base md:text-lg">
+                    <i class="fas fa-plus-circle text-xl"></i> Thêm câu hỏi
+                </button>
+                <button id="main-draw-btn" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3.5 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 font-bold flex items-center gap-2 text-base md:text-lg">
+                    <i class="fas fa-paint-brush text-xl"></i> Vẽ hình
+                </button>
+            </div>
+        </div>
+
+        <!-- Thanh Tìm Kiếm Thông Minh -->
+        <div class="mb-6 max-w-3xl mx-auto relative group z-10">
+            <div class="absolute -inset-1 bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 rounded-[2rem] blur opacity-30 group-focus-within:opacity-70 transition duration-500"></div>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-blue-500 group-focus-within:text-purple-600 transition-colors text-2xl"></i>
+                </div>
+                <input type="text" id="search-input" placeholder="Tìm kiếm lớp, chủ đề, hoặc nội dung mã code..." 
+                    class="w-full pl-16 pr-14 py-6 rounded-3xl bg-white/95 backdrop-blur-sm border-2 border-white focus:border-purple-400 outline-none transition-all duration-300 shadow-xl text-gray-700 font-bold text-xl placeholder-gray-400">
+                <button id="clear-search" class="absolute inset-y-0 right-0 pr-6 flex items-center hidden text-gray-400 hover:text-red-500 transition-colors cursor-pointer outline-none">
+                    <i class="fas fa-times-circle text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bộ Lọc Thông Minh -->
+        <div class="mb-12 max-w-3xl mx-auto flex flex-wrap justify-center gap-4 z-10 relative">
+            <div class="flex items-center bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <i class="fas fa-filter text-blue-500 mr-2"></i>
+                <select id="filter-type" class="bg-transparent border-none outline-none text-sm font-bold text-gray-600 cursor-pointer pr-2">
+                    <option value="all">Tất cả danh mục</option>
+                    <option value="question">Chỉ Câu hỏi</option>
+                    <option value="drawing">Chỉ Hình vẽ</option>
+                </select>
+            </div>
+            <div class="flex items-center bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <i class="fas fa-graduation-cap text-green-500 mr-2"></i>
+                <select id="filter-grade" class="bg-transparent border-none outline-none text-sm font-bold text-gray-600 cursor-pointer pr-2">
+                    <option value="all">Tất cả các lớp</option>
+                    <option value="Lớp 6">Lớp 6</option>
+                    <option value="Lớp 7">Lớp 7</option>
+                    <option value="Lớp 8">Lớp 8</option>
+                    <option value="Lớp 9">Lớp 9</option>
+                    <option value="Khác">Khác</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Khu vực hiển thị danh sách câu hỏi -->
+        <div class="mb-6 flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-gray-800"><i class="fas fa-layer-group text-yellow-500 mr-2"></i> Các mục gần đây</h2>
+            <div class="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full inline-flex items-center gap-2 shadow-sm border border-blue-200">
+                <i class="fas fa-sync-alt animate-spin-slow"></i> Live
+            </div>
+        </div>
+        
+        <!-- Grid chứa Cards -->
+        <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+            <!-- Thẻ câu hỏi sẽ được render ở đây bằng JS -->
+        </div>
+
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="absolute bottom-6 w-full text-center z-0">
+        <p class="font-script text-3xl text-gray-600 drop-shadow-sm">
+            © 2026 Designed with <i class="fas fa-heart text-red-500 animate-pulse"></i> Thầy Cường dạy Toán
+        </p>
+    </div>
+
+    <!-- ==========================================
+         CÁC MODAL HỖ TRỢ GIAO DIỆN
+    =========================================== -->
+
+    <!-- Modal Form Nhập Liệu Câu Hỏi -->
+    <div id="form-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[150] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden relative transform scale-95 transition-transform duration-300" id="form-modal-content">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 id="form-modal-title" class="text-xl font-bold text-gray-800"><i class="fas fa-plus-circle text-emerald-500 mr-2"></i> Thêm câu hỏi mới</h3>
+                <button id="close-form-modal" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <form id="latex-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="grade" class="block text-sm font-bold text-gray-700 mb-2">
+                                <i class="fas fa-graduation-cap text-green-500 mr-2"></i>Lớp
+                            </label>
+                            <select id="grade" required class="w-full px-5 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all duration-200 cursor-pointer text-gray-700">
+                                <option value="" disabled selected>Chọn lớp...</option>
+                                <option value="Lớp 6">Lớp 6</option>
+                                <option value="Lớp 7">Lớp 7</option>
+                                <option value="Lớp 8">Lớp 8</option>
+                                <option value="Lớp 9">Lớp 9</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="topic" class="block text-sm font-bold text-gray-700 mb-2">
+                                <i class="fas fa-tag text-blue-500 mr-2"></i>Chủ đề
+                            </label>
+                            <input type="text" id="topic" list="topic-suggestions" required placeholder="Chọn hoặc nhập chủ đề..." class="w-full px-5 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200">
+                            <datalist id="topic-suggestions">
+                                <option value="Điểm, Đường thẳng, Tia, Đoạn thẳng">
+                                <option value="Góc">
+                                <option value="Các đường đồng quy trong tam giác">
+                                <option value="Tam giác (Thường, Cân, Đều, Vuông)">
+                                <option value="Tứ giác (Hình thang, Bình hành, Chữ nhật...)">
+                                <option value="Đa giác, Diện tích đa giác">
+                                <option value="Định lý Thales và Ứng dụng">
+                                <option value="Tam giác đồng dạng">
+                                <option value="Hệ thức lượng trong tam giác vuông">
+                                <option value="Đường tròn nội tiếp tam giác">
+                                <option value="Góc với đường tròn (Góc nội tiếp, Ở tâm...)">
+                                <option value="Đường tròn với tiếp tuyến">
+                                <option value="Tứ giác nội tiếp">
+                                <option value="Độ dài đường tròn, Diện tích hình tròn">
+                                <option value="Hình không gian (Trụ, Nón, Cầu)">
+                            </datalist>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-info-circle text-orange-500 mr-2"></i>Mô tả ngắn (Tùy chọn)
+                        </label>
+                        <textarea id="description" rows="2" placeholder="Ví dụ: Đề thi giữa kì 2 trường THCS Nguyễn Du..." class="w-full px-5 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none transition-all duration-200 text-sm resize-y"></textarea>
+                    </div>
+
+                    <!-- Khu vực Upload Ảnh Cloudinary -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-image text-pink-500 mr-2"></i>Ảnh đính kèm (Tùy chọn)
+                        </label>
+                        <div id="upload-zone" class="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all duration-300 group">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 group-hover:text-pink-500 mb-3 transition-colors"></i>
+                            <p class="text-sm text-gray-600 font-bold mb-1">Click để tải ảnh lên</p>
+                            <p class="text-xs text-gray-500">Hoặc <kbd class="bg-gray-200 border border-gray-300 px-1.5 py-0.5 rounded text-gray-700 shadow-sm font-mono">Ctrl</kbd> + <kbd class="bg-gray-200 border border-gray-300 px-1.5 py-0.5 rounded text-gray-700 shadow-sm font-mono">V</kbd> trực tiếp vào form</p>
+                            <input type="file" id="image-upload" accept="image/*" class="hidden">
+                        </div>
+                        <div id="image-preview-container" class="hidden mt-3 relative inline-block group">
+                            <img id="image-preview" src="" class="max-h-48 rounded-xl shadow-md border border-gray-200 object-contain bg-white">
+                            <button type="button" id="remove-image" class="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 shadow-lg transform hover:scale-110 transition-all border-2 border-white" title="Xóa ảnh này"><i class="fas fa-times"></i></button>
+                        </div>
+                        <input type="hidden" id="image-url" value="">
+                    </div>
+
+                    <div>
+                        <label for="content" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-code text-purple-500 mr-2"></i>Nội dung câu hỏi & lời giải (Code LaTeX)
+                        </label>
+                        <textarea id="content" required rows="6" placeholder="Ví dụ: Tính tích phân $I = \int_{0}^{1} x^2 dx$..." class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-200 font-mono text-sm resize-y"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button type="button" id="cancel-form-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl transition-colors">Hủy</button>
+                        <button type="submit" id="submit-form-btn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-3">
+                            <i class="fas fa-paper-plane"></i> Lưu Lên Ngân Hàng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form Nhập Liệu VẼ HÌNH (Giao diện tối giản) -->
+    <div id="draw-form-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[150] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden relative transform scale-95 transition-transform duration-300" id="draw-form-modal-content">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 id="draw-modal-title" class="text-xl font-bold text-gray-800"><i class="fas fa-paint-brush text-purple-500 mr-2"></i> Thêm hình vẽ mới</h3>
+                <button id="close-draw-modal" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <form id="draw-form" class="space-y-6">
+                    <div>
+                        <label for="draw-topic" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-tag text-blue-500 mr-2"></i>Chủ đề
+                        </label>
+                        <input type="text" id="draw-topic" required placeholder="Nhập chủ đề hình vẽ (Ví dụ: Hình chóp tứ giác đều)..." class="w-full px-5 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all duration-200">
+                    </div>
+
+                    <div>
+                        <label for="draw-content" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-code text-purple-500 mr-2"></i>Nội dung (Code TikZ/LaTeX)
+                        </label>
+                        <textarea id="draw-content" required rows="10" placeholder="Dán mã TikZ của hình vẽ vào đây..." class="w-full px-5 py-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all duration-200 font-mono text-sm resize-y"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button type="button" id="cancel-draw-btn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl transition-colors">Hủy</button>
+                        <button type="submit" id="submit-draw-btn" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-3">
+                            <i class="fas fa-paper-plane"></i> Lưu Hình Vẽ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Xem Chi Tiết Mã Nguồn -->
+    <div id="view-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative transform scale-95 transition-transform duration-300" id="view-modal-content">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 class="text-xl font-bold text-gray-800"><i class="fas fa-code text-blue-500 mr-2"></i> Chi tiết mã nguồn (Code)</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-red-500 transition-colors text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <div id="modal-image-container" class="mb-6 hidden flex justify-center bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <img id="modal-image" src="" alt="Ảnh minh họa" class="max-h-[35vh] object-contain rounded-lg shadow-sm cursor-pointer hover:opacity-90 transition-opacity" title="Click để mở ảnh gốc">
+                </div>
+                <div class="relative group/code h-full flex flex-col rounded-xl overflow-hidden shadow-inner border border-slate-700">
+                    <div class="bg-slate-800 px-4 py-2 flex justify-between items-center border-b border-slate-700 shrink-0">
+                        <span class="text-xs text-slate-300 font-mono font-semibold"><i class="fas fa-code mr-1"></i> LaTeX / TikZ</span>
+                    </div>
+                    <div class="flex-1 flex flex-col">
+                        <pre id="modal-content-code" class="bg-slate-900 text-emerald-400 p-5 overflow-x-auto text-sm font-mono whitespace-pre-wrap leading-relaxed selection:bg-emerald-500/30 min-h-[25vh] flex-1 custom-scrollbar"></pre>
+                        <div class="bg-slate-900 border-t border-slate-700/80 p-4 flex justify-center shrink-0">
+                            <button id="modal-copy-btn" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-2.5 px-8 rounded-full shadow-lg transform hover:scale-105 transition-all flex items-center gap-2 border border-emerald-400/50">
+                                <i class="far fa-copy text-lg"></i> <span>Copy Code</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Hệ Thống -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-[300] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 transform scale-95 transition-transform duration-300 text-center border border-gray-100" id="confirm-modal-content">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 id="confirm-title" class="text-xl font-bold text-gray-800 mb-2">Xác nhận</h3>
+            <p id="confirm-message" class="text-gray-500 mb-6">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+            <div class="flex gap-3">
+                <button id="cancel-confirm" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors">Hủy</button>
+                <button id="submit-confirm" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-md transition-colors">Đồng ý</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === FIREBASE & LOGIC JAVASCRIPT === -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, doc, updateDoc, increment, deleteDoc } 
+            from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const colRef = collection(db, 'banktikz');
+
+        const pastelColors = ['bg-blue-100', 'bg-pink-100', 'bg-yellow-100', 'bg-green-100', 'bg-purple-100', 'bg-orange-100', 'bg-teal-100', 'bg-indigo-100'];
+
+        let currentEditId = null;
+        let localDataMap = {};
+        let allQuestions = [];
+
+        // --- CÁC HÀM TIỆN ÍCH ---
+        const removeAccents = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+        };
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.querySelector('span').innerText = message;
+            const icon = toast.querySelector('i');
+            if (isError) {
+                toast.classList.replace('bg-green-500', 'bg-red-500');
+                icon.className = 'fas fa-exclamation-circle text-xl';
+            } else {
+                toast.classList.replace('bg-red-500', 'bg-green-500');
+                icon.className = 'fas fa-check-circle text-xl';
+            }
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-x-full', 'opacity-0'), 3000);
+        }
+
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmContent = document.getElementById('confirm-modal-content');
+        const submitConfirmBtn = document.getElementById('submit-confirm');
+        const cancelConfirmBtn = document.getElementById('cancel-confirm');
+        let pendingConfirmAction = null;
+
+        const showConfirmModal = (title, message, onConfirm) => {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            pendingConfirmAction = onConfirm;
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                confirmModal.classList.remove('opacity-0');
+                confirmContent.classList.remove('scale-95');
+            }, 10);
+        };
+        const closeConfirmModal = () => {
+            confirmModal.classList.add('opacity-0');
+            confirmContent.classList.add('scale-95');
+            setTimeout(() => confirmModal.classList.add('hidden'), 300);
+            pendingConfirmAction = null;
+        };
+        cancelConfirmBtn.addEventListener('click', closeConfirmModal);
+        submitConfirmBtn.addEventListener('click', () => {
+            if (pendingConfirmAction) pendingConfirmAction();
+            closeConfirmModal();
+        });
+
+        // --- SIDEBAR MENU ---
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const openSidebar = () => {
+            sidebarOverlay.classList.remove('hidden');
+            setTimeout(() => { sidebarOverlay.classList.remove('opacity-0'); sidebar.classList.remove('-translate-x-full'); }, 10);
+        };
+        const closeSidebar = () => {
+            sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('opacity-0');
+            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        };
+        menuBtn.addEventListener('click', openSidebar);
+        document.getElementById('close-sidebar').addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // --- LOGIC FORM NHẬP BÀI TẬP & VẼ HÌNH ---
+        const formModal = document.getElementById('form-modal');
+        const formModalContent = document.getElementById('form-modal-content');
+        const drawFormModal = document.getElementById('draw-form-modal');
+        const drawFormModalContent = document.getElementById('draw-form-modal-content');
+        
+        // Mở Form Câu Hỏi
+        const openFormModal = (isEdit = false) => {
+            document.getElementById('form-modal-title').innerHTML = isEdit 
+                ? '<i class="fas fa-pen text-amber-500 mr-2"></i> Cập nhật câu hỏi'
+                : '<i class="fas fa-plus-circle text-emerald-500 mr-2"></i> Thêm câu hỏi mới';
+            const submitBtn = document.getElementById('submit-form-btn');
+            if(isEdit) {
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Cập nhật Câu Hỏi';
+                submitBtn.className = 'flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-3';
+            } else {
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Lưu Lên Ngân Hàng';
+                submitBtn.className = 'flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-3';
+            }
+            formModal.classList.remove('hidden');
+            setTimeout(() => { formModal.classList.remove('opacity-0'); formModalContent.classList.remove('scale-95'); }, 10);
+        };
+        const closeFormModal = () => {
+            formModal.classList.add('opacity-0'); formModalContent.classList.add('scale-95');
+            setTimeout(() => { formModal.classList.add('hidden'); }, 300);
+        };
+
+        // Mở Form Vẽ Hình
+        const openDrawModal = (isEdit = false) => {
+            document.getElementById('draw-modal-title').innerHTML = isEdit 
+                ? '<i class="fas fa-pen text-amber-500 mr-2"></i> Cập nhật hình vẽ'
+                : '<i class="fas fa-paint-brush text-purple-500 mr-2"></i> Thêm hình vẽ mới';
+            const submitBtn = document.getElementById('submit-draw-btn');
+            if(isEdit) {
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Cập nhật Hình Vẽ';
+            } else {
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Lưu Hình Vẽ';
+            }
+            drawFormModal.classList.remove('hidden');
+            setTimeout(() => { drawFormModal.classList.remove('opacity-0'); drawFormModalContent.classList.remove('scale-95'); }, 10);
+        };
+        const closeDrawModal = () => {
+            drawFormModal.classList.add('opacity-0'); drawFormModalContent.classList.add('scale-95');
+            setTimeout(() => { drawFormModal.classList.add('hidden'); }, 300);
+        };
+
+        // Đóng modals
+        document.getElementById('close-form-modal').addEventListener('click', closeFormModal);
+        document.getElementById('cancel-form-btn').addEventListener('click', closeFormModal);
+        document.getElementById('close-draw-modal').addEventListener('click', closeDrawModal);
+        document.getElementById('cancel-draw-btn').addEventListener('click', closeDrawModal);
+        
+        // HÀM MỞ FORM THÊM MỚI (CÂU HỎI)
+        const handleOpenAddForm = (e) => {
+            e.preventDefault(); 
+            closeSidebar(); 
+            currentEditId = null;
+            document.getElementById('latex-form').reset();
+            document.getElementById('image-url').value = '';
+            document.getElementById('image-preview').src = '';
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('upload-zone').classList.remove('hidden');
+            openFormModal(false);
+        };
+
+        // HÀM MỞ FORM THÊM MỚI (VẼ HÌNH)
+        const handleOpenDrawForm = (e) => {
+            e.preventDefault();
+            closeSidebar();
+            currentEditId = null;
+            document.getElementById('draw-form').reset();
+            openDrawModal(false);
+        };
+
+        document.getElementById('menu-add-btn').addEventListener('click', handleOpenAddForm);
+        document.getElementById('main-add-btn').addEventListener('click', handleOpenAddForm);
+        document.getElementById('menu-draw-btn').addEventListener('click', handleOpenDrawForm);
+        document.getElementById('main-draw-btn').addEventListener('click', handleOpenDrawForm);
+
+        // Upload Ảnh Bài tập
+        const CLOUD_NAME = "de9a28vmi"; const UPLOAD_PRESET = "anhtikz";
+        const uploadZone = document.getElementById('upload-zone');
+        const imageUploadInput = document.getElementById('image-upload');
+        const uploadToCloudinary = async (file) => {
+            if (!file.type.startsWith('image/')) return;
+            const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', UPLOAD_PRESET);
+            uploadZone.innerHTML = '<i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="text-sm font-bold">Đang tải ảnh...</p>';
+            try {
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.secure_url) {
+                    document.getElementById('image-url').value = data.secure_url;
+                    document.getElementById('image-preview').src = data.secure_url;
+                    uploadZone.classList.add('hidden');
+                    document.getElementById('image-preview-container').classList.remove('hidden');
+                }
+            } catch (error) { showToast("Lỗi tải ảnh!", true); } 
+            finally { uploadZone.innerHTML = '<i class="fas fa-cloud-upload-alt text-4xl text-gray-400 group-hover:text-pink-500 mb-3 transition-colors"></i><p class="text-sm text-gray-600 font-bold mb-1">Click để tải ảnh lên</p>'; }
+        };
+        uploadZone.addEventListener('click', () => imageUploadInput.click());
+        imageUploadInput.addEventListener('change', (e) => { if (e.target.files.length > 0) uploadToCloudinary(e.target.files[0]); });
+        document.getElementById('remove-image').addEventListener('click', () => {
+            document.getElementById('image-url').value = '';
+            document.getElementById('image-preview-container').classList.add('hidden');
+            uploadZone.classList.remove('hidden');
+        });
+
+        // Bắt sự kiện Ctrl + V để dán ảnh trực tiếp
+        document.addEventListener('paste', (e) => {
+            const formModal = document.getElementById('form-modal');
+            // Chỉ bắt sự kiện dán ảnh khi Form Thêm/Sửa câu hỏi đang mở
+            if (formModal && !formModal.classList.contains('hidden')) {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let item of items) {
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        e.preventDefault(); // Ngăn chặn dán text bậy bạ
+                        const file = item.getAsFile();
+                        uploadToCloudinary(file);
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Submit Form Bài Tập (Câu hỏi)
+        document.getElementById('latex-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-form-btn');
+            const grade = document.getElementById('grade').value, topic = document.getElementById('topic').value, desc = document.getElementById('description').value, imgUrl = document.getElementById('image-url').value, content = document.getElementById('content').value;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true;
+            try {
+                if (currentEditId) {
+                    await updateDoc(doc(db, 'banktikz', currentEditId), { grade, topic, description: desc, imageUrl: imgUrl, text: content, type: 'question' });
+                    showToast("Cập nhật thành công!");
+                } else {
+                    await addDoc(colRef, { grade, topic, description: desc, imageUrl: imgUrl, text: content, type: 'question', likes: 0, createdAt: serverTimestamp() });
+                    showToast("Đã thêm câu hỏi!");
+                }
+                closeFormModal(); 
+            } catch (err) { showToast("Lỗi lưu dữ liệu!", true); } 
+            finally { btn.disabled = false; }
+        });
+
+        // Submit Form Vẽ Hình
+        document.getElementById('draw-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-draw-btn');
+            const topic = document.getElementById('draw-topic').value, content = document.getElementById('draw-content').value;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true;
+            try {
+                if (currentEditId) {
+                    await updateDoc(doc(db, 'banktikz', currentEditId), { topic, text: content, type: 'drawing' });
+                    showToast("Cập nhật hình vẽ thành công!");
+                } else {
+                    await addDoc(colRef, { topic, text: content, type: 'drawing', likes: 0, createdAt: serverTimestamp() });
+                    showToast("Đã lưu hình vẽ!");
+                }
+                closeDrawModal(); 
+            } catch (err) { showToast("Lỗi lưu dữ liệu!", true); } 
+            finally { btn.disabled = false; }
+        });
+
+        // Render Danh sách bài tập & Hình vẽ
+        const renderCards = (dataList) => {
+            const container = document.getElementById('cards-container'); container.innerHTML = ''; 
+            if(dataList.length === 0) return container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">Không tìm thấy dữ liệu!</div>';
+            dataList.forEach((item, idx) => {
+                const d = item.data;
+                const isDrawing = d.type === 'drawing';
+
+                const typeTag = isDrawing 
+                    ? `<span class="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full shadow-sm"><i class="fas fa-paint-brush mr-1"></i> Vẽ hình</span>`
+                    : `<span class="bg-white/80 text-green-700 text-xs font-bold px-3 py-1 rounded-full shadow-sm">${d.grade || 'Chưa rõ'}</span>`;
+
+                container.innerHTML += `
+                    <div class="${pastelColors[idx%8]} p-6 rounded-3xl shadow-sm border border-white/50 flex flex-col hover:shadow-md transition-all transform hover:-translate-y-1">
+                        <div class="flex gap-2 items-center mb-4">
+                            <span class="bg-slate-800 text-emerald-400 text-xs font-black px-2.5 py-1 rounded-lg shadow-sm">#${allQuestions.length - allQuestions.findIndex(q => q.id === item.id)}</span>
+                            ${typeTag}
+                            <span class="bg-white/80 text-gray-800 text-xs font-bold px-3 py-1 rounded-full truncate max-w-[150px] shadow-sm" title="${d.topic}">${d.topic}</span>
+                        </div>
+                        
+                        ${d.description && !isDrawing ? `<p class="text-sm font-medium text-gray-700 mb-4 leading-relaxed">${d.description}</p>` : ''}
+                        
+                        ${d.imageUrl && !isDrawing ? `<div class="mb-6 flex justify-center"><img src="${d.imageUrl}" class="max-h-48 object-contain rounded-xl shadow-sm border border-white/60 bg-white/40 p-1 cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open('${d.imageUrl}', '_blank')"></div>` : ''}
+                        
+                        ${isDrawing && d.text ? `
+                        <div class="relative group/code mb-4">
+                            <div class="bg-slate-800 text-emerald-400 p-4 rounded-xl text-xs font-mono h-32 overflow-y-auto custom-scrollbar shadow-inner border border-slate-700">
+                                <pre class="whitespace-pre-wrap leading-relaxed">${escapeHTML(d.text)}</pre>
+                            </div>
+                            <button class="copy-btn absolute top-2 right-2 bg-slate-600 hover:bg-emerald-500 w-8 h-8 flex items-center justify-center rounded-lg text-white opacity-0 group-hover:opacity-100 transition-all shadow-md z-10" title="Copy mã"><i class="far fa-copy"></i></button>
+                        </div>` : ''}
+
+                        <div class="mt-auto pt-4 border-t border-black/5">
+                            <div class="flex gap-2 w-full">
+                                <button class="view-btn flex-1 bg-white/60 hover:bg-white text-blue-600 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm" data-id="${item.id}">
+                                    <i class="fas fa-code mr-1"></i> Code
+                                </button>
+                                <button class="edit-btn flex-1 bg-white/60 hover:bg-white text-amber-600 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm" data-id="${item.id}">
+                                    <i class="fas fa-pen mr-1"></i> Sửa
+                                </button>
+                                <button class="delete-btn flex-1 bg-white/60 hover:bg-white text-red-500 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm" data-id="${item.id}">
+                                    <i class="fas fa-trash mr-1"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            if (window.MathJax) window.MathJax.typesetPromise([container]);
+        };
+
+        // BỘ LỌC THÔNG MINH VÀ TÌM KIẾM
+        const applyFilters = () => {
+            const kw = removeAccents(document.getElementById('search-input').value);
+            const typeFilter = document.getElementById('filter-type').value;
+            const gradeFilter = document.getElementById('filter-grade').value;
+
+            const filtered = allQuestions.filter(q => {
+                const d = q.data;
+                const textToSearch = removeAccents(`${d.grade || ''} ${d.topic || ''} ${d.description || ''} ${d.text || ''}`);
+                const matchKw = kw === '' || textToSearch.includes(kw);
+
+                // Khắc phục dữ liệu cũ: Nếu không có d.type thì mặc định là 'question'
+                const itemType = d.type || 'question';
+
+                let matchType = true;
+                if (typeFilter === 'question') matchType = itemType === 'question';
+                if (typeFilter === 'drawing') matchType = itemType === 'drawing';
+
+                let matchGrade = true;
+                if (gradeFilter !== 'all') {
+                    if (itemType === 'question') {
+                        // So sánh chính xác lớp
+                        matchGrade = (d.grade || '') === gradeFilter;
+                    } else {
+                        // Hình vẽ không có phân lớp
+                        matchGrade = false; 
+                    }
+                }
+
+                return matchKw && matchType && matchGrade;
+            });
+
+            renderCards(filtered);
+        };
+
+        onSnapshot(query(colRef, orderBy('createdAt', 'desc')), (snap) => {
+            allQuestions = []; localDataMap = {};
+            snap.forEach(d => { allQuestions.push({id: d.id, data: d.data()}); localDataMap[d.id] = d.data(); });
+            applyFilters();
+        });
+
+        const searchInput = document.getElementById('search-input');
+        const clearSearchBtn = document.getElementById('clear-search');
+
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value.trim() !== '') clearSearchBtn.classList.remove('hidden');
+            else clearSearchBtn.classList.add('hidden');
+            applyFilters();
+        });
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearSearchBtn.classList.add('hidden');
+            applyFilters();
+            searchInput.focus();
+        });
+
+        document.getElementById('filter-type').addEventListener('change', applyFilters);
+        document.getElementById('filter-grade').addEventListener('change', applyFilters);
+
+        // Xử lý click trong Thẻ bài tập (Sửa lỗi copy code)
+        document.getElementById('cards-container').addEventListener('click', async (e) => {
+            const copyBtn = e.target.closest('.copy-btn');
+            if(copyBtn) { 
+                const preEl = copyBtn.parentElement.querySelector('pre');
+                const textToCopy = preEl ? preEl.innerText : '';
+                if (textToCopy) {
+                    try {
+                        await navigator.clipboard.writeText(textToCopy);
+                    } catch (err) {
+                        const ta = document.createElement("textarea"); 
+                        ta.value = textToCopy; 
+                        document.body.appendChild(ta); 
+                        ta.select(); 
+                        document.execCommand('copy'); 
+                        document.body.removeChild(ta);
+                    }
+                    showToast("Đã copy mã!"); 
+                }
+                return; 
+            }
+            
+            const delBtn = e.target.closest('.delete-btn');
+            if(delBtn) {
+                showConfirmModal("Xóa", "Xóa mục này?", async () => await deleteDoc(doc(db, 'banktikz', delBtn.getAttribute('data-id'))));
+                return;
+            }
+            
+            const editBtn = e.target.closest('.edit-btn');
+            if(editBtn) {
+                currentEditId = editBtn.getAttribute('data-id'); 
+                const d = localDataMap[currentEditId];
+                
+                if (d.type === 'drawing') {
+                    document.getElementById('draw-topic').value = d.topic || '';
+                    document.getElementById('draw-content').value = d.text || '';
+                    openDrawModal(true);
+                } else {
+                    document.getElementById('grade').value = d.grade || ''; 
+                    document.getElementById('topic').value = d.topic || '';
+                    document.getElementById('description').value = d.description || ''; 
+                    document.getElementById('content').value = d.text || '';
+                    if (d.imageUrl) {
+                        document.getElementById('image-url').value = d.imageUrl;
+                        document.getElementById('image-preview').src = d.imageUrl;
+                        document.getElementById('image-preview-container').classList.remove('hidden');
+                        document.getElementById('upload-zone').classList.add('hidden');
+                    } else {
+                        document.getElementById('image-url').value = '';
+                        document.getElementById('image-preview-container').classList.add('hidden');
+                        document.getElementById('upload-zone').classList.remove('hidden');
+                    }
+                    openFormModal(true);
+                }
+                return;
+            }
+            
+            const viewBtn = e.target.closest('.view-btn');
+            if(viewBtn) {
+                const d = localDataMap[viewBtn.getAttribute('data-id')];
+                document.getElementById('modal-content-code').innerText = d.text;
+                document.getElementById('view-modal').classList.remove('hidden');
+                setTimeout(() => { document.getElementById('view-modal').classList.remove('opacity-0'); document.getElementById('view-modal-content').classList.remove('scale-95'); }, 10);
+            }
+        });
+
+        // Đóng Modal Xem mã
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('view-modal').classList.add('opacity-0'); document.getElementById('view-modal-content').classList.add('scale-95');
+            setTimeout(() => document.getElementById('view-modal').classList.add('hidden'), 300);
+        });
+
+        // Copy mã trong Modal Xem Chi Tiết
+        document.getElementById('modal-copy-btn').addEventListener('click', async (e) => {
+            const codeText = document.getElementById('modal-content-code').innerText;
+            if (!codeText) return;
+            const btn = e.currentTarget;
+            const originalHTML = btn.innerHTML;
+
+            try {
+                await navigator.clipboard.writeText(codeText);
+            } catch(err) {
+                const ta = document.createElement("textarea"); ta.value = codeText; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            }
+            showToast("Đã Copy Mã Nguồn! 📋");
+
+            btn.innerHTML = '<i class="fas fa-check text-white text-lg"></i> <span>Đã Copy!</span>';
+            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+        });
+
+    </script>
+</body>
+</html>

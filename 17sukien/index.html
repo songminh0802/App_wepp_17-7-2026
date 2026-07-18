@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghi Nhận Sự Kiện</title>
+    
+    <!-- Tailwind CSS (Responsive & UI) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts cho Footer -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Thư viện Toastify cho thông báo nổi -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <style>
+        /* Font chữ viết tay thanh lịch */
+        .font-script { 
+            font-family: 'Dancing Script', cursive; 
+        }
+        
+        /* Bảng màu nền pastel đa dạng cho các thẻ (cards) */
+        .pastel-0 { background-color: #eff6ff; } /* Blue nhạt */
+        .pastel-1 { background-color: #fdf2f8; } /* Pink nhạt */
+        .pastel-2 { background-color: #fefce8; } /* Vàng nhạt */
+        .pastel-3 { background-color: #f0fdf4; } /* Xanh lá nhạt */
+        .pastel-4 { background-color: #faf5ff; } /* Tím nhạt */
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
+
+    <!-- Phần Nội dung chính -->
+    <main class="flex-grow container mx-auto px-4 py-10 max-w-5xl">
+        
+        <!-- Tiêu đề và Form nhập liệu -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-teal-600 mb-3 tracking-tight">
+                🌟 Nhật Ký của Tôi 🌟
+            </h1>
+            <p class="text-lg text-slate-600">Ghi nhận nhanh sự kiện, vi phạm hoặc thành tích của học sinh</p>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-xl shadow-teal-100/50 p-6 md:p-8 mb-12 border border-slate-100">
+            <form id="eventForm" class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="eventTime" required title="Thời gian xảy ra sự kiện" placeholder="Nhập thời gian..."
+                       class="text-lg px-4 py-4 rounded-2xl border-2 border-slate-200 focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all shadow-inner w-full md:w-48 text-slate-700 bg-slate-50">
+                <input type="text" id="eventInput" required
+                       placeholder="Nhập nội dung (VD: Vào Đảng...)"
+                       class="flex-grow text-lg px-6 py-4 rounded-2xl border-2 border-slate-200 focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all shadow-inner">
+                <div class="flex gap-2">
+                    <button type="submit" id="submitBtn"
+                            class="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white text-lg font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap">
+                        <span>Gửi Ngay</span>
+                        <span>🚀</span>
+                    </button>
+                    <button type="button" id="cancelEditBtn" onclick="window.cancelEdit()"
+                            class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 text-lg font-bold px-6 py-4 rounded-2xl shadow transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Khu vực Tìm kiếm -->
+        <div class="mb-8 relative max-w-2xl mx-auto">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span class="text-slate-400 text-xl">🔍</span>
+            </div>
+            <input type="text" id="searchInput" placeholder="Tìm kiếm nội dung, ngày tháng..."
+                   class="w-full text-lg pl-12 pr-4 py-3 rounded-2xl border-2 border-slate-200 focus:outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all shadow-sm text-slate-700 bg-white">
+        </div>
+
+        <!-- Khu vực hiển thị danh sách thẻ (Grid) -->
+        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dữ liệu từ Firebase sẽ được render vào đây -->
+            <p class="col-span-full text-center text-slate-400 italic py-10">Đang tải dữ liệu sự kiện...</p>
+        </div>
+
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="py-8 text-center mt-auto">
+        <p class="font-script text-3xl text-slate-700 hover:text-teal-600 transition-colors cursor-default">
+            © 2026 Designed with ❤️ MR Cường dạy Toán
+        </p>
+    </footer>
+
+    <!-- Modal Xoá Sự Kiện -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl transform scale-95 opacity-0 transition-all duration-300" id="deleteModalContent">
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">Xác nhận xóa</h3>
+            <p class="text-slate-600 mb-8">Bạn có chắc chắn muốn xóa sự kiện này không? Dữ liệu bị xóa sẽ không thể khôi phục.</p>
+            <div class="flex justify-end gap-4">
+                <button onclick="window.closeDeleteModal()" class="px-5 py-2.5 rounded-xl font-medium text-slate-600 hover:bg-slate-100 transition-colors">Hủy</button>
+                <button onclick="window.executeDelete()" class="px-5 py-2.5 rounded-xl font-medium text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30">Xóa ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Xử lý Logic với Firebase -->
+    <script type="module">
+        // Import Firebase SDK (v9 modular)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // 1. Khởi tạo Firebase theo cấu hình bắt buộc đã cung cấp
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Tên collection lưu trữ dữ liệu (sử dụng sukien)
+        const collectionName = "sukien"; 
+        let eventsList = [];
+        let editingId = null; // Biến lưu ID sự kiện đang chỉnh sửa
+        let eventToDelete = null; // Biến lưu ID sự kiện đang chuẩn bị xóa
+
+        const form = document.getElementById('eventForm');
+        const input = document.getElementById('eventInput');
+        const timeInput = document.getElementById('eventTime');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const searchInput = document.getElementById('searchInput');
+
+        let currentSearchTerm = '';
+
+        // Lắng nghe sự kiện tìm kiếm
+        searchInput.addEventListener('input', (e) => {
+            currentSearchTerm = e.target.value.toLowerCase().trim();
+            renderCards();
+        });
+
+        // 2. Chức năng Thêm mới dữ liệu (Gửi form)
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = input.value.trim();
+            const eventTimeVal = timeInput.value;
+            if (!text || !eventTimeVal) return;
+
+            // Vô hiệu hóa nút gửi tạm thời để tránh spam
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+
+            try {
+                if (editingId) {
+                    // Cập nhật dữ liệu
+                    const eventRef = doc(db, collectionName, editingId);
+                    await updateDoc(eventRef, {
+                        text: text,
+                        eventTime: eventTimeVal
+                    });
+
+                    Toastify({
+                        text: "✅ Đã cập nhật thành công!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "center",
+                        style: { background: "linear-gradient(to right, #0D9488, #0F766E)", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }
+                    }).showToast();
+                    
+                    window.cancelEdit(); // Thoát chế độ sửa
+                } else {
+                    // Đẩy dữ liệu mới lên collection 'sukien' kèm timestamp và số lượt thích ban đầu
+                    await addDoc(collection(db, collectionName), {
+                        text: text,
+                        eventTime: eventTimeVal,
+                        createdAt: serverTimestamp(),
+                        likes: 0
+                    });
+
+                    // Hiển thị thông báo Toast thành công
+                    Toastify({
+                        text: "✅ Đã ghi nhận thành công!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "center",
+                        style: { background: "linear-gradient(to right, #10B981, #059669)", borderRadius: "12px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }
+                    }).showToast();
+
+                    // Làm trống ô input và reset thời gian
+                    input.value = ''; 
+                    timeInput.value = '';
+                }
+            } catch (error) {
+                console.error("Lỗi khi thêm dữ liệu: ", error);
+                Toastify({
+                    text: "❌ Có lỗi xảy ra, vui lòng thử lại!",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "center",
+                    style: { background: "linear-gradient(to right, #EF4444, #DC2626)", borderRadius: "12px" }
+                }).showToast();
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        });
+
+        // 3. Chức năng Hiển thị Real-time
+        // Lắng nghe mọi thay đổi từ collection và tự động cập nhật UI
+        onSnapshot(collection(db, collectionName), (snapshot) => {
+            eventsList = [];
+            snapshot.forEach((doc) => {
+                eventsList.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Sắp xếp dữ liệu hiển thị theo thời gian sự kiện giảm dần (mới nhất lên đầu)
+            eventsList.sort((a, b) => {
+                const createdAtA = a.createdAt?.toMillis() || Date.now();
+                const createdAtB = b.createdAt?.toMillis() || Date.now();
+                
+                // Lấy thời gian thực tế của sự kiện dựa vào hàm phân tích chuỗi
+                const dateA = parseEventDate(a.eventTime, createdAtA).getTime();
+                const dateB = parseEventDate(b.eventTime, createdAtB).getTime();
+                
+                // Ưu tiên sắp xếp theo thời gian sự kiện. Nếu cùng 1 ngày thì xếp theo thời gian tạo trên hệ thống
+                if (dateA !== dateB) {
+                    return dateB - dateA;
+                }
+                return createdAtB - createdAtA;
+            });
+
+            // Gán số thứ tự cố định cho mỗi thẻ dựa trên vị trí sau khi sắp xếp
+            eventsList.forEach((ev, idx) => {
+                ev.seqNumber = eventsList.length - idx;
+            });
+
+            renderCards();
+        }, (error) => {
+            console.error("Lỗi lắng nghe dữ liệu từ Firestore: ", error);
+            cardsContainer.innerHTML = '<p class="col-span-full text-center text-red-500">Lỗi kết nối cơ sở dữ liệu. Vui lòng kiểm tra lại quyền truy cập.</p>';
+        });
+
+        // Hàm phân tích ngày từ text (hỗ trợ DD/MM/YYYY hoặc ngày chuẩn)
+        function parseEventDate(dateStr, createdAtMillis) {
+            if (dateStr) {
+                const parts = String(dateStr).split('/');
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const year = parseInt(parts[2], 10);
+                    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                        return new Date(year, month, day);
+                    }
+                }
+                const parsed = new Date(dateStr);
+                if (!isNaN(parsed.getTime())) return parsed;
+            }
+            return createdAtMillis ? new Date(createdAtMillis) : new Date();
+        }
+
+        // Hàm tính thời gian đã trôi qua (Năm, Tháng, Ngày)
+        function getElapsedTime(pastDate) {
+            const now = new Date();
+            // Chỉ tính dựa trên Ngày/Tháng/Năm
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const target = new Date(pastDate.getFullYear(), pastDate.getMonth(), pastDate.getDate());
+            
+            if (target > today) return "Chưa diễn ra";
+            
+            let years = today.getFullYear() - target.getFullYear();
+            let months = today.getMonth() - target.getMonth();
+            let days = today.getDate() - target.getDate();
+
+            if (days < 0) {
+                months--;
+                const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += prevMonth.getDate();
+            }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            let result = [];
+            if (years > 0) result.push(`${years} năm`);
+            if (months > 0) result.push(`${months} tháng`);
+            if (days > 0) result.push(`${days} ngày`);
+            
+            return result.length > 0 ? `Đã qua: ${result.join(', ')}` : "Hôm nay";
+        }
+
+        // 4. Hàm vẽ giao diện thẻ (Cards)
+        function renderCards() {
+            cardsContainer.innerHTML = '';
+            
+            // Lọc dữ liệu theo từ khóa tìm kiếm
+            const filteredEvents = eventsList.filter(ev => {
+                if (!currentSearchTerm) return true;
+                const textMatch = ev.text && ev.text.toLowerCase().includes(currentSearchTerm);
+                const timeMatch = ev.eventTime && ev.eventTime.toLowerCase().includes(currentSearchTerm);
+                return textMatch || timeMatch;
+            });
+
+            if(filteredEvents.length === 0) {
+                if (currentSearchTerm) {
+                    cardsContainer.innerHTML = '<p class="col-span-full text-center text-slate-500 italic text-lg mt-8">🔍 Không tìm thấy sự kiện nào phù hợp với từ khóa: "' + escapeHTML(currentSearchTerm) + '"</p>';
+                } else {
+                    cardsContainer.innerHTML = '<p class="col-span-full text-center text-slate-400 italic text-lg mt-8">Chưa có sự kiện nào được ghi nhận. Hãy là người đầu tiên thêm sự kiện!</p>';
+                }
+                return;
+            }
+
+            filteredEvents.forEach((ev) => {
+                const card = document.createElement('div');
+                
+                // Lấy số thứ tự đã được tính toán từ trước
+                const seqNumber = ev.seqNumber;
+
+                // Chọn màu pastel cố định theo số thứ tự (tránh bị đổi màu khi tìm kiếm)
+                const colorClass = `pastel-${seqNumber % 5}`;
+                const likesCount = ev.likes || 0;
+                
+                // Format thời gian hiển thị
+                let dateStr = 'Vừa xong';
+                if (ev.eventTime) {
+                    // Hiển thị trực tiếp nội dung thời gian người dùng đã nhập/dán
+                    dateStr = ev.eventTime;
+                } else if (ev.createdAt) {
+                    dateStr = new Date(ev.createdAt.toMillis()).toLocaleString('vi-VN', {
+                        day: '2-digit', month: '2-digit', year: 'numeric'
+                    });
+                }
+
+                // Tính toán thời gian đã trôi qua
+                const createdAtMillis = ev.createdAt ? ev.createdAt.toMillis() : null;
+                const eventDateObj = parseEventDate(ev.eventTime, createdAtMillis);
+                const elapsedTimeStr = getElapsedTime(eventDateObj);
+
+                // Thiết lập CSS cho thẻ (Bo góc, đổ bóng, hiệu ứng nhúng hover)
+                card.className = `${colorClass} rounded-3xl p-6 shadow-sm border border-black/5 hover:shadow-xl transform transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] flex flex-col justify-between`;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="bg-white/60 px-3 py-1 rounded-xl shadow-sm text-lg font-bold text-teal-600 border border-teal-100/50 flex items-center gap-2">
+                                <span>#${seqNumber}</span>
+                                <span class="text-base">📝</span>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="text-xs font-medium text-slate-500 bg-white/50 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/50 mb-1" title="Thời gian sự kiện">${dateStr}</span>
+                                <span class="text-[11px] font-bold text-teal-600 bg-teal-100/60 px-2 py-1 rounded-md shadow-sm border border-teal-200/50">${elapsedTimeStr}</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-800 text-lg font-medium mb-6 whitespace-pre-wrap leading-relaxed">${escapeHTML(ev.text)}</p>
+                    </div>
+                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-black/5">
+                        <div class="flex gap-1">
+                            <button onclick="window.editEvent('${ev.id}')" class="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50/80 rounded-xl transition-all" title="Chỉnh sửa">
+                                ✏️
+                            </button>
+                            <button onclick="window.showDeleteModal('${ev.id}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50/80 rounded-xl transition-all" title="Xóa">
+                                🗑️
+                            </button>
+                        </div>
+                        <button onclick="window.likeEvent('${ev.id}', ${likesCount})" class="group flex items-center gap-2 bg-white/70 hover:bg-white px-4 py-2 rounded-full transition-all shadow-sm hover:shadow active:scale-95 cursor-pointer">
+                            <span class="group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">❤️</span>
+                            <span class="font-bold text-pink-600 font-mono text-lg leading-none">${likesCount}</span>
+                        </button>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        // 5. Hàm xử lý chức năng Thả tim (cập nhật số like lên Firestore)
+        // Gắn vào object window để có thể gọi từ inline HTML (onclick)
+        window.likeEvent = async (id, currentLikes) => {
+            try {
+                const eventRef = doc(db, collectionName, id);
+                await updateDoc(eventRef, {
+                    likes: currentLikes + 1
+                });
+            } catch (error) {
+                console.error("Lỗi khi cập nhật thả tim:", error);
+                Toastify({
+                    text: "Vui lòng thử lại sau!",
+                    duration: 2000,
+                    style: { background: "#F59E0B" }
+                }).showToast();
+            }
+        };
+
+        // Hàm xử lý Chỉnh sửa sự kiện
+        window.editEvent = (id) => {
+            const ev = eventsList.find(e => e.id === id);
+            if (!ev) return;
+            
+            editingId = id;
+            input.value = ev.text || '';
+            timeInput.value = ev.eventTime || '';
+            
+            // Đổi giao diện nút gửi
+            submitBtn.innerHTML = '<span>Cập Nhật</span><span>💾</span>';
+            cancelEditBtn.classList.remove('hidden');
+            
+            // Cuộn lên đầu trang
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // Hàm Hủy chỉnh sửa
+        window.cancelEdit = () => {
+            editingId = null;
+            input.value = '';
+            timeInput.value = '';
+            submitBtn.innerHTML = '<span>Gửi Ngay</span><span>🚀</span>';
+            cancelEditBtn.classList.add('hidden');
+        };
+
+        // Các hàm xử lý Xóa sự kiện với Modal
+        window.showDeleteModal = (id) => {
+            eventToDelete = id;
+            const modal = document.getElementById('deleteModal');
+            const content = document.getElementById('deleteModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        };
+
+        window.closeDeleteModal = () => {
+            const modal = document.getElementById('deleteModal');
+            const content = document.getElementById('deleteModalContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                eventToDelete = null;
+            }, 300);
+        };
+
+        window.executeDelete = async () => {
+            if (!eventToDelete) return;
+            try {
+                await deleteDoc(doc(db, collectionName, eventToDelete));
+                Toastify({
+                    text: "🗑️ Đã xóa sự kiện!",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "center",
+                    style: { background: "linear-gradient(to right, #64748B, #475569)", borderRadius: "12px" }
+                }).showToast();
+                
+                // Nếu đang sửa chính sự kiện này thì thoát chế độ sửa luôn
+                if (editingId === eventToDelete) window.cancelEdit();
+                
+                window.closeDeleteModal();
+            } catch (error) {
+                console.error("Lỗi khi xóa:", error);
+                Toastify({
+                    text: "❌ Có lỗi khi xóa, vui lòng thử lại!",
+                    duration: 3000,
+                    style: { background: "#EF4444" }
+                }).showToast();
+            }
+        };
+
+        // Hàm tiện ích chống XSS (Ngăn chặn mã độc nhập vào ô input)
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>

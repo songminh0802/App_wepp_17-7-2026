@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Mã Bài Toán Chìa Khóa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfbf7;
+            color: #334155;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        .key-slot {
+            transition: all 0.3s ease;
+        }
+
+        .matched {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+        }
+
+        .trying {
+            background-color: #fef9c3 !important;
+            border-color: #eab308 !important;
+            transform: scale(1.05);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-slate-800 mb-2">Giải Mã Bài Toán Chìa Khóa</h1>
+            <p class="text-slate-500 max-w-2xl mx-auto">Khám phá xác suất và thuật toán tìm kiếm thông qua mô phỏng tương tác bài toán 8 ổ khóa và 8 chìa khóa.</p>
+        </header>
+
+        <nav class="flex flex-wrap justify-center gap-4 mb-8">
+            <button onclick="switchTab('overview')" class="tab-btn px-6 py-2 rounded-full bg-slate-800 text-white shadow-md transition" id="tab-overview">Tổng Quan</button>
+            <button onclick="switchTab('simulator')" class="tab-btn px-6 py-2 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition" id="tab-simulator">Mô Phỏng Trực Tiếp</button>
+            <button onclick="switchTab('analysis')" class="tab-btn px-6 py-2 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition" id="tab-analysis">Phân Tích Dữ Liệu</button>
+        </nav>
+
+        <main id="content-area">
+            <!-- Section: Overview -->
+            <section id="sect-overview" class="space-y-6">
+                <div class="glass-card p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                        <span class="w-8 h-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mr-3 text-sm">01</span>
+                        Đề Bài & Thách Thức
+                    </h2>
+                    <p class="leading-relaxed text-slate-600 mb-4">
+                        Bác bảo vệ đối mặt với một tình huống trớ trêu: 8 ổ khóa giống hệt nhau nhưng 8 chìa khóa đã bị trộn lẫn. Nhiệm vụ của bác là phải tìm ra cặp tương ứng cho từng ổ. Chúng ta sẽ giải quyết hai câu hỏi lớn:
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                            <h3 class="font-bold text-blue-800 mb-2">Câu A: May Mắn?</h3>
+                            <p class="text-sm text-blue-700 italic">"Xác suất chọn đúng ngay lần đầu tiên cho một ổ khóa là bao nhiêu?"</p>
+                            <div class="mt-4 font-mono text-2xl font-bold text-blue-900">12.5%</div>
+                        </div>
+                        <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                            <h3 class="font-bold text-emerald-800 mb-2">Câu B: Kiên Trì?</h3>
+                            <p class="text-sm text-emerald-700 italic">"Số lần thử nhiều nhất để hoàn thành tất cả các cặp là bao nhiêu?"</p>
+                            <div class="mt-4 font-mono text-2xl font-bold text-emerald-900">28 Lần</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="font-semibold mb-4 italic">Trực quan hóa Xác suất (Câu A)</h3>
+                        <div class="chart-container">
+                            <canvas id="probChart"></canvas>
+                        </div>
+                        <p class="mt-4 text-sm text-slate-500 text-center">Tỷ lệ 1 chìa đúng trên 8 lựa chọn có sẵn.</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="font-semibold mb-4 italic">Cấu trúc thử nghiệm (Câu B)</h3>
+                        <p class="text-sm text-slate-600 mb-4">Số lần thử giảm dần theo cấp số cộng vì sau mỗi lần khớp, số chìa còn lại sẽ ít đi.</p>
+                        <div class="chart-container">
+                            <canvas id="stepChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Simulator -->
+            <section id="sect-simulator" class="hidden space-y-6">
+                <div class="glass-card p-6 rounded-2xl shadow-sm">
+                    <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                        <div>
+                            <h2 class="text-2xl font-semibold">Phòng Thí Nghiệm Mô Phỏng</h2>
+                            <p class="text-slate-500 text-sm">Quan sát quá trình bác bảo vệ thử chìa khóa (Trường hợp xấu nhất).</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="autoPlayBtn" onclick="toggleAutoPlay()" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg shadow-md transition text-sm font-medium flex items-center gap-1">
+                                ▶ Phát Video Mô Phỏng
+                            </button>
+                            <button onclick="initSimulation()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg transition text-sm font-medium">Làm mới</button>
+                            <button id="stepBtn" onclick="nextSimulationStep()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-md transition text-sm font-medium">Thử tiếp</button>
+                        </div>
+                    </div>
+
+                    <div id="simulation-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4 mb-8">
+                        <!-- Slots will be generated here -->
+                    </div>
+
+                    <div class="bg-slate-900 text-slate-300 p-4 rounded-xl font-mono text-sm h-48 overflow-y-auto" id="sim-logs">
+                        > Hệ thống đã sẵn sàng. Nhấn "Thử tiếp" hoặc "Phát Video" để bắt đầu.
+                    </div>
+                    
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 rounded-lg text-center">
+                            <span class="block text-xs uppercase tracking-wider text-slate-400">Tổng lần thử hiện tại</span>
+                            <span class="text-3xl font-bold" id="current-tries">0</span>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg text-center">
+                            <span class="block text-xs uppercase tracking-wider text-slate-400">Ổ khóa đã khớp</span>
+                            <span class="text-3xl font-bold" id="current-matches">0/8</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Analysis -->
+            <section id="sect-analysis" class="hidden space-y-6">
+                <div class="glass-card p-6 rounded-2xl">
+                    <h2 class="text-2xl font-semibold mb-6">Mở Rộng Bài Toán</h2>
+                    <p class="text-slate-600 mb-8">Điều gì xảy ra nếu bác bảo vệ có nhiều ổ khóa hơn? Công thức tổng quát là <strong>S = (n-1) + (n-2) + ... + 1 = n(n-1)/2</strong>.</p>
+                    
+                    <div class="mb-10">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Số lượng ổ khóa (n): <span id="n-val" class="text-amber-600 font-bold">8</span></label>
+                        <input type="range" min="2" max="50" value="8" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500" id="n-slider">
+                        <div class="flex justify-between text-xs text-slate-400 mt-2">
+                            <span>2 ổ</span>
+                            <span>50 ổ</span>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="chart-container">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="p-6 bg-amber-50 rounded-2xl border border-amber-100">
+                                <h4 class="font-bold text-amber-900 mb-2">Kết quả tính toán</h4>
+                                <p class="text-slate-700">Với <span class="n-display font-bold">8</span> ổ khóa, số lần thử tối đa cần thiết là:</p>
+                                <div class="text-4xl font-bold text-amber-600 my-2" id="result-calc">28</div>
+                                <p class="text-xs text-slate-500 italic">Lưu ý: Ổ cuối cùng không cần thử vì chắc chắn là chìa còn lại.</p>
+                            </div>
+                            <div class="text-sm text-slate-500 leading-relaxed">
+                                Đồ thị bên cạnh cho thấy sự tăng trưởng bậc hai (quadratic growth). Khi số lượng ổ khóa tăng gấp đôi, số lần thử tối đa tăng gấp gần 4 lần.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-sm">
+            <p>© 2024 - Ứng dụng giải toán tương tác - Công thức n(n-1)/2</p>
+        </footer>
+    </div>
+
+    <script>
+        // State Management
+        let currentState = 'overview';
+        let simState = {
+            currentLock: 0,
+            currentTriesInLock: 0,
+            totalTries: 0,
+            matches: 0,
+            keysLeft: 8,
+            isFinished: false
+        };
+        let autoPlayInterval = null;
+
+        // Charts
+        let probChart, stepChart, growthChart;
+
+        function switchTab(tab) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`sect-${tab}`).classList.remove('hidden');
+            
+            // Xóa màu active của TẤT CẢ các nút và đưa về trạng thái thường
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('bg-slate-800', 'text-white', 'shadow-md');
+                b.classList.add('bg-white', 'text-slate-600');
+            });
+            
+            // Xóa trạng thái thường của nút ĐƯỢC CHỌN và thêm màu active (nền đậm, chữ trắng)
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            activeBtn.classList.remove('bg-white', 'text-slate-600');
+            activeBtn.classList.add('bg-slate-800', 'text-white', 'shadow-md');
+            
+            if (tab === 'simulator' && simState.totalTries === 0) initSimulation();
+            
+            // Ngưng video nếu chuyển tab
+            if (tab !== 'simulator' && autoPlayInterval) {
+                toggleAutoPlay();
+            }
+
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+        }
+
+        function initCharts() {
+            // Câu A: Probability
+            const ctxProb = document.getElementById('probChart').getContext('2d');
+            probChart = new Chart(ctxProb, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Chìa Đúng', 'Chìa Sai'],
+                    datasets: [{
+                        data: [1, 7],
+                        backgroundColor: ['#f59e0b', '#e2e8f0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + (context.raw / 8 * 100).toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Câu B: Step attempts
+            const ctxStep = document.getElementById('stepChart').getContext('2d');
+            stepChart = new Chart(ctxStep, {
+                type: 'bar',
+                data: {
+                    labels: ['Ổ 1', 'Ổ 2', 'Ổ 3', 'Ổ 4', 'Ổ 5', 'Ổ 6', 'Ổ 7', 'Ổ 8'],
+                    datasets: [{
+                        label: 'Số lần thử tối đa',
+                        data: [7, 6, 5, 4, 3, 2, 1, 0],
+                        backgroundColor: '#94a3b8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 8 } }
+                }
+            });
+
+            // Growth Chart
+            const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+            const growthData = Array.from({length: 49}, (_, i) => {
+                const n = i + 2;
+                return {x: n, y: (n * (n - 1)) / 2};
+            });
+            growthChart = new Chart(ctxGrowth, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Số lần thử tối đa (n*(n-1)/2)',
+                        data: growthData,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'linear', title: { display: true, text: 'Số lượng ổ khóa (n)' } },
+                        y: { title: { display: true, text: 'Lần thử' } }
+                    }
+                }
+            });
+        }
+
+        // Logic tự động chạy Video
+        function toggleAutoPlay() {
+            const btn = document.getElementById('autoPlayBtn');
+            const stepBtn = document.getElementById('stepBtn');
+
+            if (autoPlayInterval) {
+                // Tạm dừng
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+                btn.innerHTML = '▶ Phát Video Mô Phỏng';
+                btn.classList.replace('bg-red-500', 'bg-indigo-500');
+                btn.classList.replace('hover:bg-red-600', 'hover:bg-indigo-600');
+                if (!simState.isFinished) stepBtn.disabled = false;
+            } else {
+                // Bắt đầu phát
+                if (simState.isFinished) initSimulation(); // Làm mới nếu đã xong
+                
+                btn.innerHTML = '⏸ Tạm Dừng Video';
+                btn.classList.replace('bg-indigo-500', 'bg-red-500');
+                btn.classList.replace('hover:bg-indigo-600', 'hover:bg-red-600');
+                stepBtn.disabled = true;
+
+                autoPlayInterval = setInterval(() => {
+                    nextSimulationStep();
+                    if (simState.isFinished) {
+                        toggleAutoPlay(); // Tự động dừng khi hoàn thành
+                    }
+                }, 600); // Tốc độ chạy (600ms/bước)
+            }
+        }
+
+        // Simulation Logic
+        function initSimulation() {
+            // Ngừng auto-play nếu đang chạy
+            if (autoPlayInterval) toggleAutoPlay();
+
+            const grid = document.getElementById('simulation-grid');
+            grid.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                grid.innerHTML += `
+                    <div id="lock-${i}" class="key-slot relative flex flex-col items-center p-3 rounded-xl border-2 border-dashed border-slate-200 bg-white">
+                        <!-- Hình ảnh chìa khóa (ẩn đi lúc đầu) -->
+                        <div id="key-icon-${i}" class="hidden absolute -top-2 -right-2 text-amber-500 animate-pulse bg-white rounded-full shadow-sm p-0.5 z-10">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                            </svg>
+                        </div>
+                        
+                        <!-- Hình ảnh ổ khóa đóng -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 mb-1" id="icon-${i}">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        
+                        <span class="text-xs font-bold text-slate-400">Ổ ${i+1}</span>
+                        <div class="mt-2 text-[10px] text-slate-400 font-mono italic" id="status-${i}">Chờ...</div>
+                    </div>
+                `;
+            }
+            simState = { currentLock: 0, currentTriesInLock: 0, totalTries: 0, matches: 0, keysLeft: 8, isFinished: false };
+            document.getElementById('sim-logs').innerHTML = '> Đã khởi tạo 8 ổ khóa. Nhấn nút để bắt đầu.';
+            document.getElementById('current-tries').innerText = '0';
+            document.getElementById('current-matches').innerText = '0/8';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('stepBtn').innerText = 'Thử tiếp';
+        }
+
+        function nextSimulationStep() {
+            if (simState.isFinished) return;
+
+            const log = document.getElementById('sim-logs');
+            const currentLockEl = document.getElementById(`lock-${simState.currentLock}`);
+            const statusEl = document.getElementById(`status-${simState.currentLock}`);
+
+            // Special case for last lock
+            if (simState.currentLock === 7) {
+                currentLockEl.innerHTML = `
+                    <!-- Hình ảnh ổ khóa đã mở -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500 mb-1">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                    </svg>
+                    <span class="text-xs font-bold text-green-600">Ổ 8</span>
+                    <div class="mt-2 text-[10px] text-green-500 font-mono italic">Xong!</div>
+                `;
+                currentLockEl.classList.add('matched');
+                simState.matches++;
+                simState.isFinished = true;
+                log.innerHTML += `<br>> Ổ cuối cùng tự động khớp với chìa cuối cùng. Kết thúc!`;
+                log.scrollTop = log.scrollHeight;
+                document.getElementById('current-matches').innerText = '8/8';
+                document.getElementById('stepBtn').innerText = 'Hoàn tất';
+                document.getElementById('stepBtn').disabled = true;
+                return;
+            }
+
+            // Highlighting current
+            currentLockEl.classList.add('trying');
+            
+            // Hiện chìa khóa đang cắm vào
+            const keyIconEl = document.getElementById(`key-icon-${simState.currentLock}`);
+            if(keyIconEl) keyIconEl.classList.remove('hidden');
+            
+            simState.currentTriesInLock++;
+            simState.totalTries++;
+            
+            statusEl.innerText = `Thử lần ${simState.currentTriesInLock}`;
+            log.innerHTML += `<br>> Ổ ${simState.currentLock + 1}: Thử chìa thứ ${simState.currentTriesInLock}... Thất bại.`;
+
+            // Worst case logic: for n keys, need n-1 tries to be sure
+            if (simState.currentTriesInLock === simState.keysLeft - 1) {
+                log.innerHTML += `<br>> <span class="text-amber-400">Suy luận:</span> Đã thử ${simState.keysLeft - 1} lần sai, vậy chìa còn lại chắc chắn là của ổ ${simState.currentLock + 1}.`;
+                currentLockEl.classList.remove('trying');
+                currentLockEl.classList.add('matched');
+                
+                // Thay thế bằng hình ảnh ổ khóa đã mở
+                currentLockEl.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500 mb-1">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                    </svg>
+                    <span class="text-xs font-bold text-green-600">Ổ ${simState.currentLock+1}</span>
+                    <div class="mt-2 text-[10px] text-green-500 font-mono italic">Khớp!</div>
+                `;
+                
+                simState.matches++;
+                simState.keysLeft--;
+                simState.currentLock++;
+                simState.currentTriesInLock = 0;
+            }
+
+            document.getElementById('current-tries').innerText = simState.totalTries;
+            document.getElementById('current-matches').innerText = `${simState.matches}/8`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Analysis Slider Logic
+        document.getElementById('n-slider').addEventListener('input', (e) => {
+            const n = parseInt(e.target.value);
+            const result = (n * (n - 1)) / 2;
+            document.getElementById('n-val').innerText = n;
+            document.querySelectorAll('.n-display').forEach(el => el.innerText = n);
+            document.getElementById('result-calc').innerText = result;
+        });
+
+        // Initialize on Load
+        window.onload = () => {
+            initCharts();
+            initSimulation();
+        };
+    </script>
+</body>
+</html>

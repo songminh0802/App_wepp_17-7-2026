@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><title>Workspace Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%);color:white;min-height:100vh;margin:0;}
+.glass-card{background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);transition:all 0.3s;position:relative;}
+.glass-card:hover{transform:translateY(-5px);border-color:rgba(139,92,246,0.5);}
+.badge{position:absolute;top:10px;right:10px;font-size:0.65rem;font-weight:600;padding:2px 8px;border-radius:12px;}
+.badge-firebase{background:rgba(245,158,11,0.2);color:#fbbf24;}
+.badge-sheets{background:rgba(16,185,129,0.2);color:#34d399;}
+.badge-static{background:rgba(156,163,175,0.2);color:#9ca3af;}
+.badge-multi-2{top:35px;}
+.hidden-item{display:none !important;}
+.filter-btn.active{background:rgba(139,92,246,0.5);border:1px solid rgba(139,92,246,0.8);}
+</style></head><body class="p-6 md:p-12"><div class="max-w-7xl mx-auto">
+<header class="mb-10 text-center"><h1 class="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500 mb-4">App Workspace</h1></header>
+<div class="flex justify-center gap-3 mb-12">
+    <button class="filter-btn active glass-card px-5 py-2 rounded-full text-sm" onclick="f('all',this)">🌟 Tất cả</button>
+    <button class="filter-btn glass-card px-5 py-2 rounded-full text-sm" onclick="f('firebase',this)">🔥 Firebase</button>
+    <button class="filter-btn glass-card px-5 py-2 rounded-full text-sm" onclick="f('googlesheets',this)">🟢 Google Sheets</button>
+    <button class="filter-btn glass-card px-5 py-2 rounded-full text-sm" onclick="f('static',this)">⚪ Tĩnh</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" id="appGrid">
+<a href="./00khoai/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">00khoai</div></a>
+<a href="./01thongnhattoanc2/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">01thongnhattoanc2</div></a>
+<a href="./02trinhchieu/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">02trinhchieu</div></a>
+<a href="./03SmartNoteAI/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">03SmartNoteAI</div></a>
+<a href="./04hsvipham/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">04hsvipham</div></a>
+<a href="./05bankAi/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">05bankAi</div></a>
+<a href="./06sodiemAi/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">06sodiemAi</div></a>
+<a href="./07Vongquymaymanver2/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">07Vongquymaymanver2</div></a>
+<a href="./09hayts10/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">09hayts10</div></a>
+<a href="./10taocautuongtuAi/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">10taocautuongtuAi</div></a>
+<a href="./11xacsuat/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">11xacsuat</div></a>
+<a href="./12khaosat/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">12khaosat</div></a>
+<a href="./13luunhanh/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">13luunhanh</div></a>
+<a href="./14banktikz/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">14banktikz</div></a>
+<a href="./15thongtincanhan/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">15thongtincanhan</div></a>
+<a href="./16tronlatex/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">16tronlatex</div></a>
+<a href="./17sukien/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">17sukien</div></a>
+<a href="./18ts10hd/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">18ts10hd</div></a>
+<a href="./19sodiemgas/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets"><div class="badge badge-sheets ">Sheets</div><div class="mt-4 truncate">19sodiemgas</div></a>
+<a href="./20giadinh/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets"><div class="badge badge-sheets ">Sheets</div><div class="mt-4 truncate">20giadinh</div></a>
+<a href="./21giaitoanai/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">21giaitoanai</div></a>
+<a href="./22canhan/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets"><div class="badge badge-sheets ">Sheets</div><div class="mt-4 truncate">22canhan</div></a>
+<a href="./23gvcn/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">23gvcn</div></a>
+<a href="./24quanlyfile/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">24quanlyfile</div></a>
+<a href="./25nhanxettudong/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">25nhanxettudong</div></a>
+<a href="./26blog/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">26blog</div></a>
+<a href="./27hosocanhan/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets"><div class="badge badge-sheets ">Sheets</div><div class="mt-4 truncate">27hosocanhan</div></a>
+<a href="./28nopbtvn/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets firebase"><div class="badge badge-firebase ">Firebase</div><div class="badge badge-sheets badge-multi-2">Sheets</div><div class="mt-4 truncate">28nopbtvn</div></a>
+<a href="./29bangtrang/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">29bangtrang</div></a>
+<a href="./30thinghiemao/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">30thinghiemao</div></a>
+<a href="./31tanbinh/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets firebase"><div class="badge badge-firebase ">Firebase</div><div class="badge badge-sheets badge-multi-2">Sheets</div><div class="mt-4 truncate">31tanbinh</div></a>
+<a href="./32khaosat/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets firebase"><div class="badge badge-firebase ">Firebase</div><div class="badge badge-sheets badge-multi-2">Sheets</div><div class="mt-4 truncate">32khaosat</div></a>
+<a href="./33nopbainhanh/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">33nopbainhanh</div></a>
+<a href="./34khac/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets"><div class="badge badge-sheets ">Sheets</div><div class="mt-4 truncate">34khac</div></a>
+<a href="./35googlesheet/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets"><div class="badge badge-sheets ">Sheets</div><div class="mt-4 truncate">35googlesheet</div></a>
+<a href="./36anhbia/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="static"><div class="badge badge-static">Tĩnh</div><div class="mt-4 truncate">36anhbia</div></a>
+<a href="./37_demo/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets firebase"><div class="badge badge-firebase ">Firebase</div><div class="badge badge-sheets badge-multi-2">Sheets</div><div class="mt-4 truncate">37_demo</div></a>
+<a href="./38_dieuhuong/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">38_dieuhuong</div></a>
+<a href="./39_khaosatcancuoc/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="firebase"><div class="badge badge-firebase ">Firebase</div><div class="mt-4 truncate">39_khaosatcancuoc</div></a>
+<a href="./40_lop9a7/" class="app-item glass-card rounded-2xl p-6 text-center text-gray-200 hover:text-white no-underline font-semibold" data-types="googlesheets firebase"><div class="badge badge-firebase ">Firebase</div><div class="badge badge-sheets badge-multi-2">Sheets</div><div class="mt-4 truncate">40_lop9a7</div></a>
+</div></div>
+<script>
+function f(t, e){
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    e.classList.add('active');
+    document.querySelectorAll('.app-item').forEach(i=>{
+        if(t==='all' || i.getAttribute('data-types').includes(t)) i.classList.remove('hidden-item');
+        else i.classList.add('hidden-item');
+    });
+}
+</script></body></html>

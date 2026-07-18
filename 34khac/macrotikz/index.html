@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikZ Macro Menu – Vẽ Hình Hình Học</title>
+<style>
+  :root {
+    --bg: #f7f6f3; --surface: #ffffff; --surface2: #f2f1ee;
+    --border: #e2e0da; --border-strong: #ccc9c1;
+    --text: #1a1917; --text2: #5c5a54; --text3: #9b9890;
+    --accent: #1a56db; --accent-bg: #eff6ff; --accent-border: #bfdbfe; --accent-text: #1e40af;
+    --green: #16a34a; --green-bg: #f0fdf4; --danger: #dc2626; --danger-bg: #fef2f2;
+    --code-bg: #1e1e2e; --code-text: #cdd6f4; --code-comment: #6c7086;
+    --code-cmd: #89b4fa; --code-arg: #a6e3a1; --code-math: #f38ba8;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.10), 0 2px 4px rgba(0,0,0,.06);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOPBAR ── */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .logo { font-family: 'Courier New', monospace; font-size: 17px; font-weight: 700; color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-border); padding: 4px 10px; border-radius: var(--radius); }
+  .logo span { color: var(--text2); font-weight: 400; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  
+  .btn { padding: 8px 14px; font-size: 13px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; transition: all 0.15s; }
+  .btn:hover { background: var(--surface2); color: var(--text); }
+  .btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-text); }
+  .btn.ghost { background: transparent; border-color: transparent; }
+  .btn.ghost:hover { background: var(--bg); border-color: var(--border); }
+
+  /* ── LAYOUT & SIDEBAR ── */
+  .layout { flex: 1; display: flex; height: calc(100vh - 56px); }
+  .sidebar { width: 240px; min-width: 200px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  .search-wrap { padding: 14px; border-bottom: 1px solid var(--border); }
+  .search-wrap input { width: 100%; padding: 8px 12px 8px 34px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); outline: none; transition: border-color .15s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239b9890' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 10px center; }
+  .search-wrap input:focus { border-color: var(--accent); }
+  
+  .cat-section-scroll { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .cat-btn-wrap { position: relative; display: flex; }
+  .cat-btn { flex: 1; text-align: left; padding: 10px 16px; border: none; background: none; cursor: pointer; font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 10px; transition: .1s; }
+  .cat-btn:hover { background: var(--bg); color: var(--text); }
+  .cat-btn.active { background: var(--accent-bg); color: var(--accent-text); font-weight: 600; }
+  .cat-btn.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0; }
+  .cat-btn .ico { font-size: 18px; width: 22px; text-align: center; flex-shrink: 0; }
+  .cat-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-count { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border); transition: 0.1s; }
+  
+  /* Hiệu ứng hover sửa xoá Category */
+  .cat-actions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: none; gap: 4px; background: var(--bg); padding-left: 5px; border-radius: 4px; }
+  .cat-btn-wrap:hover .cat-actions { display: flex; }
+  .cat-btn.active:hover ~ .cat-actions { background: var(--accent-bg); }
+  .cat-btn-wrap:hover .cat-count { display: none; }
+  .cat-action-btn { cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 4px; color: var(--text3); display: flex; align-items: center; justify-content: center; }
+  .cat-action-btn:hover { color: var(--accent); background: var(--border); }
+  .cat-action-btn.del:hover { color: var(--danger); }
+
+  .sidebar-footer { padding: 12px 14px; border-top: 1px solid var(--border); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; position: relative; }
+  .content-area { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 15px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+  .section-count { font-size: 13px; color: var(--text3); }
+
+  .macro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .macro-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: .15s; position: relative; }
+  .macro-card:hover { border-color: var(--accent-border); box-shadow: var(--shadow-md); }
+  .macro-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,219,.12); background: var(--accent-bg); }
+  .macro-card .card-icon { font-size: 26px; line-height: 1; margin-bottom: 10px; display: block; }
+  .macro-card .card-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .macro-card .card-desc { font-size: 12px; color: var(--text3); line-height: 1.4; }
+  
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+  
+  /* ── CODE PANEL ── */
+  .code-panel { border-top: 1px solid var(--border); background: var(--code-bg); display: flex; flex-direction: column; min-height: 200px; max-height: 300px; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.03); }
+  .code-header-left { display: flex; align-items: center; gap: 12px; }
+  .code-label { font-family: 'Courier New', monospace; font-size: 12px; color: var(--code-comment); text-transform: uppercase; }
+  .code-name { font-size: 14px; color: var(--code-cmd); font-family: 'Courier New', monospace; font-weight: bold; }
+  .code-actions { display: flex; gap: 8px; }
+  .code-btn { padding: 5px 14px; font-size: 12px; border-radius: 5px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.07); color: #a6adc8; cursor: pointer; transition: .12s; display: flex; align-items: center; gap: 5px; }
+  .code-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+  .code-btn.danger:hover { background: rgba(220,38,38,.8); border-color: transparent; }
+  .code-btn.primary { background: rgba(26,86,219,.7); border-color: rgba(26,86,219,.8); color: #fff; }
+  .code-btn.primary:hover { background: rgba(26,86,219,.9); }
+  .code-body { flex: 1; overflow-y: auto; padding: 14px 18px; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.7; color: var(--code-text); white-space: pre; }
+  .c-cmd { color: var(--code-cmd); } .c-arg { color: var(--code-arg); } .c-math { color: var(--code-math); } .c-cmt { color: var(--code-comment); font-style: italic; }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: .2s; }
+  .modal-overlay.show { opacity: 1; pointer-events: auto; }
+  .modal-box { background: var(--surface); width: 100%; max-width: 520px; border-radius: 12px; box-shadow: var(--shadow-lg); padding: 28px; transform: scale(0.95); transition: .2s; }
+  .modal-box.small { max-width: 420px; }
+  .modal-overlay.show .modal-box { transform: scale(1); }
+  .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 24px; color: var(--text); }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 8px; }
+  .form-control { width: 100%; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; font-family: inherit; }
+  .form-control:focus { border-color: var(--accent); }
+  textarea.form-control { height: 140px; font-family: 'Courier New', monospace; resize: vertical; line-height: 1.5; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; }
+  
+  /* ── LOADING SPINNER ── */
+  .loader-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); z-index: 50; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: .2s; }
+  .loader-overlay.show { opacity: 1; pointer-events: auto; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOAST ── */
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: white; padding: 10px 18px; border-radius: var(--radius); font-size: 14px; opacity: 0; transform: translateY(8px); transition: .2s; pointer-events: none; z-index: 1000; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--danger); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">\tikz <span>Macro</span></div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn primary" onclick="openModal()">+ Thêm Macro</button>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="search-wrap">
+      <input type="text" id="search" placeholder="Tìm macro..." oninput="filterMacros()" autocomplete="off">
+    </div>
+    <div class="cat-section-scroll" id="catList">
+      <!-- Danh mục render ở đây -->
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn ghost" style="width: 100%; justify-content: center;" onclick="openCatModal()">+ Thêm Nhóm Mới</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="loader-overlay" id="mainLoader"><div class="spinner"></div></div>
+    <div class="content-area">
+      <div class="section-header">
+        <span class="section-title" id="sectionTitle">Loading...</span>
+        <span class="section-count" id="sectionCount"></span>
+      </div>
+      <div class="macro-grid" id="macroGrid"></div>
+    </div>
+
+    <!-- CODE PANEL -->
+    <div class="code-panel">
+      <div class="code-header">
+        <div class="code-header-left">
+          <span class="code-label">TikZ Code</span>
+          <span class="code-name" id="selectedName">– chọn một macro –</span>
+        </div>
+        <div class="code-actions" id="codeActions" style="display:none">
+          <button class="code-btn danger" onclick="deleteMacro()">🗑 Xoá</button>
+          <button class="code-btn" onclick="openModal(true)">✎ Sửa</button>
+          <button class="code-btn primary" onclick="copyCode()">⎘ Sao chép</button>
+        </div>
+      </div>
+      <div class="code-body" id="codeOut"><span class="c-cmt">% Nhấn vào một macro bên trên để xem code TikZ tại đây.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FORM MACRO -->
+<div class="modal-overlay" id="macroModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">Thêm Macro Mới</div>
+    <form id="macroForm" onsubmit="saveMacro(event)">
+      <div class="form-group">
+        <label>Nhóm danh mục</label>
+        <select id="mCategory" class="form-control" required></select>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+          <label>Tên Macro</label>
+          <input type="text" id="mName" class="form-control" required placeholder="Ví dụ: Điểm đơn">
+        </div>
+        <div class="form-group" style="width: 80px;">
+          <label>Icon</label>
+          <input type="text" id="mIcon" class="form-control" placeholder="Tự động" maxlength="2">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Mô tả ngắn</label>
+        <input type="text" id="mDesc" class="form-control" required placeholder="Vẽ một điểm có nhãn">
+      </div>
+      <div class="form-group">
+        <label>Code TikZ</label>
+        <textarea id="mCode" class="form-control" required placeholder="\coordinate (A) at (1,2);"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="closeModal('macroModal')">Huỷ</button>
+        <button type="submit" class="btn primary">Lưu Macro</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL FORM CATEGORY -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal-box small">
+    <div class="modal-title" id="catModalTitle">Thêm Nhóm Danh Mục</div>
+    <form id="catForm" onsubmit="saveCat(event)">
+      <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+          <label>Tên Nhóm</label>
+          <input type="text" id="cLabel" class="form-control" required placeholder="Ví dụ: Hệ toạ độ">
+        </div>
+        <div class="form-group" style="width: 80px;">
+          <label>Icon</label>
+          <input type="text" id="cIcon" class="form-control" placeholder="Tự động" maxlength="2">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="closeModal('catModal')">Huỷ</button>
+        <button type="submit" class="btn primary">Lưu Nhóm</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast">Thành công!</div>
+
+<script>
+// --- KHAI BÁO URL ỨNG DỤNG GOOGLE APPS SCRIPT ---
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxtg_LJRFCKtTpHLek9AWi8oXYRAA1BJaQepnSN3XSQyerAuKJzIjy9jYNuZ-dQCruXnQ/exec'; 
+
+const autoIcons = ['●', '▲', '■', '◆', '★', '📐', '✏️', '📍', '✂️', '⊹', '⊞', '⊙', '▱', '△', '○', '◇', '▭', '📝', '✨', '⚡', '∠', '⊾', '⊕', '⊗', '⚙️'];
+
+let allMacros = [];
+let allCats = [];
+let activeCat = null;
+let currentMacro = null;
+let currentCatEdit = null; // Lưu category đang sửa
+let searchTerm = '';
+let currentItems = [];
+
+// ── INIT & FETCH DATA ──
+async function init() {
+  await loadData();
+}
+
+async function loadData() {
+  showLoader(true);
+  try {
+    const res = await fetch(GAS_URL);
+    const json = await res.json();
+    if(json.status === 'success') {
+      allMacros = json.data.macros || [];
+      allCats = json.data.categories || [];
+      
+      if (allCats.length > 0 && !allCats.find(c => c.ID === activeCat)) {
+        activeCat = allCats[0].ID;
+      }
+      
+      populateCatSelect();
+      renderCats();
+      renderMacros();
+    } else {
+      showToast('Lỗi tải dữ liệu: ' + json.message, 'error');
+    }
+  } catch (err) {
+    showToast('Lỗi kết nối tới Server!', 'error');
+    console.error(err);
+  }
+  showLoader(false);
+}
+
+async function apiRequest(payload, callback) {
+  showLoader(true);
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+    });
+    const json = await res.json();
+    if(json.status === 'success') {
+      showToast('Cập nhật dữ liệu thành công!', 'success');
+      await loadData();
+      if(callback) callback();
+    } else {
+      showToast('Lỗi: ' + json.message, 'error');
+    }
+  } catch (err) {
+    showToast('Lỗi kết nối!', 'error');
+  }
+  showLoader(false);
+}
+
+// ── RENDER & LOGIC ──
+function getMacrosByCat(catId) {
+  return allMacros.filter(m => m.Category === catId);
+}
+
+function renderCats() {
+  const el = document.getElementById('catList');
+  if(allCats.length === 0) {
+    el.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text3);font-size:12px">Chưa có nhóm nào</div>';
+    return;
+  }
+  
+  el.innerHTML = allCats.map(c => {
+    const count = getMacrosByCat(c.ID).length;
+    return `
+      <div class="cat-btn-wrap">
+        <button class="cat-btn ${c.ID===activeCat?'active':''}" onclick="selectCat('${c.ID}')">
+          <span class="ico">${c.Icon}</span> 
+          <span class="cat-label" title="${c.Label}">${c.Label}</span>
+          <span class="cat-count">${count}</span>
+        </button>
+        <div class="cat-actions">
+          <span class="cat-action-btn" title="Sửa nhóm" onclick="openCatModal('${c.ID}')">✎</span>
+          <span class="cat-action-btn del" title="Xoá nhóm" onclick="deleteCat('${c.ID}')">🗑</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectCat(id) {
+  activeCat = id;
+  searchTerm = '';
+  document.getElementById('search').value = '';
+  clearCode();
+  renderCats();
+  renderMacros();
+}
+
+function renderMacros() {
+  const grid = document.getElementById('macroGrid');
+  const title = document.getElementById('sectionTitle');
+  const count = document.getElementById('sectionCount');
+
+  if (searchTerm) {
+    currentItems = allMacros.filter(m => 
+      m.Name.toLowerCase().includes(searchTerm) || 
+      m.Description.toLowerCase().includes(searchTerm) || 
+      m.Code.toLowerCase().includes(searchTerm)
+    );
+    title.textContent = 'Kết quả tìm kiếm';
+  } else {
+    currentItems = getMacrosByCat(activeCat);
+    const cat = allCats.find(c => c.ID === activeCat);
+    title.textContent = cat ? cat.Label : 'Chưa có nhóm';
+  }
+
+  count.textContent = currentItems.length + ' macro';
+
+  if (currentItems.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-ico">🔍</div><p>Chưa có dữ liệu</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = currentItems.map((m, i) => `
+    <div class="macro-card ${currentMacro && currentMacro.ID === m.ID ? 'selected' : ''}" data-idx="${i}">
+      <span class="card-icon">${m.Icon}</span>
+      <div class="card-name">${m.Name}</div>
+      <div class="card-desc">${m.Description}</div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('macroGrid').addEventListener('click', function(e) {
+  const card = e.target.closest('.macro-card');
+  if (!card) return;
+  const idx = parseInt(card.dataset.idx, 10);
+  currentMacro = currentItems[idx];
+  
+  document.querySelectorAll('.macro-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  
+  document.getElementById('selectedName').textContent = currentMacro.Name;
+  document.getElementById('codeOut').innerHTML = highlight(currentMacro.Code);
+  document.getElementById('codeActions').style.display = 'flex';
+});
+
+// ── MACRO CRUD ──
+function populateCatSelect() {
+  document.getElementById('mCategory').innerHTML = allCats.map(c => 
+    `<option value="${c.ID}">${c.Label}</option>`
+  ).join('');
+}
+
+function openModal(isEdit = false) {
+  if (allCats.length === 0) return showToast('Vui lòng tạo ít nhất 1 Nhóm trước!', 'error');
+  
+  document.getElementById('macroModal').classList.add('show');
+  if (isEdit && currentMacro) {
+    document.getElementById('modalTitle').textContent = 'Sửa Macro';
+    document.getElementById('mCategory').value = currentMacro.Category;
+    document.getElementById('mName').value = currentMacro.Name;
+    document.getElementById('mIcon').value = currentMacro.Icon;
+    document.getElementById('mDesc').value = currentMacro.Description;
+    document.getElementById('mCode').value = currentMacro.Code;
+  } else {
+    document.getElementById('modalTitle').textContent = 'Thêm Macro Mới';
+    document.getElementById('macroForm').reset();
+    document.getElementById('mCategory').value = activeCat || allCats[0].ID;
+    document.getElementById('mIcon').value = autoIcons[Math.floor(Math.random() * autoIcons.length)];
+    currentMacro = null;
+  }
+}
+
+function saveMacro(e) {
+  e.preventDefault();
+  let iconValue = document.getElementById('mIcon').value.trim();
+  if (!iconValue) iconValue = autoIcons[Math.floor(Math.random() * autoIcons.length)];
+  
+  const payload = {
+    action: currentMacro ? 'update' : 'create',
+    id: currentMacro ? currentMacro.ID : null,
+    category: document.getElementById('mCategory').value,
+    name: document.getElementById('mName').value,
+    icon: iconValue,
+    desc: document.getElementById('mDesc').value,
+    code: document.getElementById('mCode').value
+  };
+  
+  if(payload.action === 'create') activeCat = payload.category; 
+  apiRequest(payload, () => closeModal('macroModal'));
+}
+
+function deleteMacro() {
+  if(!currentMacro) return;
+  if(confirm(`Thầy có chắc chắn muốn xoá macro "${currentMacro.Name}" không?`)) {
+    apiRequest({ action: 'delete', id: currentMacro.ID }, clearCode);
+  }
+}
+
+// ── CATEGORY CRUD ──
+function openCatModal(catId = null) {
+  document.getElementById('catModal').classList.add('show');
+  if (catId) {
+    currentCatEdit = allCats.find(c => c.ID === catId);
+    document.getElementById('catModalTitle').textContent = 'Sửa Nhóm Danh Mục';
+    document.getElementById('cLabel').value = currentCatEdit.Label;
+    document.getElementById('cIcon').value = currentCatEdit.Icon;
+  } else {
+    currentCatEdit = null;
+    document.getElementById('catModalTitle').textContent = 'Thêm Nhóm Mới';
+    document.getElementById('catForm').reset();
+    document.getElementById('cIcon').value = autoIcons[Math.floor(Math.random() * autoIcons.length)];
+  }
+}
+
+function saveCat(e) {
+  e.preventDefault();
+  let iconValue = document.getElementById('cIcon').value.trim();
+  if (!iconValue) iconValue = autoIcons[Math.floor(Math.random() * autoIcons.length)];
+  
+  const payload = {
+    action: currentCatEdit ? 'update_cat' : 'create_cat',
+    id: currentCatEdit ? currentCatEdit.ID : null,
+    label: document.getElementById('cLabel').value,
+    icon: iconValue
+  };
+  
+  apiRequest(payload, () => {
+    closeModal('catModal');
+    if (payload.action === 'create_cat') {
+      // Tìm category mới nhất để active (thường nằm cuối danh sách)
+      setTimeout(() => { if(allCats.length) selectCat(allCats[allCats.length-1].ID); }, 500);
+    }
+  });
+}
+
+function deleteCat(catId) {
+  const macrosInCat = getMacrosByCat(catId).length;
+  let msg = `Thầy có chắc muốn xoá nhóm này không?`;
+  if (macrosInCat > 0) {
+    msg = `CẢNH BÁO: Nhóm này đang chứa ${macrosInCat} macro. Xoá nhóm sẽ làm các macro này mất danh mục. Thầy có chắc chắn xoá?`;
+  }
+  
+  if(confirm(msg)) {
+    apiRequest({ action: 'delete_cat', id: catId }, () => {
+      if(activeCat === catId && allCats.length > 0) selectCat(allCats[0].ID);
+    });
+  }
+}
+
+// ── TIỆN ÍCH ──
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function filterMacros() {
+  searchTerm = document.getElementById('search').value.trim().toLowerCase();
+  renderMacros();
+}
+
+function clearCode() {
+  currentMacro = null;
+  document.querySelectorAll('.macro-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('selectedName').textContent = '– chọn một macro –';
+  document.getElementById('codeActions').style.display = 'none';
+  document.getElementById('codeOut').innerHTML = '<span class="c-cmt">% Nhấn vào một macro bên trên để xem.</span>';
+}
+
+function copyCode() {
+  if (!currentMacro) return;
+  navigator.clipboard.writeText(currentMacro.Code).then(()=>showToast('Đã sao chép!','success'));
+}
+
+function highlight(code) {
+  return code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(%.+)/g,'<span class="c-cmt">$1</span>')
+    .replace(/\\([a-zA-Z@]+)/g,'<span class="c-cmd">\\$1</span>')
+    .replace(/\$([^$]+)\$/g,'<span class="c-math">$$$1$$</span>')
+    .replace(/(\d+\.?\d*)/g,'<span class="c-arg">$1</span>');
+}
+
+function showLoader(show) {
+  const l = document.getElementById('mainLoader');
+  show ? l.classList.add('show') : l.classList.remove('show');
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+init();
+</script>
+</body>
+</html>

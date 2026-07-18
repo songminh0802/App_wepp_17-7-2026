@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngân Hàng Câu Hỏi Toán LaTeX</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter cho text thường, Dancing Script cho Footer -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Cấu hình MathJax để render LaTeX -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' },
+            startup: { typeset: false } // Sẽ gọi typeset thủ công sau khi render JS
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-dancing { font-family: 'Dancing Script', cursive; }
+        
+        /* Hiệu ứng Toast notification */
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        .toast-enter { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
+        
+        /* Hiệu ứng cuộn mượt cho thẻ nội dung */
+        .card-enter { animation: fadeInScale 0.4s ease-out forwards; }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        /* Tùy chỉnh thanh cuộn thanh lịch cho các thẻ */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* Tailwind slate-300 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8; /* Tailwind slate-400 */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col relative pb-24 text-gray-800">
+
+    <!-- Header -->
+    <header class="text-center pt-12 pb-8 px-4">
+        <h1 class="text-4xl md:text-5xl font-bold text-indigo-600 mb-3 drop-shadow-sm">
+            ✨ Ngân Hàng Câu Hỏi Toán ✨
+        </h1>
+        <p class="text-gray-500 text-lg">Soạn thảo nhanh bằng LaTeX, lưu trữ và chia sẻ thời gian thực 🚀</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 max-w-5xl">
+        
+        <!-- Form Nhập Liệu -->
+        <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-gray-100 mb-12 transition-transform duration-300 hover:shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400"></div>
+            
+            <label for="questionInput" class="block text-lg font-semibold text-gray-700 mb-3">
+                📝 Nội dung câu hỏi / Ghi chú:
+            </label>
+            <textarea 
+                id="questionInput" 
+                class="w-full h-36 p-4 text-gray-700 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none resize-none transition-all duration-200 text-base" 
+                placeholder="Nhập câu hỏi (Hỗ trợ LaTeX). VD: Giải phương trình bậc hai $ax^2 + bx + c = 0$... Hoặc nhập nhiều câu cùng lúc bằng \begin{bt}...\end{bt}"
+            ></textarea>
+            
+            <!-- Ô chọn hoặc nhập trực tiếp dạng bài (Sử dụng datalist) -->
+            <div class="mt-4">
+                <label for="questionType" class="block text-sm font-semibold text-gray-600 mb-2">🏷️ Phân loại dạng bài (Chọn hoặc tự nhập):</label>
+                <input 
+                    list="typeOptions" 
+                    id="questionType" 
+                    class="w-full p-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none transition-all duration-200 text-sm hover:bg-gray-100 placeholder-gray-400" 
+                    placeholder="-- Bấm chọn 7 dạng có sẵn hoặc gõ trực tiếp tên dạng mới vào đây --"
+                    autocomplete="off"
+                >
+                <datalist id="typeOptions">
+                    <option value="Bài 1: Hàm số (y=ax^2)">Hàm số (y=ax^2). Vẽ đồ thị (P), tìm điểm...</option>
+                    <option value="Bài 2: Phương trình bậc hai">Điều kiện có nghiệm, áp dụng Vi-ét.</option>
+                    <option value="Bài 3: Xác suất – thống kê">Xác suất – thống kê. Bài toán thực tế.</option>
+                    <option value="Bài 4: Mô hình hóa">Mô hình hóa. Lập biểu thức theo (x).</option>
+                    <option value="Bài 5: Hình học thực tế">Hình học thực tế. Tính chu vi, diện tích, thể tích.</option>
+                    <option value="Bài 6: Giải bài toán bằng PT/HPT">Giải toán bằng phương trình/hệ phương trình.</option>
+                    <option value="Bài 7: Hình học phẳng">Hình học phẳng (3 ý).</option>
+                </datalist>
+            </div>
+            
+            <div class="mt-5 flex flex-col sm:flex-row justify-end items-center gap-4">
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <!-- Nút Nhập từ File -->
+                    <input type="file" id="fileUpload" accept=".tex,.txt" class="hidden">
+                    <label for="fileUpload" class="w-full sm:w-auto bg-white border-2 border-indigo-200 hover:bg-indigo-50 text-indigo-600 font-bold py-2.5 px-6 rounded-full shadow-sm transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer mb-0">
+                        <span>Nhập File</span> 📂
+                    </label>
+
+                    <button 
+                        id="cancelEditBtn" 
+                        class="hidden w-full sm:w-auto bg-white border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-600 font-bold py-2.5 px-6 rounded-full shadow-sm transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <span>Hủy Sửa</span> ❌
+                    </button>
+                    <button 
+                        id="submitBtn" 
+                        class="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                    >
+                        <span>Gửi</span> ✈️
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tiêu đề phần danh sách và Bộ lọc + Thanh tìm kiếm -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 px-2 w-full">
+            <!-- Cột trái: Tiêu đề -->
+            <div class="flex items-center gap-3 w-full md:w-auto flex-shrink-0">
+                <h2 class="text-2xl font-bold text-gray-700 whitespace-nowrap">📚 Câu hỏi</h2>
+                <div class="h-px bg-gray-200 flex-grow md:hidden"></div>
+            </div>
+            
+            <!-- Cột giữa: Bộ lọc dạng bài & Thanh tìm kiếm thông minh -->
+            <div class="flex flex-col sm:flex-row w-full md:flex-grow max-w-2xl mx-auto gap-3">
+                <!-- Dropdown Bộ lọc -->
+                <select id="filterType" class="block w-full sm:w-48 px-3 py-2.5 border border-gray-200 rounded-2xl leading-5 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 sm:text-sm transition-all duration-300 cursor-pointer text-gray-600 font-medium">
+                    <option value="All">Lọc: Tất cả dạng bài</option>
+                    <option value="Bài 1: Hàm số (y=ax^2)">Bài 1: Hàm số (y=ax²)</option>
+                    <option value="Bài 2: Phương trình bậc hai">Bài 2: PT bậc hai</option>
+                    <option value="Bài 3: Xác suất – thống kê">Bài 3: Xác suất - TK</option>
+                    <option value="Bài 4: Mô hình hóa">Bài 4: Mô hình hóa</option>
+                    <option value="Bài 5: Hình học thực tế">Bài 5: Hình học thực tế</option>
+                    <option value="Bài 6: Giải bài toán bằng PT/HPT">Bài 6: Giải PT/HPT</option>
+                    <option value="Bài 7: Hình học phẳng">Bài 7: Hình học phẳng</option>
+                    <option value="Chưa phân dạng" class="text-pink-500 font-bold">Chưa phân dạng ⚠️</option>
+                </select>
+
+                <!-- Thanh tìm kiếm -->
+                <div class="relative w-full group flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-2xl leading-5 bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 sm:text-sm transition-all duration-300" 
+                        placeholder="Tìm kiếm từ khóa..."
+                    >
+                </div>
+            </div>
+
+            <!-- Cột phải: Nút Gán hàng loạt & Tải file .tex -->
+            <div class="w-full sm:w-auto flex-shrink-0 flex flex-col sm:flex-row justify-end gap-2">
+                <!-- Nút Phân loại hàng loạt -->
+                <button id="bulkTypeBtn" class="bg-white border border-pink-200 text-pink-600 hover:bg-pink-50 hover:border-pink-300 px-4 py-2.5 rounded-2xl font-semibold shadow-sm transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap group" title="Phân loại cho tất cả các câu đang hiển thị">
+                    <span class="group-hover:scale-110 transition-transform">🏷️</span> Gán dạng bài
+                </button>
+                <!-- Nút Tải file -->
+                <button id="downloadTexBtn" class="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 px-4 py-2.5 rounded-2xl font-semibold shadow-sm transition-all duration-300 flex items-center justify-center gap-2 whitespace-nowrap group">
+                    <span class="group-hover:-translate-y-1 transition-transform">📥</span> Tải file .tex
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards Grid -->
+        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dữ liệu từ Firebase sẽ được render vào đây -->
+            <div class="text-center col-span-full text-gray-400 py-10 animate-pulse">
+                Đang tải dữ liệu từ ngân hàng... ⏳
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Xem & Sửa Chi Tiết Code -->
+    <div id="codeModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[95vh] scale-100 transition-transform">
+            <div class="px-6 py-4 border-b flex flex-col gap-3 bg-gray-50">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 text-lg">📄 Chi tiết mã LaTeX (Có thể sửa trực tiếp)</h3>
+                    <button id="closeModalBtn" class="text-gray-400 hover:text-red-500 transition-colors p-1">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <!-- Thêm ô sửa dạng bài vào Header của Modal -->
+                <div class="flex items-center gap-2">
+                    <label for="modalQuestionType" class="text-sm font-semibold text-gray-600 whitespace-nowrap">🏷️ Phân loại:</label>
+                    <input 
+                        list="typeOptions" 
+                        id="modalQuestionType" 
+                        class="w-full p-2 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 focus:outline-none transition-all duration-200 text-sm placeholder-gray-400" 
+                        placeholder="-- Bấm chọn hoặc gõ dạng bài mới --"
+                        autocomplete="off"
+                    >
+                </div>
+            </div>
+            <div class="p-8 flex-grow bg-white flex flex-col h-[60vh]">
+                <pre id="modalCodeContent" contenteditable="true" class="w-full h-full text-lg leading-loose font-mono text-gray-800 focus:outline-none custom-scrollbar bg-transparent overflow-y-auto whitespace-pre-wrap break-words outline-none" spellcheck="false"></pre>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex flex-col sm:flex-row justify-end gap-3">
+                <button id="modalEditBtn" class="bg-white border-2 border-green-200 hover:bg-green-50 text-green-600 px-6 py-2.5 rounded-xl font-bold transition-transform hover:scale-105 shadow-md flex items-center justify-center gap-2">
+                    💾 Lưu Trực Tiếp
+                </button>
+                <button id="copyCodeBtn" class="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-6 py-2.5 rounded-xl font-bold transition-transform hover:scale-105 shadow-md flex items-center justify-center gap-2">
+                    📋 Copy Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Xóa -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center transform transition-all scale-100">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Xác nhận xóa</h3>
+            <p class="text-gray-500 mb-6 text-sm">Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác.</p>
+            <div class="flex gap-3 justify-center">
+                <button id="cancelDeleteBtn" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors">Hủy bỏ</button>
+                <button id="confirmDeleteBtn" class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors shadow-md shadow-red-500/30">Xóa ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gán Dạng Bài Hàng Loạt -->
+    <div id="bulkTypeModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-6 transform transition-all scale-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">🏷️ Phân loại hàng loạt</h3>
+                <button id="closeBulkTypeBtn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <p class="text-gray-600 mb-4 text-sm">Hệ thống sẽ cập nhật dạng bài cho <strong id="bulkQuestionCount" class="text-indigo-600 text-base">0</strong> câu hỏi đang hiển thị trên màn hình.</p>
+            
+            <div class="mb-6">
+                <label for="bulkTypeInput" class="block text-sm font-semibold text-gray-700 mb-2">Chọn dạng bài cần gán:</label>
+                <input 
+                    list="typeOptions" 
+                    id="bulkTypeInput" 
+                    class="w-full p-3 text-gray-700 bg-gray-50 border border-gray-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-pink-100 focus:border-pink-400 focus:outline-none transition-all duration-200" 
+                    placeholder="-- Bấm chọn hoặc gõ dạng bài mới --"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="flex gap-3 justify-end">
+                <button id="cancelBulkTypeBtn" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors">Hủy bỏ</button>
+                <button id="confirmBulkTypeBtn" class="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-xl transition-colors shadow-md shadow-pink-500/30 flex items-center gap-2">
+                    Áp dụng ngay
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer bản quyền -->
+    <footer class="absolute bottom-0 w-full py-6 text-center">
+        <p class="text-teal-600 font-dancing text-2xl lg:text-3xl tracking-wide">
+            © 2026 Designed with ❤️ Thầy Cường dạy Toán
+        </p>
+    </footer>
+
+    <!-- Firebase SDK & Logic Ứng dụng -->
+    <script type="module">
+        // 2. Khởi tạo Firebase SDK v9 (Modular)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            serverTimestamp, 
+            doc, 
+            updateDoc, 
+            increment,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Cấu hình Firebase bắt buộc từ yêu cầu
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        // Khởi tạo App & Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const collectionName = "NganhangAI";
+
+        // Mảng màu pastel cho các thẻ card
+        const pastelColors = [
+            'bg-blue-50 border-blue-100', 
+            'bg-pink-50 border-pink-100', 
+            'bg-yellow-50 border-yellow-100', 
+            'bg-green-50 border-green-100', 
+            'bg-purple-50 border-purple-100', 
+            'bg-orange-50 border-orange-100'
+        ];
+
+        // Hàm hiển thị thông báo Toast
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-6 right-6 bg-gray-800/90 backdrop-blur-sm text-white px-6 py-3 rounded-2xl shadow-2xl font-medium z-50 toast-enter flex items-center gap-3 border border-gray-700';
+            toast.innerHTML = `<span class="text-xl">🎉</span> <span>${message}</span>`;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // Biến toàn cục theo dõi trạng thái Sửa/Xóa
+        let currentEditId = null;
+        let docToDelete = null;
+
+        // Hàm đặt lại trạng thái Form
+        function resetForm() {
+            document.getElementById('questionInput').value = '';
+            document.getElementById('questionType').value = '';
+            currentEditId = null;
+            
+            const btn = document.getElementById('submitBtn');
+            btn.innerHTML = `<span>Gửi</span> ✈️`;
+            btn.classList.replace('from-green-500', 'from-indigo-500');
+            btn.classList.replace('to-teal-500', 'to-purple-500');
+            
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+        // 3. Xử lý logic gửi dữ liệu (Thêm mới / Cập nhật / Nhập hàng loạt)
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const inputEl = document.getElementById('questionInput');
+            const typeEl = document.getElementById('questionType');
+            const content = inputEl.value.trim();
+            const selectedType = typeEl.value; // Lấy giá trị dạng bài
+            
+            if (!content) {
+                showToast("⚠️ Vui lòng nhập nội dung câu hỏi!");
+                return inputEl.focus();
+            }
+
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span>Đang xử lý...</span> ⏳`;
+            btn.disabled = true;
+
+            try {
+                if (currentEditId) {
+                    // Chế độ Cập nhật dữ liệu (1 câu) từ Form chính
+                    const docRef = doc(db, collectionName, currentEditId);
+                    await updateDoc(docRef, {
+                        text: content,
+                        type: selectedType
+                    });
+                    showToast("Đã cập nhật câu hỏi thành công! ✨");
+                } else {
+                    // Chế độ Thêm mới
+                    // Dùng Regex để tách các khối \begin{bt|ex|vd} ... \end{bt|ex|vd}
+                    // \s\S khớp với mọi ký tự bao gồm cả newline, ? là match dạng lười biếng (lazy)
+                    const regex = /\\begin\{(bt|ex|vd)\}[\s\S]*?\\end\{\1\}/gi;
+                    const matches = content.match(regex);
+
+                    if (matches && matches.length > 0) {
+                        // Nhập hàng loạt: Lặp qua từng khối và đẩy riêng lên DB
+                        const promises = matches.map(matchText => {
+                            return addDoc(collection(db, collectionName), {
+                                text: matchText.trim(),
+                                type: selectedType, // Áp dụng dạng bài đã chọn cho tất cả
+                                likes: 0,
+                                createdAt: serverTimestamp()
+                            });
+                        });
+                        
+                        await Promise.all(promises);
+                        showToast(`Đã tách và lưu thành công ${matches.length} câu hỏi! 📦`);
+                    } else {
+                        // Nhập thông thường: Không có block thì lưu toàn bộ là 1 câu
+                        await addDoc(collection(db, collectionName), {
+                            text: content,
+                            type: selectedType,
+                            likes: 0,
+                            createdAt: serverTimestamp()
+                        });
+                        showToast("Đã lưu vào ngân hàng câu hỏi! 🎉");
+                    }
+                }
+                
+                resetForm(); // Reset form sau khi thành công
+            } catch (error) {
+                console.error("Lỗi khi lưu tài liệu: ", error);
+                showToast("❌ Có lỗi xảy ra: " + error.message);
+                btn.innerHTML = originalText;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Hàm xử lý chuỗi để chống XSS an toàn
+        function escapeHTML(str) {
+            return str ? str.replace(/[&<>'"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[c])) : '';
+        }
+
+        // 4. Lắng nghe dữ liệu realtime (Hiển thị)
+        const gridRef = document.getElementById('cardsGrid');
+        const searchInput = document.getElementById('searchInput');
+        const filterTypeSelect = document.getElementById('filterType');
+        let allQuestions = []; // Mảng toàn cục lưu trữ toàn bộ câu hỏi
+        let currentRenderedQuestions = []; // Mảng lưu trữ các câu hỏi đang được hiển thị trên màn hình
+
+        onSnapshot(collection(db, collectionName), (snapshot) => {
+            allQuestions = []; // Reset mảng
+            snapshot.forEach((doc) => {
+                allQuestions.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Sắp xếp trên bộ nhớ client (mới nhất lên đầu)
+            allQuestions.sort((a, b) => {
+                const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.now();
+                const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.now();
+                return timeB - timeA;
+            });
+
+            filterAndRenderQuestions(); // Lọc và hiển thị
+        }, (error) => {
+            console.error("Lỗi realtime Firestore:", error);
+            gridRef.innerHTML = `<div class="col-span-full text-red-500 text-center">Lỗi kết nối CSDL: ${error.message}</div>`;
+        });
+
+        // Hàm xử lý tìm kiếm và bộ lọc
+        function filterAndRenderQuestions() {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            const filterValue = filterTypeSelect.value;
+            
+            const filteredQuestions = allQuestions.filter(q => {
+                // Điều kiện tìm kiếm từ khóa
+                const matchesSearch = !searchTerm || 
+                    q.text.toLowerCase().includes(searchTerm) ||
+                    (q.type && q.type.toLowerCase().includes(searchTerm));
+                
+                // Điều kiện lọc theo select box
+                let matchesFilter = true;
+                if (filterValue === "Chưa phân dạng") {
+                    matchesFilter = !q.type || q.type.trim() === "";
+                } else if (filterValue !== "All") {
+                    // Kiểm tra type có chứa tên dạng bài không
+                    matchesFilter = q.type && q.type.includes(filterValue);
+                }
+                
+                return matchesSearch && matchesFilter;
+            });
+            
+            currentRenderedQuestions = filteredQuestions;
+            renderQuestions(filteredQuestions);
+        }
+
+        // Bắt sự kiện thay đổi của Dropdown bộ lọc
+        filterTypeSelect.addEventListener('change', filterAndRenderQuestions);
+
+        // Bắt sự kiện gõ phím vào ô tìm kiếm (Thêm Debounce chống lag)
+        let searchTimeout;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterAndRenderQuestions();
+            }, 300);
+        });
+
+        // Lấy danh sách ID đã like từ LocalStorage
+        function getLikedPosts() {
+            return JSON.parse(localStorage.getItem('likedPosts') || '[]');
+        }
+
+        // Hàm render danh sách thẻ (cards)
+        function renderQuestions(questions) {
+            gridRef.innerHTML = ''; // Xóa grid cũ
+            
+            const currentSearchTerm = searchInput.value.trim();
+            const filterValue = filterTypeSelect.value;
+            let regex = null;
+            if (currentSearchTerm) {
+                // Escape chuỗi tìm kiếm để tìm highlight an toàn
+                const safeSearchTerm = escapeHTML(currentSearchTerm).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                regex = new RegExp(`(${safeSearchTerm})`, 'gi');
+            }
+
+            if (questions.length === 0) {
+                // Hiển thị thông báo khác nhau tùy vào việc đang tìm kiếm hay chưa có dữ liệu
+                const emptyMsg = currentSearchTerm || filterValue !== "All"
+                    ? `Không tìm thấy câu hỏi nào phù hợp với bộ lọc hiện tại 🕵️‍♂️`
+                    : `Ngân hàng chưa có câu hỏi nào. Hãy là người đầu tiên đóng góp! 🌟`;
+                
+                gridRef.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10 bg-white rounded-3xl border border-dashed border-gray-300">${emptyMsg}</div>`;
+                return;
+            }
+
+            const likedPosts = getLikedPosts(); // Load ds đã like từ trình duyệt
+
+            questions.forEach((q, index) => {
+                const colorTheme = pastelColors[index % pastelColors.length];
+                const likesCount = q.likes || 0;
+                const isLikedByMe = likedPosts.includes(q.id); // Check xem user này đã like chưa
+
+                let safeType = escapeHTML(q.type);
+                let displayType = safeType;
+                
+                let safeText = escapeHTML(q.text);
+                let displayText = safeText;
+
+                // Xử lý Highlight nếu đang tìm kiếm
+                if (regex) {
+                    if (displayType) displayType = displayType.replace(regex, `<mark class="bg-yellow-300 text-gray-900 rounded-sm px-0.5">$1</mark>`);
+                    if (displayText) displayText = displayText.replace(regex, `<mark class="bg-yellow-300 text-gray-900 rounded-sm px-0.5">$1</mark>`);
+                }
+
+                // Tạo Card Container (Thu nhỏ lại, cố định chiều cao)
+                const card = document.createElement('div');
+                card.className = `${colorTheme} p-4 rounded-2xl border shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col h-60 card-enter group`;
+                
+                // Header nhỏ chứa STT, tag dạng bài và ngày tháng
+                const dateStr = q.createdAt?.toDate ? q.createdAt.toDate().toLocaleDateString('vi-VN') : 'Mới đây';
+                const typeTag = q.type 
+                    ? `<span class="text-[10px] font-bold text-indigo-600 bg-indigo-100/80 border border-indigo-200 px-2 py-1 rounded-md truncate max-w-[120px]" title="${safeType}">🏷️ ${displayType}</span>` 
+                    : ``; // Bỏ spacer đi để linh hoạt
+                
+                const cardHeader = document.createElement('div');
+                cardHeader.className = 'flex justify-between items-center mb-2 gap-2';
+                cardHeader.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-[11px] font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-500 px-2 py-1 rounded-md shadow-sm whitespace-nowrap flex-shrink-0">Câu ${questions.length - index}</span>
+                        ${typeTag}
+                    </div>
+                    <span class="text-[11px] font-medium text-gray-500 bg-white/60 px-2 py-1 rounded-md ml-auto whitespace-nowrap flex-shrink-0">🕒 ${dateStr}</span>
+                `;
+
+                // Vùng chứa văn bản có thể cuộn (Thêm overflow-y-auto và custom-scrollbar)
+                const textContainer = document.createElement('div');
+                textContainer.className = 'relative flex-grow overflow-hidden mb-3 bg-white/60 rounded-xl shadow-inner border border-white/60';
+
+                const textDiv = document.createElement('pre');
+                // Đổi overflow-hidden thành overflow-y-auto để cuộn được
+                textDiv.className = 'text-gray-700 font-mono text-xs leading-relaxed p-3 whitespace-pre-wrap break-words w-full h-full overflow-y-auto custom-scrollbar';
+                textDiv.innerHTML = displayText; // Sử dụng innerHTML để hiển thị thẻ <mark> highlight an toàn
+
+                textContainer.appendChild(textDiv);
+                
+                // Vùng footer của thẻ (Nút Like, Sửa, Xóa & Xem Code)
+                const cardFooter = document.createElement('div');
+                cardFooter.className = 'flex justify-between items-center pt-2 border-t border-black/5 mt-auto gap-2';
+                
+                // Nút Xem Code
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'view-btn flex-1 text-xs font-semibold text-indigo-700 bg-white/60 hover:bg-white px-3 py-2 rounded-xl transition-colors shadow-sm text-center border border-indigo-100 flex justify-center items-center gap-1';
+                viewBtn.innerHTML = '👁️ Xem chi tiết';
+
+                const actionGroup = document.createElement('div');
+                actionGroup.className = 'flex items-center gap-1.5';
+
+                // Nút Sửa (Edit)
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn text-blue-500 hover:text-blue-700 bg-white/60 hover:bg-white p-1.5 rounded-xl transition-colors shadow-sm border border-blue-100 group/btn';
+                editBtn.setAttribute('data-id', q.id);
+                editBtn.title = "Sửa câu hỏi";
+                editBtn.innerHTML = `<svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`;
+
+                // Nút Xóa (Delete)
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn text-red-500 hover:text-red-700 bg-white/60 hover:bg-white p-1.5 rounded-xl transition-colors shadow-sm border border-red-100 group/btn';
+                deleteBtn.setAttribute('data-id', q.id);
+                deleteBtn.title = "Xóa câu hỏi";
+                deleteBtn.innerHTML = `<svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+
+                // Nút Like (Cập nhật logic màu sắc dựa trên isLikedByMe)
+                const likeBtn = document.createElement('button');
+                likeBtn.className = 'like-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/60 hover:bg-white text-gray-600 hover:text-teal-500 transition-colors shadow-sm border border-teal-100 group/btn';
+                likeBtn.setAttribute('data-id', q.id);
+                likeBtn.innerHTML = `
+                    <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110 ${isLikedByMe ? 'fill-teal-500 text-teal-500' : 'fill-none stroke-current'}" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span class="font-medium text-xs ${isLikedByMe ? 'text-teal-600' : ''}">${likesCount}</span>
+                `;
+
+                actionGroup.appendChild(editBtn);
+                actionGroup.appendChild(deleteBtn);
+                actionGroup.appendChild(likeBtn);
+
+                cardFooter.appendChild(viewBtn);
+                cardFooter.appendChild(actionGroup);
+                
+                card.appendChild(cardHeader);
+                card.appendChild(textContainer);
+                card.appendChild(cardFooter);
+                gridRef.appendChild(card);
+            });
+        }
+
+        // 5. Ủy quyền sự kiện (Event Delegation) cho chức năng Like và Xem Code
+        gridRef.addEventListener('click', async (e) => {
+            // Xử lý nút Xem Code
+            const viewBtn = e.target.closest('.view-btn');
+            if (viewBtn) {
+                const card = viewBtn.closest('.group');
+                // Lấy HTML để giữ lại thẻ highlight <mark>
+                const codeHTML = card.querySelector('pre').innerHTML;
+                
+                // Lấy data-id của câu hỏi và gắn vào nút sửa bên trong modal
+                const docId = card.querySelector('.edit-btn').getAttribute('data-id');
+                document.getElementById('modalEditBtn').setAttribute('data-id', docId);
+
+                // Lấy thông tin dạng bài hiện tại từ mảng allQuestions và hiển thị lên ô input
+                const questionData = allQuestions.find(q => q.id === docId);
+                document.getElementById('modalQuestionType').value = questionData.type || "";
+
+                // Gắn nội dung vào thẻ pre contenteditable
+                document.getElementById('modalCodeContent').innerHTML = codeHTML;
+                document.getElementById('codeModal').classList.remove('hidden');
+                return;
+            }
+
+            // Xử lý nút Xóa
+            const delBtn = e.target.closest('.delete-btn');
+            if (delBtn) {
+                docToDelete = delBtn.getAttribute('data-id');
+                document.getElementById('confirmModal').classList.remove('hidden');
+                return;
+            }
+
+            // Xử lý nút Sửa (Đưa lên form chính)
+            const editBtn = e.target.closest('.edit-btn');
+            if (editBtn) {
+                const docId = editBtn.getAttribute('data-id');
+                const questionToEdit = allQuestions.find(q => q.id === docId);
+                
+                if (questionToEdit) {
+                    currentEditId = docId;
+                    document.getElementById('questionInput').value = questionToEdit.text;
+                    document.getElementById('questionType').value = questionToEdit.type || "";
+                    
+                    const submitBtn = document.getElementById('submitBtn');
+                    submitBtn.innerHTML = `<span>Cập Nhật Câu Hỏi</span> 📝`;
+                    submitBtn.classList.replace('from-indigo-500', 'from-green-500');
+                    submitBtn.classList.replace('to-purple-500', 'to-teal-500');
+                    
+                    document.getElementById('cancelEditBtn').classList.remove('hidden');
+                    
+                    // Cuộn mượt lên khu vực form nhập liệu
+                    document.getElementById('questionInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return;
+            }
+
+            // Xử lý nút Like (Thêm chức năng Unlike)
+            const likeBtn = e.target.closest('.like-btn');
+            if (!likeBtn) return;
+            
+            const docId = likeBtn.getAttribute('data-id');
+            // Thêm hiệu ứng bóp/nhả tạm thời cho nút tim
+            likeBtn.classList.add('scale-90');
+            setTimeout(() => likeBtn.classList.remove('scale-90'), 150);
+
+            try {
+                let likedPosts = getLikedPosts();
+                const isCurrentlyLiked = likedPosts.includes(docId);
+                const docRef = doc(db, collectionName, docId);
+
+                if (isCurrentlyLiked) {
+                    // Nếu đã like rồi -> Bỏ like (Trừ đi 1)
+                    await updateDoc(docRef, { likes: increment(-1) });
+                    likedPosts = likedPosts.filter(id => id !== docId); // Xóa khỏi danh sách đã like
+                } else {
+                    // Nếu chưa like -> Thêm like (Cộng 1)
+                    await updateDoc(docRef, { likes: increment(1) });
+                    likedPosts.push(docId); // Lưu vào danh sách đã like
+                }
+                
+                // Cập nhật lại localStorage
+                localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+                
+            } catch (error) {
+                console.error("Lỗi khi like/unlike: ", error);
+            }
+        });
+
+        // 6. Xử lý Modal Xem Code & Copy & Sửa Modal Trực Tiếp
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('codeModal').classList.add('hidden');
+        });
+
+        // Đóng modal khi click ra ngoài
+        document.getElementById('codeModal').addEventListener('click', (e) => {
+            if (e.target.id === 'codeModal') {
+                document.getElementById('codeModal').classList.add('hidden');
+            }
+        });
+
+        // Xử lý nút Lưu Trực Tiếp trong Modal
+        document.getElementById('modalEditBtn').addEventListener('click', async (e) => {
+            const docId = e.currentTarget.getAttribute('data-id');
+            // Dùng innerText thay vì value vì đã chuyển sang thẻ pre
+            const newContent = document.getElementById('modalCodeContent').innerText.trim();
+            const newType = document.getElementById('modalQuestionType').value; // Lấy giá trị dạng bài mới
+            
+            if (!newContent) {
+                showToast("⚠️ Nội dung không được để trống!");
+                return;
+            }
+
+            const btn = e.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `⏳ Đang lưu...`;
+            btn.disabled = true;
+
+            try {
+                const docRef = doc(db, collectionName, docId);
+                await updateDoc(docRef, {
+                    text: newContent,
+                    type: newType // Cập nhật luôn cả dạng bài lên Firestore
+                });
+                showToast("Đã cập nhật trực tiếp thành công! ✨");
+                
+                // Tự động đóng modal sau 0.5s cho mượt
+                setTimeout(() => {
+                    document.getElementById('codeModal').classList.add('hidden');
+                }, 500);
+            } catch (error) {
+                console.error("Lỗi khi lưu trực tiếp: ", error);
+                showToast("❌ Có lỗi xảy ra khi lưu.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+        
+        document.getElementById('copyCodeBtn').addEventListener('click', () => {
+            // Lấy từ .innerText của thẻ pre thay vì textarea
+            const code = document.getElementById('modalCodeContent').innerText;
+            
+            // Xử lý copy an toàn (hỗ trợ cả iframe)
+            const textArea = document.createElement("textarea");
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Đã copy code vào bộ nhớ! 📋');
+                // document.getElementById('codeModal').classList.add('hidden'); // Giữ nguyên modal cho tiện
+            } catch (err) {
+                alert('Lỗi copy: ' + err);
+            }
+            document.body.removeChild(textArea);
+        });
+
+        // 7. Xử lý Modal Xác Nhận Xóa
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+            document.getElementById('confirmModal').classList.add('hidden');
+            docToDelete = null;
+        });
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            if (!docToDelete) return;
+            const btn = document.getElementById('confirmDeleteBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Đang xóa...';
+            btn.disabled = true;
+
+            try {
+                await deleteDoc(doc(db, collectionName, docToDelete));
+                showToast('Đã xóa câu hỏi thành công! 🗑️');
+            } catch (error) {
+                console.error("Lỗi khi xóa: ", error);
+                showToast("❌ Có lỗi xảy ra khi xóa.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                document.getElementById('confirmModal').classList.add('hidden');
+                docToDelete = null;
+            }
+        });
+
+        // 8. Xử lý xuất file .tex
+        document.getElementById('downloadTexBtn').addEventListener('click', () => {
+            if (currentRenderedQuestions.length === 0) {
+                showToast("⚠️ Không có câu hỏi nào để tải xuống!");
+                return;
+            }
+
+            // Tạo khung cơ bản cho file LaTeX
+            let texContent = "% --- File duoc tao tu Ngan Hang Cau Hoi Toan LaTeX ---\n";
+            texContent += "\\documentclass[12pt,a4paper]{article}\n";
+            texContent += "\\usepackage[utf8]{inputenc}\n";
+            texContent += "\\usepackage[vietnamese]{babel}\n";
+            texContent += "\\usepackage{amsmath, amssymb, amsfonts}\n";
+            texContent += "\\usepackage[margin=2cm]{geometry}\n\n";
+            texContent += "\\begin{document}\n\n";
+
+            // Lặp qua các câu hỏi đang hiển thị và đưa vào file (Đồng bộ số thứ tự với UI)
+            currentRenderedQuestions.forEach((q, index) => {
+                const typeLabel = q.type ? `[${q.type}]` : '';
+                const cauSo = currentRenderedQuestions.length - index; // Lấy chính xác số thứ tự trên màn hình hiển thị
+                
+                texContent += `% --- Cau ${cauSo} ${typeLabel} ---\n`;
+                texContent += `${q.text}\n\n`;
+            });
+
+            texContent += "\\end{document}\n";
+
+            // Tạo blob và link tải xuống
+            const blob = new Blob([texContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // Đặt tên file có ngày tháng để dễ quản lý
+            const dateStr = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `ngan_hang_toan_${dateStr}.tex`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast("Đã tải file .tex thành công! 📥");
+        });
+
+        // 9. Xử lý nhập từ file
+        document.getElementById('fileUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('questionInput').value = event.target.result;
+                showToast(`Đã đọc file "${file.name}". Vui lòng kiểm tra và bấm Gửi! 📂`);
+            };
+            reader.onerror = function() {
+                showToast("❌ Lỗi khi đọc file!");
+            };
+            reader.readAsText(file);
+            
+            // Reset input để có thể chọn lại cùng một file nếu cần
+            this.value = '';
+        });
+
+        // 10. Phân loại hàng loạt
+        document.getElementById('bulkTypeBtn').addEventListener('click', () => {
+            if (currentRenderedQuestions.length === 0) {
+                showToast("⚠️ Không có câu hỏi nào đang hiển thị để phân loại!");
+                return;
+            }
+            document.getElementById('bulkQuestionCount').textContent = currentRenderedQuestions.length;
+            document.getElementById('bulkTypeInput').value = '';
+            document.getElementById('bulkTypeModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeBulkTypeBtn').addEventListener('click', () => {
+            document.getElementById('bulkTypeModal').classList.add('hidden');
+        });
+
+        document.getElementById('cancelBulkTypeBtn').addEventListener('click', () => {
+            document.getElementById('bulkTypeModal').classList.add('hidden');
+        });
+
+        document.getElementById('bulkTypeModal').addEventListener('click', (e) => {
+            if (e.target.id === 'bulkTypeModal') {
+                document.getElementById('bulkTypeModal').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('confirmBulkTypeBtn').addEventListener('click', async () => {
+            const newType = document.getElementById('bulkTypeInput').value.trim();
+            const btn = document.getElementById('confirmBulkTypeBtn');
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Đang xử lý...';
+            btn.disabled = true;
+
+            try {
+                // Tạo một mảng các Promise updateDoc để chạy song song
+                const promises = currentRenderedQuestions.map(q => {
+                    const docRef = doc(db, collectionName, q.id);
+                    return updateDoc(docRef, { type: newType });
+                });
+                
+                await Promise.all(promises); // Đợi tất cả cập nhật xong
+                
+                showToast(`Đã phân loại thành công ${currentRenderedQuestions.length} câu hỏi! 🎉`);
+                document.getElementById('bulkTypeModal').classList.add('hidden');
+            } catch (error) {
+                console.error("Lỗi khi phân loại hàng loạt:", error);
+                showToast("❌ Có lỗi xảy ra khi cập nhật hàng loạt.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // Chống dán mã HTML/Rich text vào ô xem chi tiết (chỉ nhận văn bản LaTeX thô)
+        document.getElementById('modalCodeContent').addEventListener('paste', function(e) {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Toán Cùng Thầy Cường</title>
+
+    <!-- Thư viện giao diện Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Thư viện Icon FontAwesome (Thay thế cho Lucide để chạy trực tiếp trên HTML) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Thư viện React & ReactDOM để chạy ứng dụng -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+
+    <!-- Thư viện Babel giúp trình duyệt hiểu được mã JSX của React -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Thư viện MathJax để hiển thị công thức Toán học -->
+    <script>
+        window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          },
+          startup: { typeset: false } // Để React tự kích hoạt khi có dữ liệu
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* CSS cho các hiệu ứng xuất hiện mượt mà */
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Chỉnh sửa thanh cuộn cho bảng đẹp hơn */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800">
+    
+    <!-- Đây là nơi ứng dụng React sẽ hiển thị -->
+    <div id="root"></div>
+
+    <!-- CODE LOGIC ỨNG DỤNG (Bọc trong thẻ text/babel) -->
+    <script type="text/babel">
+        // Lấy các hàm cơ bản của React
+        const { useState, useRef, useEffect } = React;
+
+        const App = () => {
+          // ----------------------------------------------------------------------
+          // [KHU VỰC DỮ LIỆU ĐỘNG & AI]
+          // ----------------------------------------------------------------------
+          const initialProblemData = {
+            title: "Bài Toán Chuyển Động Ngược Chiều (Mẫu)",
+            content: "Một ô tô và một xe máy khởi hành cùng lúc từ hai tỉnh A và B cách nhau 180 km, đi ngược chiều nhau và gặp nhau sau 2 giờ. Biết vận tốc của ô tô lớn hơn vận tốc của xe máy 10 km/h. Tính vận tốc của mỗi xe.",
+            type: "Toán chuyển động",
+            formulas: [
+              { name: "Quãng đường", eq: "S = v \\times t" },
+              { name: "Vận tốc", eq: "v = S / t" },
+              { name: "Thời gian", eq: "t = S / v" }
+            ],
+            table: {
+              headers: ["Đối tượng", "Vận tốc (km/h)", "Thời gian (h)", "Quãng đường (km)"],
+              rows: [
+                ["Xe máy", "x", "2", "2x"],
+                ["Ô tô", "x + 10", "2", "2(x + 10)"]
+              ],
+              rowsSys: [
+                ["Xe máy", "y", "2", "2y"],
+                ["Ô tô", "x", "2", "2x"]
+              ]
+            },
+            method1Steps: [
+              { title: "Bước 1 (Gọi ẩn)", content: "Gọi vận tốc của xe máy là x (km/h). Điều kiện: x > 0." },
+              { title: "Bước 2 (Biểu diễn các đại lượng)", content: "Vì vận tốc ô tô lớn hơn xe máy 10 km/h, nên vận tốc của ô tô là: x + 10 (km/h).\nTrong 2 giờ, quãng đường xe máy đi được là: 2x (km).\nTrong 2 giờ, quãng đường ô tô đi được là: 2(x + 10) (km)." },
+              { title: "Bước 3 (Lập phương trình)", content: "Vì hai xe đi ngược chiều nhau và gặp nhau, nên tổng quãng đường hai xe đi được đúng bằng độ dài quãng đường AB (180 km). Ta có phương trình:", equation: "2x + 2(x + 10) = 180" },
+              { title: "Bước 4 (Giải phương trình)", content: "Ta biến đổi phương trình:\n\\Leftrightarrow 2x + 2x + 20 = 180\n\\Leftrightarrow 4x = 160\n\\Leftrightarrow x = 40 (thỏa mãn điều kiện)" },
+              { title: "Bước 5 (Kết luận)", content: "Vận tốc của xe máy là **40 km/h**.\nVận tốc của ô tô là 40 + 10 = 50 (km/h).", isResult: true }
+            ],
+            method2Steps: [
+              { title: "Bước 1 (Gọi ẩn)", content: "Gọi vận tốc của ô tô là x (km/h) và vận tốc của xe máy là y (km/h). \nĐiều kiện: x > y > 0." },
+              { title: "Bước 2 (Lập phương trình thứ nhất)", content: "Vì vận tốc ô tô lớn hơn xe máy 10 km/h, ta có phương trình:", equation: "x - y = 10" },
+              { title: "Bước 3 (Lập phương trình thứ hai)", content: "Trong 2 giờ, quãng đường ô tô đi là 2x (km), xe máy đi là 2y (km). Tổng quãng đường là 180 km, ta có phương trình:", equation: "2x + 2y = 180 \\Leftrightarrow x + y = 90" },
+              { title: "Bước 4 (Giải hệ phương trình)", content: "Từ (1) và (2), ta có hệ phương trình gồm:\n(1) x - y = 10\n(2) x + y = 90\nCộng vế theo vế hai phương trình, ta được 2x = 100 => x = 50.\nThay x = 50 vào (2) => 50 + y = 90 => y = 40.\n(Các giá trị đều thỏa mãn điều kiện)" },
+              { title: "Bước 5 (Kết luận)", content: "Vận tốc của ô tô là **50 km/h**.\nVận tốc của xe máy là **40 km/h**.", isResult: true }
+            ]
+          };
+
+          const [problemData, setProblemData] = useState(initialProblemData);
+          const [activeTab, setActiveTab] = useState('method1');
+          const [inputText, setInputText] = useState('');
+          const [attachedFile, setAttachedFile] = useState(null);
+          const [isAnalyzing, setIsAnalyzing] = useState(false);
+          const [showResult, setShowResult] = useState(false);
+          const [errorMsg, setErrorMsg] = useState('');
+          const [submittedImage, setSubmittedImage] = useState(null);
+          const [isCopied, setIsCopied] = useState(false);
+          
+          // State cho API Key (Chuyển sang dạng Mảng để chứa nhiều ô nhập)
+          const [apiKeysInput, setApiKeysInput] = useState(() => {
+            const stored = localStorage.getItem('gemini_api_keys_array');
+            if (stored) {
+              try { return JSON.parse(stored); } catch(e) {}
+            }
+            // Tương thích ngược với bản cũ (nếu có 1 key đã lưu)
+            const oldKey = localStorage.getItem('gemini_api_key');
+            return oldKey ? [oldKey] : [''];
+          });
+          
+          // State quản lý việc ẩn/hiện của từng ô nhập Key
+          const [showKeys, setShowKeys] = useState(() => Array(apiKeysInput.length).fill(false));
+          
+          const fileInputRef = useRef(null);
+
+          // Kích hoạt MathJax mỗi khi nội dung Toán thay đổi
+          useEffect(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+              window.MathJax.typesetPromise().catch((err) => console.log('Lỗi MathJax: ', err));
+            }
+          }, [problemData, activeTab, showResult]);
+
+          const handleFileChange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+              setAttachedFile(e.target.files[0]);
+              setErrorMsg('');
+            }
+          };
+
+          const triggerFileInput = (acceptType) => {
+            if (fileInputRef.current) {
+              fileInputRef.current.accept = acceptType;
+              fileInputRef.current.click();
+            }
+          };
+
+          // Hàm cập nhật giá trị của 1 ô API Key cụ thể
+          const handleApiKeyChange = (index, val) => {
+            const newKeys = [...apiKeysInput];
+            newKeys[index] = val;
+            setApiKeysInput(newKeys);
+            localStorage.setItem('gemini_api_keys_array', JSON.stringify(newKeys));
+          };
+
+          // Hàm ẩn hiện key
+          const toggleKeyVisibility = (index) => {
+            const newShowKeys = [...showKeys];
+            newShowKeys[index] = !newShowKeys[index];
+            setShowKeys(newShowKeys);
+          };
+
+          // Hàm thêm ô nhập mới
+          const handleAddKey = () => {
+            const newKeys = [...apiKeysInput, ''];
+            setApiKeysInput(newKeys);
+            setShowKeys([...showKeys, false]); // Thêm trạng thái ẩn cho ô mới
+            localStorage.setItem('gemini_api_keys_array', JSON.stringify(newKeys));
+          };
+
+          // Hàm xóa 1 ô nhập
+          const handleRemoveKey = (index) => {
+            const newKeys = apiKeysInput.filter((_, i) => i !== index);
+            const newShowKeys = showKeys.filter((_, i) => i !== index);
+            if (newKeys.length === 0) {
+                newKeys.push(''); // Luôn giữ ít nhất 1 ô
+                newShowKeys.push(false);
+            }
+            setApiKeysInput(newKeys);
+            setShowKeys(newShowKeys);
+            localStorage.setItem('gemini_api_keys_array', JSON.stringify(newKeys));
+          };
+
+          const handleAnalyze = async () => {
+            // Lấy danh sách key đã nhập, bỏ qua ô trống
+            let apiKeys = apiKeysInput.map(k => k.trim()).filter(k => k);
+            
+            // Nếu người dùng không nhập Key nào (đang thử nghiệm trên Canvas Demo)
+            // Ta tự động đẩy 1 chuỗi rỗng vào để kích hoạt Proxy của Canvas
+            if (apiKeys.length === 0) {
+              apiKeys = [""];
+            }
+
+            if (!inputText.trim() && !attachedFile) {
+              setErrorMsg("Vui lòng nhập đề bài hoặc tải ảnh lên.");
+              return;
+            }
+            
+            if (attachedFile && !attachedFile.type.startsWith('image/')) {
+              setErrorMsg("Hệ thống Demo hiện tại chỉ hỗ trợ phân tích Đề bài qua Văn bản (dán vào ô) hoặc Hình ảnh (JPG/PNG).");
+              return;
+            }
+
+            setIsAnalyzing(true);
+            setErrorMsg('');
+            setShowResult(false);
+            
+            if (attachedFile && attachedFile.type.startsWith('image/')) {
+              setSubmittedImage(URL.createObjectURL(attachedFile));
+            } else {
+              setSubmittedImage(null);
+            }
+            
+            try {
+              let inlineData = null;
+              if (attachedFile && attachedFile.type.startsWith('image/')) {
+                const base64 = await new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                  reader.readAsDataURL(attachedFile);
+                });
+                inlineData = { mimeType: attachedFile.type, data: base64 };
+              }
+
+              const prompt = `Bạn là một giáo viên Toán THCS. Hãy phân tích và giải bài toán được cung cấp bằng 2 cách: Cách 1 (Lập phương trình 1 ẩn) và Cách 2 (Lập hệ phương trình 2 ẩn).
+Nếu đề bài không thể giải bằng 2 cách, hãy cố gắng tách thành 2 phương pháp tiếp cận hoặc lặp lại cách giải để đảm bảo đúng format.
+QUAN TRỌNG:
+- Trích xuất và trả về NGUYÊN VĂN đề bài gốc vào trường 'content'.
+- Khi giải phương trình, BẮT BUỘC sử dụng ký hiệu tương đương (\\Leftrightarrow) ở đầu mỗi bước biến đổi tương đương.
+- SỬ DỤNG MÃ LATEX cho TẤT CẢ các biểu thức toán học, biến số, phân số, hệ phương trình... Bọc mã LaTeX trong cặp dấu $...$.
+- Sử dụng **...** để in đậm kết quả quan trọng.
+Đề bài cần giải: ${inputText || "Xem ảnh đính kèm"}`;
+
+              const parts = [{ text: prompt }];
+              if (inlineData) parts.push({ inlineData });
+
+              const payload = {
+                contents: [{ parts }],
+                generationConfig: {
+                  responseMimeType: "application/json",
+                  responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                      title: { type: "STRING" },
+                      content: { type: "STRING" },
+                      type: { type: "STRING" },
+                      formulas: { type: "ARRAY", items: { type: "OBJECT", properties: { name: { type: "STRING" }, eq: { type: "STRING" } } } },
+                      table: {
+                        type: "OBJECT",
+                        properties: {
+                          headers: { type: "ARRAY", items: { type: "STRING" } },
+                          rows: { type: "ARRAY", items: { type: "ARRAY", items: { type: "STRING" } } },
+                          rowsSys: { type: "ARRAY", items: { type: "ARRAY", items: { type: "STRING" } } }
+                        }
+                      },
+                      method1Steps: { type: "ARRAY", items: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" }, equation: { type: "STRING" }, isResult: { type: "BOOLEAN" } } } },
+                      method2Steps: { type: "ARRAY", items: { type: "OBJECT", properties: { title: { type: "STRING" }, content: { type: "STRING" }, equation: { type: "STRING" }, isResult: { type: "BOOLEAN" } } } }
+                    },
+                    required: ["title", "content", "type", "formulas", "table", "method1Steps", "method2Steps"]
+                  }
+                }
+              };
+
+              let solvedData = null;
+              let lastErrorMsg = "";
+              let hasQuotaError = false;
+
+              // Thuật toán duyệt qua từng API Key và Model dự phòng
+              for (let i = 0; i < apiKeys.length; i++) {
+                const currentKey = apiKeys[i];
+                let isKeyFatal = false;
+                
+                // Cấu hình Model linh hoạt.
+                let modelsToTry = [];
+                if (currentKey === "") {
+                    // Nếu dùng hệ thống Proxy của Canvas, bắt buộc dùng đúng bản preview
+                    modelsToTry = ["gemini-2.5-flash-preview-09-2025"];
+                } else {
+                    // Nếu dùng API Key cá nhân, dùng các phiên bản Public hỗ trợ JSON Schema
+                    modelsToTry = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+                }
+                
+                for (let j = 0; j < modelsToTry.length; j++) {
+                  const currentModel = modelsToTry[j];
+                  let url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${currentKey}`;
+                  
+                  let retries = 3; // Thử lại 3 lần cho mỗi model
+                  let delay = 2000; 
+                  
+                  while (retries > 0 && !solvedData) {
+                    try {
+                      const res = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+                      const data = await res.json();
+                      
+                      if(data.error) {
+                        const errMsg = data.error.message.toLowerCase();
+                        let userFriendlyError = data.error.message;
+                        let isFatalKey = false;
+                        let isFatalModel = false;
+                        
+                        // Phân loại các lỗi
+                        if (errMsg.includes("api key not valid") || errMsg.includes("api_key_invalid")) {
+                          userFriendlyError = "Khóa API không hợp lệ.";
+                          isFatalKey = true;
+                        } else if (errMsg.includes("quota") || errMsg.includes("exhausted")) {
+                          userFriendlyError = "Khóa API đã hết lượt miễn phí (Quota).";
+                          hasQuotaError = true;
+                          isFatalKey = true; // Bỏ qua hoàn toàn key này
+                        } else if (errMsg.includes("not found") || data.error.code === 404) {
+                          userFriendlyError = `Mô hình AI ${currentModel} chưa được hỗ trợ cho API Key này.`;
+                          isFatalModel = true; // Bỏ qua model này, thử model tiếp theo với cùng Key
+                        } else if (errMsg.includes("high demand") || errMsg.includes("overloaded") || data.error.code === 503) {
+                          userFriendlyError = `Mô hình ${currentModel} đang quá tải, đang tự động thử lại...`;
+                        } else if (data.error.code === 429) {
+                          userFriendlyError = "Gửi yêu cầu quá nhanh, đang chờ...";
+                        } else if (data.error.code >= 400 && data.error.code < 500) {
+                          userFriendlyError = `Lỗi truy vấn: ${data.error.message}`;
+                          isFatalModel = true; 
+                        }
+
+                        if (isFatalKey) {
+                          throw new Error(`[FATAL_KEY] Key số ${i + 1}: ${userFriendlyError}`);
+                        } else if (isFatalModel) {
+                          throw new Error(`[FATAL_MODEL] ${userFriendlyError}`);
+                        } else {
+                          throw new Error(`[RETRY] ${userFriendlyError}`);
+                        }
+                      }
+
+                      if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        solvedData = JSON.parse(data.candidates[0].content.parts[0].text);
+                        break; // Lấy dữ liệu thành công
+                      } else {
+                        throw new Error("[RETRY] Định dạng dữ liệu trả về từ AI không hợp lệ.");
+                      }
+                    } catch (e) {
+                      lastErrorMsg = e.message.replace("[FATAL_KEY] ", "").replace("[FATAL_MODEL] ", "").replace("[RETRY] ", "");
+                      
+                      if (e.message.startsWith("[FATAL_KEY]")) {
+                          isKeyFatal = true;
+                          break;
+                      }
+                      
+                      if (e.message.startsWith("[FATAL_MODEL]")) {
+                          break;
+                      }
+                      
+                      retries--;
+                      if (retries === 0) {
+                          lastErrorMsg = `Hệ thống Google AI (${currentModel}) hiện đang có quá nhiều yêu cầu (High demand). Đang chuyển sang mô hình dự phòng...`;
+                          break;
+                      }
+                      
+                      // Chờ đợi bằng Exponential Backoff
+                      await new Promise(r => setTimeout(r, delay));
+                      delay *= 2; 
+                    }
+                  }
+                  
+                  if (solvedData || isKeyFatal) break; // Nếu đã giải xong hoặc Key hỏng thì không thử các model khác
+                }
+                
+                if (solvedData) break; // Nếu giải thành công thì dừng việc duyệt qua các Key
+              }
+
+              // Xử lý báo lỗi chung
+              if (!solvedData) {
+                if (hasQuotaError) {
+                    throw new Error("Tất cả các API Key bạn cung cấp đều đã hết lượt sử dụng miễn phí (Quota). Vui lòng cung cấp Key mới hoặc sử dụng hệ thống mặc định (Bằng cách xóa trắng tất cả các ô nhập API Key).");
+                } else {
+                    throw new Error(`Giải bài toán thất bại. Lỗi gần nhất: ${lastErrorMsg}`);
+                }
+              }
+
+              if (solvedData) {
+                if (inputText.trim()) {
+                  solvedData.content = inputText;
+                }
+                setProblemData(solvedData);
+                setShowResult(true);
+              }
+            } catch (error) {
+              console.error(error);
+              setErrorMsg(`${error.message}`);
+              if (problemData !== initialProblemData) setShowResult(true);
+            } finally {
+              setIsAnalyzing(false);
+            }
+          };
+
+          const generateSolutionText = () => {
+            if (!problemData) return "";
+            let text = `--- ĐỀ BÀI ---\n${problemData.title}\n${problemData.content}\n\n`;
+            text += `--- KIẾN THỨC CẦN NHỚ ---\n`;
+            problemData.formulas.forEach(f => { text += `${f.name}: ${f.eq}\n`; });
+            text += `\n--- CÁCH 1: LẬP PHƯƠNG TRÌNH (1 ẨN) ---\n`;
+            problemData.method1Steps.forEach(step => {
+              text += `${step.title}: ${step.content}\n`;
+              if (step.equation) text += `${step.equation}\n`;
+            });
+            text += `\n--- CÁCH 2: LẬP HỆ PHƯƠNG TRÌNH (2 ẨN) ---\n`;
+            problemData.method2Steps.forEach(step => {
+              text += `${step.title}: ${step.content}\n`;
+              if (step.equation) text += `${step.equation}\n`;
+            });
+            return text;
+          };
+
+          const handleCopy = () => {
+            const text = generateSolutionText();
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+              document.execCommand('copy');
+              setIsCopied(true);
+              setTimeout(() => setIsCopied(false), 2000);
+            } catch (err) { console.error('Sao chép thất bại', err); }
+            document.body.removeChild(textArea);
+          };
+
+          const handleDownload = () => {
+            const text = generateSolutionText();
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Loi_Giai_Toan.txt';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          };
+
+          const renderText = (text) => {
+            if (text == null) return null;
+            let htmlText = String(text)
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              .replace(/\\n/g, '<br/>')
+              .replace(/\n/g, '<br/>');
+            return <span dangerouslySetInnerHTML={{ __html: htmlText }} />;
+          };
+
+          return (
+            <div className="flex flex-col min-h-screen">
+              {/* HEADER */}
+              <header className="bg-blue-600 text-white shadow-md">
+                <div className="max-w-4xl mx-auto px-4 py-6 flex items-center gap-4">
+                  <div className="bg-white rounded-full shadow-sm text-blue-600 flex items-center justify-center w-12 h-12 flex-shrink-0">
+                    <i className="fa-solid fa-calculator text-[24px]"></i>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-bold">Giải Toán Cùng Thầy Cường</h1>
+                    <p className="text-blue-100 mt-1 text-sm md:text-base">Chuyên đề: Giải bài toán bằng cách lập phương trình, hệ phương trình</p>
+                  </div>
+                </div>
+              </header>
+
+              {/* MAIN CONTENT */}
+              <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-8 flex flex-col gap-8">
+                
+                {/* KHU VỰC CẤU HÌNH API KEY */}
+                <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-base">
+                  <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex items-center gap-3">
+                    <i className="fa-solid fa-key text-slate-500 text-[18px]"></i>
+                    <h2 className="font-bold text-slate-700">Cấu hình API Key (Có thể để trống trên hệ thống Demo)</h2>
+                  </div>
+                  <div className="p-4 sm:p-6 space-y-3">
+                    {apiKeysInput.map((key, index) => (
+                      <div key={index} className="flex gap-2 items-center animate-fade-in">
+                        <div className="relative flex-grow">
+                          <input
+                            type={showKeys[index] ? "text" : "password"}
+                            className="w-full p-3 pr-10 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base font-mono"
+                            placeholder={`Nhập Google Gemini API Key ${index + 1}...`}
+                            value={key}
+                            onChange={(e) => handleApiKeyChange(index, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => toggleKeyVisibility(index)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                            title={showKeys[index] ? "Ẩn Key" : "Hiện Key"}
+                          >
+                            <i className={`fa-solid ${showKeys[index] ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveKey(index)}
+                          className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-200 flex-shrink-0"
+                          title="Xóa Key này"
+                        >
+                          <i className="fa-solid fa-trash"></i>
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <button
+                      onClick={handleAddKey}
+                      className="flex items-center gap-2 text-blue-600 font-medium hover:text-blue-800 transition-colors px-2 py-1 mt-1"
+                    >
+                      <i className="fa-solid fa-plus-circle"></i> Thêm API Key dự phòng
+                    </button>
+
+                    <div className="mt-4 pt-3 border-t border-slate-100">
+                      <p className="text-sm text-slate-500">
+                        <i className="fa-solid fa-circle-info mr-1"></i>
+                        Lấy API Key miễn phí tại <a href="https://aistudio.google.com/" target="_blank" className="text-blue-600 font-medium hover:underline">Google AI Studio</a>. 
+                        <strong> Mẹo:</strong> Nếu bạn đang chạy thử nghiệm ngay trên nền tảng Canvas, bạn có thể xóa trắng ô nhập liệu để dùng hệ thống ngầm định.
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* KHU VỰC NHẬP ĐỀ BÀI */}
+                <section className="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden text-lg">
+                  <div className="bg-blue-50 px-6 py-4 border-b border-blue-100 flex items-center gap-3">
+                    <i className="fa-solid fa-cloud-arrow-up text-blue-600 text-[24px]"></i>
+                    <h2 className="font-bold text-blue-800">Nhập hoặc Tải đề bài lên</h2>
+                  </div>
+                  <div className="p-6">
+                    <textarea
+                      className="w-full h-32 p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none mb-4 text-base"
+                      placeholder="Dán đề bài (văn bản), hoặc mã LaTeX (.tex) vào đây..."
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                    ></textarea>
+                    
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                      <div className="flex flex-wrap gap-2">
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                        <button onClick={() => triggerFileInput('.docx')} className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-200">
+                          <i className="fa-solid fa-file-word text-blue-600 text-[18px]"></i> .DOCX
+                        </button>
+                        <button onClick={() => triggerFileInput('.pdf')} className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-200">
+                          <i className="fa-solid fa-file-pdf text-red-500 text-[18px]"></i> .PDF
+                        </button>
+                        <button onClick={() => triggerFileInput('image/*')} className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-200">
+                          <i className="fa-solid fa-image text-green-500 text-[18px]"></i> Ảnh
+                        </button>
+                        <button onClick={() => triggerFileInput('.tex')} className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors border border-slate-200">
+                          <i className="fa-solid fa-file-code text-purple-500 text-[18px]"></i> .TEX
+                        </button>
+                      </div>
+                      
+                      <button 
+                        onClick={handleAnalyze}
+                        disabled={isAnalyzing || (!inputText.trim() && !attachedFile)}
+                        className="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isAnalyzing ? <i className="fa-solid fa-spinner fa-spin text-[20px]"></i> : <i className="fa-solid fa-lightbulb text-[20px]"></i>}
+                        {isAnalyzing ? 'AI Đang giải...' : 'Phân tích & Giải'}
+                      </button>
+                    </div>
+
+                    {errorMsg && (
+                      <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 font-medium text-sm animate-fade-in">
+                        {errorMsg}
+                      </div>
+                    )}
+
+                    {attachedFile && (
+                      <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between animate-fade-in">
+                        <span className="text-emerald-700 font-medium text-sm flex items-center gap-2">
+                          <i className="fa-solid fa-circle-check text-[16px]"></i> Đã tải lên: {attachedFile.name}
+                        </span>
+                        <button onClick={() => setAttachedFile(null)} className="text-slate-400 hover:text-red-500 text-sm font-medium transition-colors">Xóa</button>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* GIAO DIỆN CHỜ */}
+                {!showResult && !isAnalyzing && (
+                  <div className="flex flex-col items-center justify-center py-16 text-slate-400 animate-fade-in">
+                    <i className="fa-solid fa-calculator text-blue-200 text-[64px] mb-4"></i>
+                    <p className="text-xl font-medium text-slate-500">Chưa có dữ liệu bài toán</p>
+                    <p className="text-sm mt-2 text-center max-w-md">Hãy nhập đề bài hoặc tải ảnh lên, sau đó ấn "Phân tích & Giải" để Trí tuệ nhân tạo bắt đầu làm việc nhé!</p>
+                  </div>
+                )}
+
+                {/* KHU VỰC KẾT QUẢ */}
+                {showResult && (
+                  <div className="flex flex-col gap-8 animate-fade-in">
+                    {/* KHU VỰC ĐỀ BÀI */}
+                    <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden text-lg md:text-xl">
+                      <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+                        <i className="fa-solid fa-book-open text-blue-600 text-[24px]"></i>
+                        <h2 className="font-bold text-slate-800">Đề bài</h2>
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-blue-700 mb-3">{problemData?.title}</h3>
+                        <div className="leading-relaxed whitespace-pre-wrap text-slate-700">
+                          {problemData?.content}
+                        </div>
+                        {submittedImage && (
+                          <div className="mt-6 border-t border-slate-200 pt-5">
+                            <p className="text-sm font-bold text-slate-500 mb-3 flex items-center gap-2">
+                              <i className="fa-solid fa-image text-[16px]"></i> Ảnh đề bài gốc đính kèm:
+                            </p>
+                            <img src={submittedImage} alt="Đề bài gốc đính kèm" className="max-w-full h-auto max-h-[400px] rounded-lg border border-slate-200 shadow-sm object-contain" />
+                          </div>
+                        )}
+                      </div>
+                    </section>
+
+                    {/* KHU VỰC CÔNG THỨC */}
+                    <section className="bg-amber-50 rounded-2xl border-2 border-amber-200 p-6 flex flex-col md:flex-row gap-6 items-center">
+                      <div className="flex-shrink-0 bg-amber-100 w-16 h-16 rounded-full text-amber-600 flex items-center justify-center">
+                        <i className="fa-solid fa-lightbulb text-[32px]"></i>
+                      </div>
+                      <div className="flex-grow text-center md:text-left">
+                        <h3 className="text-lg font-bold text-amber-800 mb-2">💡 Kiến thức cần nhớ ({problemData?.type}):</h3>
+                        <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                          {problemData?.formulas?.map((f, i) => (
+                            <div key={i} className="bg-white px-4 py-3 rounded-lg shadow-sm border border-amber-100 text-lg text-amber-900">
+                              <span className="font-sans text-sm text-amber-600 block mb-1 font-bold">{f.name}</span>
+                              <span className="font-serif italic font-medium text-blue-800">{f.eq}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* KHU VỰC LỜI GIẢI CÓ TABS */}
+                    <section className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+                      <div className="flex border-b border-slate-200 bg-slate-50">
+                        <button
+                          onClick={() => setActiveTab('method1')}
+                          className={`flex-1 py-4 px-2 text-center font-bold text-lg transition-colors ${
+                            activeTab === 'method1' ? 'bg-white text-blue-600 border-b-4 border-blue-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                          }`}
+                        >
+                          Cách 1: Lập Phương Trình (1 Ẩn)
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('method2')}
+                          className={`flex-1 py-4 px-2 text-center font-bold text-lg transition-colors ${
+                            activeTab === 'method2' ? 'bg-white text-emerald-600 border-b-4 border-emerald-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                          }`}
+                        >
+                          Cách 2: Lập Hệ Phương Trình (2 Ẩn)
+                        </button>
+                      </div>
+
+                      <div className="p-6 md:p-8">
+                        {/* LỜI GIẢI CÁCH 1 */}
+                        {activeTab === 'method1' && (
+                          <div className="animate-fade-in text-lg space-y-6">
+                            <div className="mb-8">
+                              <h4 className="flex items-center gap-2 font-bold text-slate-700 mb-4">
+                                <i className="fa-solid fa-pen-nib text-blue-500 text-[20px]"></i> 
+                                Bảng Phân Tích Đại Lượng:
+                              </h4>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse rounded-xl overflow-hidden shadow-sm">
+                                  <thead>
+                                    <tr className="bg-blue-100 text-blue-800 text-center">
+                                      {problemData?.table?.headers?.map((h, i) => (
+                                        <th key={i} className="py-3 px-4 border border-blue-200 font-bold">{renderText(h)}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {problemData?.table?.rows?.map((row, i) => (
+                                      <tr key={i} className="bg-white text-center hover:bg-blue-50">
+                                        <td className="py-3 px-4 border border-slate-200 font-bold text-slate-700">{renderText(row[0])}</td>
+                                        <td className="py-3 px-4 border border-slate-200 text-blue-700">{renderText(row[1])}</td>
+                                        <td className="py-3 px-4 border border-slate-200 text-slate-700">{renderText(row[2])}</td>
+                                        <td className="py-3 px-4 border border-slate-200 bg-yellow-50 text-slate-800">{renderText(row[3])}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                              <p className="text-sm text-slate-500 mt-2 italic">* Cột màu vàng là đại lượng được biểu diễn theo ẩn và đại lượng đã biết để lập phương trình.</p>
+                            </div>
+
+                            <h4 className="flex items-center gap-2 font-bold text-slate-700 mb-4 border-b pb-2">
+                              <i className="fa-solid fa-circle-info text-blue-500 text-[20px]"></i> 
+                              Lời giải chi tiết:
+                            </h4>
+                            
+                            <ul className="space-y-4 text-slate-700">
+                              {problemData?.method1Steps?.map((step, index) => (
+                                <li key={index} className={`flex items-start gap-3 ${step.equation ? 'bg-blue-50 p-4 rounded-xl border border-blue-100' : ''} ${step.isResult ? 'bg-green-50 p-4 rounded-xl border border-green-100' : ''}`}>
+                                  {step.isResult ? (
+                                    <i className="fa-solid fa-circle-check text-green-600 mt-1 text-[20px] flex-shrink-0"></i>
+                                  ) : (
+                                    <i className={`fa-solid fa-chevron-right ${step.equation ? 'text-blue-600' : 'text-blue-500'} mt-1 text-[20px] flex-shrink-0`}></i>
+                                  )}
+                                  <div className="w-full leading-relaxed">
+                                    <strong>{renderText(step.title)}:</strong> <span className="mt-1 block md:inline">{renderText(step.content)}</span>
+                                    {step.equation && (
+                                      <div className="text-blue-800 my-4 text-xl overflow-x-auto pb-2 font-serif font-bold text-center">
+                                        {step.equation}
+                                      </div>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* LỜI GIẢI CÁCH 2 */}
+                        {activeTab === 'method2' && (
+                          <div className="animate-fade-in text-lg space-y-6">
+                            <div className="mb-8">
+                              <h4 className="flex items-center gap-2 font-bold text-slate-700 mb-4">
+                                <i className="fa-solid fa-pen-nib text-emerald-500 text-[20px]"></i> 
+                                Bảng Phân Tích Đại Lượng (Hệ phương trình):
+                              </h4>
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse rounded-xl overflow-hidden shadow-sm">
+                                  <thead>
+                                    <tr className="bg-emerald-100 text-emerald-900 text-center">
+                                      {problemData?.table?.headers?.map((h, i) => (
+                                        <th key={i} className="py-3 px-4 border border-emerald-200 font-bold">{renderText(h)}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {problemData?.table?.rowsSys?.map((row, i) => (
+                                      <tr key={i} className="bg-white text-center hover:bg-emerald-50">
+                                        <td className="py-3 px-4 border border-slate-200 font-bold text-slate-700">{renderText(row[0])}</td>
+                                        <td className="py-3 px-4 border border-slate-200 text-emerald-700 font-bold">{renderText(row[1])}</td>
+                                        <td className="py-3 px-4 border border-slate-200 text-slate-700">{renderText(row[2])}</td>
+                                        <td className="py-3 px-4 border border-slate-200 bg-yellow-50 text-slate-800">{renderText(row[3])}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+
+                            <h4 className="flex items-center gap-2 font-bold text-slate-700 mb-4 border-b pb-2">
+                              <i className="fa-solid fa-circle-info text-emerald-500 text-[20px]"></i> 
+                              Lời giải chi tiết:
+                            </h4>
+                            
+                            <ul className="space-y-4 text-slate-700">
+                              {problemData?.method2Steps?.map((step, index) => (
+                                <li key={index} className={`flex items-start gap-3 ${step.equation ? 'bg-emerald-50 p-4 rounded-xl border border-emerald-100' : ''} ${step.isResult ? 'bg-green-50 p-4 rounded-xl border border-green-100' : ''}`}>
+                                  {step.isResult ? (
+                                    <i className="fa-solid fa-circle-check text-green-600 mt-1 text-[20px] flex-shrink-0"></i>
+                                  ) : (
+                                    <i className={`fa-solid fa-chevron-right ${step.equation ? 'text-emerald-600' : 'text-emerald-500'} mt-1 text-[20px] flex-shrink-0`}></i>
+                                  )}
+                                  <div className="w-full leading-relaxed">
+                                    <strong>{renderText(step.title)}:</strong> <span className="mt-1 block md:inline">{renderText(step.content)}</span>
+                                    {step.equation && (
+                                      <div className="text-emerald-800 my-4 text-xl overflow-x-auto pb-2 font-serif font-bold text-center">
+                                        {step.equation}
+                                      </div>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+
+                    {/* THANH CÔNG CỤ (COPY / DOWNLOAD) */}
+                    <div className="flex flex-wrap justify-center gap-4 mb-4">
+                      <button 
+                        onClick={handleCopy}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-blue-600 transition-all w-full sm:w-auto"
+                      >
+                        {isCopied ? <i className="fa-solid fa-check text-[20px] text-green-600"></i> : <i className="fa-solid fa-copy text-[20px] text-blue-500"></i>}
+                        {isCopied ? <span className="text-green-600">Đã sao chép</span> : 'Sao chép bài giải'}
+                      </button>
+                      <button 
+                        onClick={handleDownload}
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-blue-600 transition-all w-full sm:w-auto"
+                      >
+                        <i className="fa-solid fa-download text-[20px] text-blue-500"></i>
+                        Tải về (.txt)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </main>
+
+              {/* FOOTER */}
+              <footer className="mt-auto w-full bg-blue-600 text-white text-center py-4 font-bold shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
+                Thầy Nguyễn Cường dạy Toán
+              </footer>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

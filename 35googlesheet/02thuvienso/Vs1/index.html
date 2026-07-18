@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thư Viện Số Mở</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+    .loader {
+      border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+      border-radius: 50%; width: 40px; height: 40px;
+      animation: spin 1s linear infinite; margin: 20px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .line-clamp-2 {
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    /* Progress bar transition */
+    #progress-bar-fill { transition: width 0.3s ease-in-out; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+  <!-- Header -->
+  <header class="bg-blue-800 text-white shadow-lg sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+          <i class="fa-solid fa-book-open-reader text-2xl"></i>
+          <h1 class="text-xl font-bold uppercase tracking-wider">Thư Viện Số</h1>
+        </div>
+        
+        <!-- Search Bar -->
+        <div class="relative w-full md:w-1/3">
+          <input type="text" id="search-input" placeholder="Tìm kiếm tài liệu..." 
+            class="w-full pl-10 pr-4 py-2 rounded-full text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-inner"
+            onkeypress="handleEnterSearch(event)">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400"></i>
+          <button onclick="executeSearch()" class="absolute right-1 top-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-1.5 px-3 text-xs transition">Tìm</button>
+        </div>
+
+        <!-- Tab Navigation -->
+        <nav class="flex space-x-2 bg-blue-900 p-1 rounded-lg">
+          <button onclick="switchTab('honor')" id="btn-honor" class="px-4 py-2 rounded-md text-sm font-semibold text-white hover:bg-blue-700 transition">
+            <i class="fa-solid fa-trophy mr-2 text-yellow-400"></i>Vinh Danh
+          </button>
+          <button onclick="switchTab('library')" id="btn-library" class="px-4 py-2 rounded-md text-sm font-semibold bg-white text-blue-900 transition">
+            <i class="fa-solid fa-folder-open mr-2"></i>Kho Tài Liệu
+          </button>
+          <button onclick="switchTab('upload')" id="btn-upload" class="px-4 py-2 rounded-md text-sm font-semibold text-white hover:bg-blue-700 transition">
+            <i class="fa-solid fa-cloud-arrow-up mr-2"></i>Đóng Góp
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-6 min-h-screen">
+    
+    <!-- === TAB 1: LIBRARY === -->
+    <div id="tab-library" class="block">
+      <!-- Breadcrumbs -->
+      <div id="breadcrumbs" class="flex items-center text-sm text-gray-600 mb-6 bg-white p-3 rounded shadow-sm overflow-x-auto whitespace-nowrap">
+        <span class="text-gray-400">Đang tải...</span>
+      </div>
+
+      <!-- Search Result Title -->
+      <div id="search-result-title" class="hidden mb-4 text-lg font-bold text-blue-700 flex items-center">
+        <i class="fa-solid fa-filter mr-2"></i> Kết quả tìm kiếm: <span id="search-query" class="ml-1 text-black"></span>
+        <button onclick="clearSearch()" class="ml-4 text-xs text-red-500 underline hover:text-red-700">Xóa tìm kiếm</button>
+      </div>
+
+      <div id="library-loader" class="loader hidden"></div>
+
+      <!-- Content Area -->
+      <div id="library-content" class="flex flex-col lg:flex-row gap-4">
+        <div id="main-list-area" class="w-full lg:w-full transition-all duration-300 overflow-hidden" style="flex: 1 1 auto;">
+          <!-- Folders Grid -->
+          <div id="folder-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8"></div>
+
+          <h2 id="files-title" class="text-lg font-bold text-gray-700 mb-4 border-l-4 border-blue-600 pl-3">Danh Sách Tài Liệu</h2>
+          
+          <!-- Files List -->
+          <div id="file-container" class="grid grid-cols-1 gap-4">
+            <!-- Render Cards -->
+          </div>
+          
+          <div id="empty-msg" class="hidden text-center text-gray-400 py-10">
+            <i class="fa-solid fa-box-open text-4xl mb-3"></i>
+            <p>Không tìm thấy dữ liệu</p>
+          </div>
+        </div>
+
+        <!-- Resizer -->
+        <div id="resizer" class="hidden lg:hidden w-2 cursor-col-resize hover:bg-blue-400 active:bg-blue-600 rounded transition-colors self-stretch bg-gray-200"></div>
+
+        <div id="preview-pane" class="hidden w-full lg:w-1/2 bg-white p-4 rounded-lg shadow-md border border-gray-200 sticky top-24 h-[calc(100vh-120px)] flex-col shrink-0">
+           <div class="flex justify-between items-center mb-3">
+             <h3 class="font-bold text-blue-800 truncate pr-2" id="preview-title">Xem trước</h3>
+             <button onclick="closePreview()" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+           </div>
+           <div class="flex-grow w-full relative bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+              <iframe id="preview-iframe" class="w-full h-full border-0 absolute top-0 left-0 hidden" onload="const loader = document.getElementById('preview-loader'); if(loader) { loader.classList.add('hidden'); } this.classList.remove('hidden');"></iframe>
+              <div id="preview-loader" class="text-gray-400 flex flex-col items-center"><i class="fa-solid fa-spinner fa-spin text-3xl mb-2"></i><p>Đang tải...</p></div>
+           </div>
+           <div class="mt-4 flex gap-2">
+              <a id="preview-download-btn" href="#" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-center transition"><i class="fa-solid fa-download mr-2"></i>Tải về</a>
+           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === TAB 2: UPLOAD === -->
+    <div id="tab-upload" class="hidden max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-md mt-6">
+      <h2 class="text-2xl font-bold text-blue-800 mb-6 text-center border-b pb-4">Đóng Góp Tài Liệu Mới</h2>
+      
+      <form id="upload-form" onsubmit="handleBatchUpload(event)">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <!-- Cột Trái -->
+          <div class="space-y-4">
+             <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">1. Chọn thư mục lưu trữ *</label>
+              <div class="flex gap-2">
+                <div class="relative flex-grow">
+                  <select id="folder-select" class="block w-full bg-gray-50 border border-gray-300 text-gray-700 py-2.5 px-3 rounded focus:outline-none focus:border-blue-500">
+                    <option value="">Đang tải danh sách...</option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                  </div>
+                </div>
+                <button type="button" onclick="handleCreateFolder(this)" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-3 rounded shadow transition flex-shrink-0" 
+                        title="Tạo thư mục con trong thư mục đang chọn">
+                  <i class="fa-solid fa-folder-plus"></i>
+                </button>
+              </div>
+              <p class="text-xs text-gray-500 mt-1 italic">Mẹo: Chọn thư mục cha ở danh sách rồi bấm nút (+) màu xanh để tạo thư mục con.</p>
+            </div>
+
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">2. Loại tài liệu *</label>
+              <select id="file-type" class="block w-full bg-gray-50 border border-gray-300 text-gray-700 py-2.5 px-3 rounded focus:outline-none focus:border-blue-500">
+                <option value="Tài liệu chung">Tài liệu chung</option>
+                <option value="Đề thi / Kiểm tra">Đề thi / Kiểm tra</option>
+                <option value="Giáo án / Kế hoạch bài dạy">Giáo án / Kế hoạch bài dạy</option>
+                <option value="Sách giáo khoa / Ebook">Sách giáo khoa / Ebook</option>
+                <option value="Tổng hợp / Dự án">Tổng hợp / Dự án</option>
+                <option value="Biểu mẫu / Văn bản">Biểu mẫu / Văn bản</option>
+                <option value="Khác">Khác</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">3. Tên hiển thị (Tiêu đề) *</label>
+              <input type="text" id="display-name" placeholder="VD: Đề thi Toán HK1 năm 2024" 
+                class="border rounded w-full py-2.5 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+              <p class="text-xs text-gray-500 mt-1 italic">Nếu upload nhiều file, tên này sẽ áp dụng cho tất cả hoặc để trống để dùng tên file gốc.</p>
+            </div>
+          </div>
+
+          <!-- Cột Phải -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">4. Thông tin người đăng *</label>
+              <input type="text" id="uploader-name" required placeholder="Nickname của bạn" 
+                class="border rounded w-full py-2 px-3 text-gray-700 mb-2 focus:outline-none focus:border-blue-500">
+              <input type="email" id="uploader-email" placeholder="Email (để ẩn)"
+                class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+              <label class="block text-gray-700 text-sm font-bold mb-2">5. Ghi chú thêm (Tùy chọn)</label>
+              <textarea id="file-desc" rows="3" placeholder="Mô tả nội dung, đáp án, lưu ý..." 
+                class="border rounded w-full py-2 px-3 text-gray-700 focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Input Multiple -->
+        <div class="mb-6">
+          <label class="block text-gray-700 text-sm font-bold mb-2">6. Chọn file (Cho phép chọn nhiều file)</label>
+          <div class="flex items-center justify-center w-full">
+            <label for="file-upload" class="flex flex-col items-center justify-center w-full h-32 border-2 border-blue-300 border-dashed rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition">
+              <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-2"></i>
+                <p class="text-sm text-gray-500"><span class="font-semibold">Click để chọn file</span></p>
+                <p id="file-count-display" class="text-xs text-gray-400 mt-1">Chưa chọn file</p>
+              </div>
+              <input id="file-upload" type="file" class="hidden" multiple onchange="displayFileCount()" required />
+            </label>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="btn-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow-lg transform transition hover:-translate-y-0.5 flex justify-center items-center">
+          <span><i class="fa-solid fa-upload mr-2"></i>Tải Lên Hệ Thống</span>
+        </button>
+
+        <!-- Progress Bar Container (Hidden by default) -->
+        <div id="progress-container" class="hidden mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+           <div class="flex justify-between items-center mb-1">
+              <span id="progress-text" class="text-sm font-semibold text-blue-800">Đang chuẩn bị...</span>
+              <span id="progress-percent" class="text-sm font-bold text-blue-800">0%</span>
+           </div>
+           <div class="w-full bg-gray-200 rounded-full h-3">
+              <div id="progress-bar-fill" class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
+           </div>
+           <p id="progress-detail" class="text-xs text-gray-500 mt-2 italic">Đang tải lên, vui lòng không tắt trình duyệt...</p>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- === TAB 3: HONOR === -->
+    <div id="tab-honor" class="hidden">
+       <h2 class="text-3xl font-bold text-blue-800 mb-8 text-center uppercase tracking-wide border-b pb-4"><i class="fa-solid fa-ranking-star mr-3 text-yellow-500"></i>Bảng Vàng Vinh Danh</h2>
+       <div id="leaderboard-loader" class="loader hidden"></div>
+       
+       <!-- Top 3 -->
+       <div id="top-3-container" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 max-w-6xl mx-auto items-end"></div>
+       
+       <!-- Lưới còn lại -->
+       <h3 class="text-xl font-bold text-gray-700 mb-4 border-l-4 border-blue-600 pl-3">Các đóng góp tiêu biểu khác</h3>
+       <div id="other-leaderboard-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </div>
+
+  </main>
+
+  <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-6 py-3 rounded shadow-lg transform translate-y-20 transition duration-300 opacity-0 z-50"></div>
+
+  <script>
+    // =========================================================================
+    // LƯU Ý QUAN TRỌNG:
+    // Bạn hãy thay thế URL bên dưới bằng URL có đuôi /exec sau khi Deploy Web App.
+    // Dưới đây chỉ là URL ví dụ để bạn biết cấu trúc.
+    // =========================================================================
+    const LINK_GAS = "https://script.google.com/macros/s/AKfycbykut9rIcjD6SnOR8aXfUBGPoz9ArGm-rAGTmZ4iH3w7J7DFjOjL_xIf4fd7_l_AN0liw/exec";
+
+    async function gasCall(action, params = {}) {
+      try {
+        const payload = { action, ...params };
+        const res = await fetch(LINK_GAS, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(payload),
+          redirect: 'follow' // BẮT BUỘC ĐỐI VỚI GOOGLE APPS SCRIPT ĐỂ KHÔNG BỊ LỖI FETCH
+        });
+        
+        if (!res.ok) {
+           throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return await res.json();
+      } catch (err) {
+        console.error("Lỗi gasCall:", err);
+        // Cảnh báo người dùng nếu gặp lỗi CORS (Failed to fetch)
+        if (err.message.includes('Failed to fetch') || err.message.includes('Network Error')) {
+          throw new Error('Lỗi kết nối. Vui lòng chắc chắn bạn đã Deploy Web App với quyền truy cập "Anyone" (Bất kỳ ai) thay vì "Anyone with Google account".');
+        }
+        throw new Error(err.message || 'Lỗi mạng không xác định');
+      }
+    }
+
+    let currentFolderId = null;
+
+    // --- INIT ---
+    window.onload = function() {
+      loadLibrary(null);
+      loadFolderTree();
+      loadUserInfo();
+    };
+
+    function switchTab(tab) {
+      document.getElementById('tab-library').classList.toggle('hidden', tab !== 'library');
+      document.getElementById('tab-upload').classList.toggle('hidden', tab !== 'upload');
+      document.getElementById('tab-honor').classList.toggle('hidden', tab !== 'honor');
+      
+      const btnLib = document.getElementById('btn-library');
+      const btnUp = document.getElementById('btn-upload');
+      const btnHonor = document.getElementById('btn-honor');
+      const activeClass = "bg-white text-blue-900 shadow";
+      const inactiveClass = "text-white hover:bg-blue-700";
+      
+      btnLib.className = "px-4 py-2 rounded-md text-sm font-semibold transition " + (tab==='library'?activeClass:inactiveClass);
+      btnUp.className = "px-4 py-2 rounded-md text-sm font-semibold transition " + (tab==='upload'?activeClass:inactiveClass);
+      btnHonor.className = "px-4 py-2 rounded-md text-sm font-semibold transition " + (tab==='honor'?activeClass:inactiveClass);
+
+      if (tab === 'honor') loadLeaderboard();
+    }
+
+    function goHome() {
+      switchTab('library');
+      document.getElementById('search-input').value = '';
+      document.getElementById('breadcrumbs').classList.remove('hidden');
+      document.getElementById('search-result-title').classList.add('hidden');
+      document.getElementById('files-title').innerText = "Danh Sách Tài Liệu";
+      closePreview();
+      loadLibrary(null); 
+    }
+
+    // --- CHUNKED & DIRECT UPLOAD LOGIC ---
+    function displayFileCount() {
+      const input = document.getElementById('file-upload');
+      const display = document.getElementById('file-count-display');
+      if (input.files && input.files.length > 0) {
+        display.innerText = `Đã chọn ${input.files.length} file`;
+        display.classList.add("text-blue-600", "font-bold");
+      }
+    }
+
+    async function handleBatchUpload(e) {
+      e.preventDefault();
+      const files = document.getElementById('file-upload').files;
+      if (files.length === 0) { showToast("Chưa chọn file!"); return; }
+
+      const folderId = document.getElementById('folder-select').value;
+      const uploaderName = document.getElementById('uploader-name').value;
+      const uploaderEmail = document.getElementById('uploader-email').value;
+      const fileType = document.getElementById('file-type').value;
+      const desc = document.getElementById('file-desc').value;
+      const customNameInput = document.getElementById('display-name').value;
+
+      saveUserInfo(uploaderName, uploaderEmail);
+
+      const btn = document.getElementById('btn-submit');
+      const originalBtnText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang xử lý...`;
+      
+      // Show progress container
+      const progressContainer = document.getElementById('progress-container');
+      progressContainer.classList.remove('hidden');
+
+      // NGƯỠNG AN TOÀN: 40MB
+      // Để an toàn, file <= 40MB dùng Direct Upload (Nhanh)
+      // File > 40MB dùng Chunking (Chậm nhưng chắc)
+      const MAX_DIRECT_SIZE = 40 * 1024 * 1024; 
+
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const file = files[i];
+          let finalDisplayName = customNameInput;
+          if (!finalDisplayName) finalDisplayName = file.name;
+          else if (files.length > 1) finalDisplayName = `${customNameInput} (${i+1})`;
+          
+          const meta = {
+            folderId, uploaderName, uploaderEmail, fileType, description: desc, displayName: finalDisplayName
+          };
+
+          if (file.size <= MAX_DIRECT_SIZE) {
+            // Upload trực tiếp (nhanh hơn cho file nhỏ và trung bình)
+            await uploadFileDirectly(file, i+1, files.length, meta);
+          } else {
+            // Upload chia chunk (an toàn cho file khổng lồ > 40MB)
+            await uploadFileInChunks(file, i+1, files.length, meta);
+          }
+
+        } catch (err) {
+          console.error(err);
+          showToast(`Lỗi upload file ${i+1}: ${err}`);
+        }
+      }
+
+      // Reset UI
+      btn.innerHTML = originalBtnText;
+      btn.disabled = false;
+      progressContainer.classList.add('hidden');
+      
+      showToast(`Hoàn tất! Đã tải lên ${files.length} file.`);
+      document.getElementById('upload-form').reset();
+      document.getElementById('file-count-display').innerText = "Chưa chọn file";
+      goHome();
+    }
+
+    async function uploadFileDirectly(file, currentIdx, totalFiles, meta) {
+      // UI Elements
+      const progressBar = document.getElementById('progress-bar-fill');
+      const progressText = document.getElementById('progress-text');
+      const progressPercent = document.getElementById('progress-percent');
+      const progressDetail = document.getElementById('progress-detail');
+
+      progressText.innerText = `File ${currentIdx}/${totalFiles}: ${file.name}`;
+      progressDetail.innerText = "Đang tải lên tốc độ cao (chờ chút)...";
+      progressBar.style.width = '30%';
+      progressPercent.innerText = '...';
+
+      // Convert to Base64
+      const base64Data = await readFileAsBase64(file);
+      
+      progressBar.style.width = '70%';
+      progressDetail.innerText = "Đang đẩy dữ liệu lên Google Drive...";
+
+      // Call Backend
+      const res = await gasCall('handleUpload', {
+        data: {
+          fileData: base64Data,
+          fileName: file.name,
+          mimeType: file.type,
+          folderId: meta.folderId,
+          uploaderName: meta.uploaderName,
+          uploaderEmail: meta.uploaderEmail,
+          displayName: meta.displayName,
+          fileType: meta.fileType,
+          description: meta.description
+        }
+      });
+      if (!res.success) throw new Error(res.error);
+
+      progressBar.style.width = '100%';
+      progressPercent.innerText = '100%';
+      progressDetail.innerText = "Hoàn tất.";
+    }
+
+    async function uploadFileInChunks(file, currentIdx, totalFiles, meta) {
+      // 2MB Chunk Size
+      const CHUNK_SIZE = 1024 * 1024 * 2; 
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      let fileId = null;
+
+      // UI Elements
+      const progressBar = document.getElementById('progress-bar-fill');
+      const progressText = document.getElementById('progress-text');
+      const progressPercent = document.getElementById('progress-percent');
+      const progressDetail = document.getElementById('progress-detail');
+
+      for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+        const start = chunkIdx * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunkBlob = file.slice(start, end);
+        const base64Data = await readFileAsBase64(chunkBlob);
+
+        // Update Progress UI
+        const percent = Math.round((chunkIdx / totalChunks) * 100);
+        const progressStr = `File ${currentIdx}/${totalFiles}: ${file.name}`;
+        
+        progressBar.style.width = `${percent}%`;
+        progressText.innerText = progressStr;
+        progressPercent.innerText = `${percent}%`;
+        progressDetail.innerText = `Đang tải gói dữ liệu lớn ${chunkIdx + 1}/${totalChunks}...`;
+
+        if (chunkIdx === 0) {
+          // Init Upload
+          const res = await gasCall('initiateUpload', {
+            data: {
+               fileData: base64Data,
+               fileName: file.name,
+               mimeType: file.type,
+               folderId: meta.folderId
+            }
+          });
+          if (res.success) { fileId = res.fileId; } 
+          else throw new Error(res.error);
+        } else {
+          // Append Chunk
+          const res = await gasCall('appendChunk', { fileId, base64Data });
+          if (!res.success) throw new Error(res.error);
+        }
+      }
+
+      // Final Step: Save Metadata
+      progressBar.style.width = `100%`;
+      progressPercent.innerText = `100%`;
+      progressDetail.innerText = "Đang lưu thông tin file lớn vào hệ thống...";
+      
+      const res = await gasCall('saveFileMetadata', {
+        fileId,
+        meta: {
+          fileName: file.name,
+          uploaderName: meta.uploaderName,
+          uploaderEmail: meta.uploaderEmail,
+          displayName: meta.displayName,
+          fileType: meta.fileType,
+          description: meta.description
+        }
+      });
+      if (!res.success) throw new Error(res.error);
+    }
+
+    function readFileAsBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    // --- OTHER LOGIC (Giữ nguyên) ---
+    function handleCreateFolder(btnElement) {
+      const parentId = document.getElementById('folder-select').value;
+      if (!parentId) { showToast("Vui lòng chọn thư mục cha!"); return; }
+      const folderName = prompt("Nhập tên thư mục mới:");
+      if (!folderName || folderName.trim() === "") return;
+
+      const originalHtml = btnElement.innerHTML;
+      btnElement.disabled = true;
+      btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+      const timeoutId = setTimeout(() => {
+         if (btnElement.disabled) {
+           btnElement.innerHTML = originalHtml;
+           btnElement.disabled = false;
+           showToast("Server phản hồi chậm, hãy kiểm tra lại sau.");
+         }
+      }, 15000);
+
+      gasCall('createFolder', { parentId, folderName }).then(res => {
+          clearTimeout(timeoutId);
+          btnElement.innerHTML = originalHtml;
+          btnElement.disabled = false;
+          if(res.success) { showToast("Đã tạo thư mục: " + folderName); loadFolderTree(); } 
+          else showToast("Lỗi: " + res.error);
+      }).catch(err => { clearTimeout(timeoutId); btnElement.innerHTML=originalHtml; btnElement.disabled=false; showError(err); });
+    }
+
+    function handleEnterSearch(e) { if (e.key === 'Enter') executeSearch(); }
+    function executeSearch() {
+      const query = document.getElementById('search-input').value.trim();
+      if (!query) return;
+      document.getElementById('library-loader').classList.remove('hidden');
+      document.getElementById('library-content').classList.add('opacity-50');
+      document.getElementById('breadcrumbs').classList.add('hidden');
+      document.getElementById('search-result-title').classList.remove('hidden');
+      document.getElementById('search-query').innerText = `"${query}"`;
+      document.getElementById('folder-container').innerHTML = ''; 
+      document.getElementById('files-title').innerText = "Kết quả tìm được";
+      gasCall('searchFiles', { query }).then(renderSearchResults).catch(showError);
+    }
+    function clearSearch() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('breadcrumbs').classList.remove('hidden');
+      document.getElementById('search-result-title').classList.add('hidden');
+      document.getElementById('files-title').innerText = "Danh Sách Tài Liệu";
+      loadLibrary(currentFolderId);
+    }
+    function renderSearchResults(res) {
+      document.getElementById('library-loader').classList.add('hidden');
+      document.getElementById('library-content').classList.remove('opacity-50');
+      if(!res.success) { showToast(res.error); return; }
+      renderFiles(res.files);
+    }
+    function loadLibrary(folderId) {
+      document.getElementById('library-loader').classList.remove('hidden');
+      document.getElementById('library-content').classList.add('opacity-50');
+      gasCall('getData', { folderId }).then(renderLibrary).catch(showError);
+    }
+    function renderLibrary(response) {
+      document.getElementById('library-loader').classList.add('hidden');
+      document.getElementById('library-content').classList.remove('opacity-50');
+      if (!response.success) { showToast("Lỗi: " + response.error); return; }
+      const data = response.data;
+      currentFolderId = data.currentFolderId;
+      
+      const filesTitle = document.getElementById('files-title');
+      // Fix ReferenceError here
+      if (!currentFolderId || currentFolderId === 'root' || (data.breadcrumbs.length > 0 && currentFolderId === data.breadcrumbs[0].id)) {
+         filesTitle.innerText = "20 Tài Liệu Mới Nhất Hệ Thống";
+      } else {
+         filesTitle.innerText = "Danh Sách Tài Liệu";
+      }
+
+      const bc = document.getElementById('breadcrumbs');
+      bc.innerHTML = data.breadcrumbs.map((c, i) => {
+        const last = i === data.breadcrumbs.length - 1;
+        return `<span class="${last?'font-bold text-blue-800':'cursor-pointer hover:underline text-blue-600'}" 
+                onclick="${last?'':'loadLibrary(\''+c.id+'\')'}">${c.name}</span>
+                ${last?'':'<i class="fa-solid fa-chevron-right text-xs mx-2 text-gray-400"></i>'}`;
+      }).join('');
+      document.getElementById('folder-container').innerHTML = data.folders.map(f => `
+        <div onclick="loadLibrary('${f.id}')" 
+             class="cursor-pointer bg-white p-3 rounded-lg shadow-sm hover:shadow-md hover:bg-blue-50 border border-gray-200 flex flex-col items-center text-center transition">
+          <i class="fa-solid fa-folder text-3xl text-yellow-400 mb-2"></i>
+          <span class="text-sm font-medium text-gray-700 truncate w-full">${f.name}</span>
+        </div>
+      `).join('');
+      renderFiles(data.files);
+    }
+    function renderFiles(files) {
+      const container = document.getElementById('file-container');
+      const emptyMsg = document.getElementById('empty-msg');
+      if (!files || files.length === 0) { container.innerHTML = ''; emptyMsg.classList.remove('hidden'); return; }
+      emptyMsg.classList.add('hidden');
+      container.innerHTML = files.map(f => {
+        const icon = getFileIcon(f.mimeType);
+        const folderInfo = f.folderName ? `<div class="mb-1"><span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded-full"><i class="fa-solid fa-folder-tree mr-1"></i>${f.folderName}</span></div>` : '';
+        return `
+        <div class="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-200 p-4 transition flex flex-col md:flex-row gap-4">
+          <div class="flex-shrink-0 flex flex-col items-center justify-center bg-gray-50 rounded-lg w-20 h-20">
+             <i class="${icon} text-3xl mb-1"></i>
+             <span class="text-[10px] font-bold text-gray-500 uppercase text-center leading-tight px-1">${f.fileType}</span>
+          </div>
+          <div class="flex-grow min-w-0">
+            ${folderInfo}
+            <h3 class="font-bold text-blue-700 text-lg truncate cursor-pointer hover:underline" title="${f.displayName}" onclick="openPreview('${f.id}', '${f.displayName.replace(/'/g, "\\'")}', '${f.viewUrl}', '${f.downloadUrl}')">${f.displayName}</h3>
+            <p class="text-xs text-gray-500 mb-1"><i class="fa-regular fa-file"></i> ${f.name} - ${f.size}</p>
+            ${f.description ? `<p class="text-sm text-gray-600 italic bg-yellow-50 p-2 rounded mb-2 line-clamp-2"><i class="fa-solid fa-quote-left text-xs text-gray-400 mr-1"></i>${f.description}</p>` : ''}
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+              <span class="text-blue-700 font-bold text-sm bg-blue-50 px-2 py-0.5 rounded border border-blue-100 shadow-sm"><i class="fa-solid fa-user-pen mr-1"></i>${f.uploader}</span>
+              <span class="text-xs text-gray-500 flex items-center"><i class="fa-solid fa-download mr-1"></i>${f.downloads} lượt tải</span>
+            </div>
+          </div>
+          <div class="flex flex-row md:flex-col justify-center items-end gap-2 border-t md:border-t-0 md:border-l pt-3 md:pt-0 md:pl-4 mt-2 md:mt-0 min-w-[120px]">
+             <div class="flex space-x-2 bg-gray-100 rounded-full px-2 py-1 mb-2">
+                <button onclick="vote('${f.id}','like',this)" class="hover:text-green-600 flex items-center space-x-1 px-1"><i class="fa-regular fa-thumbs-up"></i><span>${f.likes}</span></button>
+                <div class="w-px bg-gray-300"></div>
+                <button onclick="vote('${f.id}','dislike',this)" class="hover:text-red-600 flex items-center space-x-1 px-1"><i class="fa-regular fa-thumbs-down"></i><span>${f.dislikes}</span></button>
+             </div>
+             <a href="${f.downloadUrl}" target="_blank" onclick="trackDownload('${f.id}')" class="w-full text-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded shadow transition flex items-center justify-center"><i class="fa-solid fa-download mr-2"></i> Tải về</a>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    function getFileIcon(mime) {
+      if (mime.includes('pdf')) return 'fa-solid fa-file-pdf text-red-500';
+      if (mime.includes('word') || mime.includes('document')) return 'fa-solid fa-file-word text-blue-500';
+      if (mime.includes('sheet') || mime.includes('excel')) return 'fa-solid fa-file-excel text-green-500';
+      if (mime.includes('presentation')) return 'fa-solid fa-file-powerpoint text-orange-500';
+      if (mime.includes('image')) return 'fa-solid fa-file-image text-purple-500';
+      if (mime.includes('compressed') || mime.includes('zip') || mime.includes('rar')) return 'fa-solid fa-file-zipper text-yellow-600';
+      return 'fa-solid fa-file-lines text-gray-500';
+    }
+    function vote(id, action, el) {
+       const span = el.querySelector('span'); const val = parseInt(span.innerText); span.innerText = val + 1;
+       el.classList.add('pointer-events-none', action==='like'?'text-green-600':'text-red-600');
+       gasCall('handleVote', { fileId: id, voteAction: action }).then(r => { if(!r.success) { span.innerText = val; showToast("Lỗi vote"); } }).catch(() => { span.innerText = val; showToast("Lỗi kết nối"); });
+    }
+    function trackDownload(id) { gasCall('incrementDownload', { fileId: id }); }
+    function loadFolderTree() {
+      gasCall('getAllFolders').then(res => {
+        if (!res.success) return;
+        const list = res.data;
+        const sel = document.getElementById('folder-select');
+        sel.innerHTML = list.map(f => `<option value="${f.id}">${"&nbsp;&nbsp;".repeat(f.level) + (f.level>0 ? "↳ " : "📂 ")}${f.name}</option>`).join('');
+        if(currentFolderId) sel.value = currentFolderId;
+      }).catch(console.error);
+    }
+    function saveUserInfo(n, e) { localStorage.setItem('lib_uploader_name', n); localStorage.setItem('lib_uploader_email', e); }
+    function loadUserInfo() {
+      const n = localStorage.getItem('lib_uploader_name'), e = localStorage.getItem('lib_uploader_email');
+      if(n) document.getElementById('uploader-name').value = n; if(e) document.getElementById('uploader-email').value = e;
+    }
+    function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000); }
+    function showError(e) { showToast("Lỗi: " + e); document.getElementById('library-loader').classList.add('hidden'); }
+
+    function openPreview(id, name, viewUrl, downloadUrl) {
+       let previewUrl = viewUrl.replace(/\/view.*$/, '/preview');
+       document.getElementById('preview-title').innerText = name;
+       document.getElementById('preview-title').title = name;
+       document.getElementById('preview-download-btn').href = downloadUrl;
+       document.getElementById('preview-download-btn').onclick = () => trackDownload(id);
+       
+       const iframe = document.getElementById('preview-iframe');
+       const loader = document.getElementById('preview-loader');
+       
+       iframe.classList.add('hidden');
+       loader.classList.remove('hidden');
+       iframe.src = previewUrl;
+       
+       document.getElementById('main-list-area').classList.remove('lg:w-full');
+       document.getElementById('preview-pane').style.width = '50%';
+       document.getElementById('preview-pane').classList.remove('hidden');
+       document.getElementById('preview-pane').classList.add('flex');
+       document.getElementById('resizer').classList.remove('lg:hidden');
+       document.getElementById('resizer').classList.add('lg:block');
+    }
+    
+    function closePreview() {
+       document.getElementById('preview-pane').classList.add('hidden');
+       document.getElementById('preview-pane').classList.remove('flex');
+       document.getElementById('preview-pane').style.width = '';
+       document.getElementById('preview-iframe').src = '';
+       document.getElementById('main-list-area').classList.add('lg:w-full');
+       document.getElementById('resizer').classList.remove('lg:block');
+       document.getElementById('resizer').classList.add('lg:hidden');
+    }
+
+    function loadLeaderboard() {
+      document.getElementById('leaderboard-loader').classList.remove('hidden');
+      document.getElementById('top-3-container').innerHTML = '';
+      document.getElementById('other-leaderboard-container').innerHTML = '';
+      gasCall('getLeaderboard').then(renderLeaderboard).catch(showError);
+    }
+    
+    function renderLeaderboard(res) {
+      document.getElementById('leaderboard-loader').classList.add('hidden');
+      if (!res.success) { showToast(res.error); return; }
+      
+      const users = res.data;
+      const top3 = users.slice(0, 3);
+      const others = users.slice(3);
+      
+      const top3Container = document.getElementById('top-3-container');
+      const ranks = [
+        { color: 'text-yellow-400', label: 'Hạng 1', h: 'h-72', border: 'border-yellow-400' },
+        { color: 'text-gray-400', label: 'Hạng 2', h: 'h-64', border: 'border-gray-400' },
+        { color: 'text-orange-400', label: 'Hạng 3', h: 'h-60', border: 'border-orange-400' }
+      ];
+      
+      let displayOrder = [];
+      if(top3.length >= 2) displayOrder.push({ u: top3[1], r: ranks[1] });
+      if(top3.length >= 1) displayOrder.push({ u: top3[0], r: ranks[0] });
+      if(top3.length >= 3) displayOrder.push({ u: top3[2], r: ranks[2] });
+      
+      top3Container.innerHTML = displayOrder.map(item => `
+        <div class="bg-white rounded-xl shadow-lg border-t-4 ${item.r.border} p-6 flex flex-col items-center transform transition hover:-translate-y-2 text-center ${item.r.h}">
+          <i class="fa-solid fa-crown text-4xl mb-2 ${item.r.color}"></i>
+          <span class="text-xs font-bold uppercase text-gray-500 mb-1">${item.r.label}</span>
+          <h3 class="text-xl font-bold text-blue-800 line-clamp-2 w-full mb-3 leading-tight" title="${item.u.name}">${item.u.name}</h3>
+          <div class="flex-grow"></div>
+          <div class="w-full bg-gray-50 rounded p-2 grid grid-cols-2 gap-2 text-sm text-gray-600">
+             <div><i class="fa-solid fa-file-lines text-blue-500 mr-1"></i><b>${item.u.totalFiles}</b> file</div>
+             <div><i class="fa-solid fa-download text-green-500 mr-1"></i><b>${item.u.downloads}</b> tải</div>
+             <div class="col-span-2"><i class="fa-solid fa-thumbs-up text-pink-500 mr-1"></i><b>${item.u.likes}</b> lượt thích</div>
+          </div>
+        </div>
+      `).join('');
+      
+      const otherContainer = document.getElementById('other-leaderboard-container');
+      otherContainer.innerHTML = others.map((u, i) => `
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-4 transition hover:shadow-md">
+           <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">${i+4}</div>
+           <div class="flex-grow min-w-0">
+             <h4 class="font-bold text-gray-800 truncate">${u.name}</h4>
+             <div class="text-xs text-gray-500 flex flex-wrap gap-2 mt-1">
+               <span><i class="fa-solid fa-file mr-1"></i>${u.totalFiles}</span>
+               <span><i class="fa-solid fa-download mr-1"></i>${u.downloads}</span>
+               <span><i class="fa-solid fa-thumbs-up mr-1 text-pink-500"></i>${u.likes}</span>
+             </div>
+           </div>
+        </div>
+      `).join('');
+    }
+    
+    let isResizing = false;
+    let startX, startWidthPreview;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+       const resizer = document.getElementById('resizer');
+       if (!resizer) return;
+       const previewPane = document.getElementById('preview-pane');
+       const libraryContent = document.getElementById('library-content');
+       
+       resizer.addEventListener('mousedown', function(e) {
+         isResizing = true;
+         startX = e.clientX;
+         startWidthPreview = previewPane.getBoundingClientRect().width;
+         document.body.style.cursor = 'col-resize';
+         document.body.style.userSelect = 'none';
+         
+         const iframe = document.getElementById('preview-iframe');
+         if(iframe) iframe.style.pointerEvents = 'none';
+       });
+       
+       document.addEventListener('mousemove', function(e) {
+         if (!isResizing) return;
+         const dx = startX - e.clientX; 
+         let newWidth = startWidthPreview + dx;
+         const containerWidth = libraryContent.getBoundingClientRect().width;
+         if (newWidth < containerWidth * 0.25) newWidth = containerWidth * 0.25;
+         if (newWidth > containerWidth * 0.75) newWidth = containerWidth * 0.75;
+         previewPane.style.width = `${newWidth}px`;
+       });
+       
+       document.addEventListener('mouseup', function(e) {
+         if (isResizing) {
+           isResizing = false;
+           document.body.style.cursor = '';
+           document.body.style.userSelect = '';
+           const iframe = document.getElementById('preview-iframe');
+           if(iframe) iframe.style.pointerEvents = 'auto';
+         }
+       });
+    });
+  </script>
+</body>
+</html>

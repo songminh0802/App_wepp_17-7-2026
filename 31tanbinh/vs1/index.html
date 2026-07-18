@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Thẻ Coi Thi</title>
+    <!-- Tailwind CSS for clean UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- SheetJS (Hỗ trợ đọc file Excel/CSV) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2pdf (Hỗ trợ xuất file PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        /* === STYLES CHO THẺ IN (THEO YÊU CẦU) === */
+        body {
+            background-color: #f3f4f6;
+        }
+
+        /* Container chứa các thẻ khi in hoặc xem trước */
+        #print-area {
+            display: none;
+            width: 100%;
+            background: #e5e7eb; /* Nền xám khi preview để nổi bật trang A4 trắng */
+        }
+
+        /* Khung trang in (1 trang A4 chứa tối đa 8 thẻ) */
+        .print-page {
+            width: 21cm;
+            height: 29.7cm; /* Khóa cứng chiều cao trang A4 */
+            display: grid;
+            grid-template-columns: repeat(2, 10cm);
+            grid-auto-rows: 7cm;
+            gap: 0.1cm;
+            justify-content: center;
+            align-content: start;
+            background: white;
+            padding-top: 0.4cm; /* Lề trên */
+            box-sizing: border-box;
+            page-break-after: always; /* Luôn sang trang mới sau 8 thẻ */
+            margin: 0 auto;
+        }
+
+        /* Khi ở chế độ xem trước trên web, hiển thị bóng đổ như tờ giấy thật */
+        body.preview-mode .print-page {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        /* CÁC QUY TẮC CSS ĐẶC BIỆT ĐỂ FIX LỖI KHI XUẤT PDF BẰNG HTML2PDF */
+        body.pdf-exporting {
+            background-color: white !important;
+        }
+        body.pdf-exporting #app-ui,
+        body.pdf-exporting .preview-controls,
+        body.pdf-exporting #toast-container {
+            display: none !important; /* Ẩn sạch các UI rườm rà */
+        }
+        body.pdf-exporting #print-area {
+            display: block !important;
+            background: white !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        body.pdf-exporting .print-page {
+            box-shadow: none !important;
+            /* Cực kỳ quan trọng: Bỏ căn giữa (margin: 0 auto) để ép trang in sát góc trái-trên cùng, 
+               giúp html2canvas bắt tọa độ (0,0) chính xác tuyệt đối, không bị lệch hay ra trang trắng */
+            margin: 0 !important; 
+            padding-top: 0.4cm !important;
+        }
+
+        /* Thiết kế 1 thẻ */
+        .badge-card {
+            width: 10cm;
+            height: 7cm;
+            box-sizing: border-box;
+            border: 1px solid #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            page-break-inside: avoid;
+            background: white;
+            padding: 2px;
+        }
+
+        .badge-inner {
+            border: 3px solid black;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .badge-line-1 {
+            font-size: 13pt;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .badge-line-2 {
+            font-size: 13pt;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .badge-line-3 {
+            font-size: 16pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .badge-line-4-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            height: 50px; /* Tăng chiều cao để không cắt đuôi chữ (vd: dấu nặng) */
+            padding-bottom: 4px; /* Thêm khoảng trống an toàn dưới đáy chữ */
+        }
+
+        .badge-line-4 {
+            font-size: 22pt; /* Cỡ chữ mặc định rất lớn */
+            font-weight: 900; /* In đậm nổi bật */
+            text-transform: uppercase;
+            white-space: nowrap; /* Không xuống dòng */
+            line-height: 1.2; /* Đảm bảo chiều cao dòng đủ không gian cho dấu */
+        }
+
+        /* === CSS KHI IN THẬT (CTRL + P) === */
+        @media print {
+            body {
+                background-color: white;
+                margin: 0;
+            }
+            #app-ui, .preview-controls, #toast-container {
+                display: none !important; /* Ẩn toàn bộ UI quản lý */
+            }
+            #print-area {
+                display: block !important;
+                padding: 0 !important;
+                background: transparent;
+            }
+            #badges-container {
+                padding: 0 !important;
+                gap: 0 !important;
+            }
+            .print-page {
+                box-shadow: none !important;
+                padding-top: 0.4cm !important; /* Giữ lại padding top cho in thật */
+                margin: 0 !important;
+                page-break-after: always;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 0; /* Cho lề = 0 vì thẻ print-page đã tự căn giữa */
+            }
+        }
+
+        /* Chế độ xem trước (Print Preview) trên web */
+        body.preview-mode #app-ui {
+            display: none;
+        }
+        body.preview-mode #print-area {
+            display: block;
+            min-height: 100vh;
+        }
+        .preview-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none;
+            z-index: 50;
+        }
+        body.preview-mode .preview-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Toast Message */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- KHU VỰC 1: GIAO DIỆN QUẢN LÝ -->
+    <div id="app-ui" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-blue-800 text-white p-4 shadow-md flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="ph ph-identification-card text-3xl"></i>
+                Hệ Thống Quản Lý Thẻ Coi Thi
+            </h1>
+            <div class="flex gap-2">
+                <button onclick="togglePreview()" class="bg-white text-blue-800 px-4 py-2 rounded font-semibold hover:bg-gray-100 transition flex items-center gap-2">
+                    <i class="ph ph-eye"></i> Xem Dạng In
+                </button>
+                <button onclick="exportPDF()" class="bg-red-500 text-white px-4 py-2 rounded font-semibold hover:bg-red-600 transition flex items-center gap-2">
+                    <i class="ph ph-file-pdf"></i> Xuất PDF
+                </button>
+                <button onclick="triggerPrint()" class="bg-yellow-400 text-blue-900 px-4 py-2 rounded font-bold hover:bg-yellow-300 transition flex items-center gap-2">
+                    <i class="ph ph-printer"></i> In Tất Cả Thẻ
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Cột trái: Form nhập liệu -->
+            <div class="bg-white p-6 rounded-lg shadow-md h-fit">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2 text-gray-700" id="form-title">Thêm Thẻ Mới</h2>
+                
+                <form id="badge-form" class="space-y-4">
+                    <input type="hidden" id="badge-id">
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Chức vụ / Nhiệm vụ</label>
+                        <input type="text" id="chucVu" required placeholder="VD: TRƯỞNG ĐIỂM" 
+                               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và Tên</label>
+                        <input type="text" id="hoTen" required placeholder="VD: PHẠM THỊ MINH TUYẾN" 
+                               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Thứ tự sắp xếp</label>
+                        <input type="number" id="thuTu" required placeholder="1, 2, 3..." min="1"
+                               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="flex gap-2 pt-2">
+                        <button type="submit" id="btn-submit" class="flex-1 bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 transition">
+                            Thêm Thẻ
+                        </button>
+                        <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden flex-1 bg-gray-400 text-white py-2 rounded font-semibold hover:bg-gray-500 transition">
+                            Hủy
+                        </button>
+                    </div>
+                </form>
+
+                <!-- KHU VỰC THÊM HÀNG LOẠT TỪ EXCEL -->
+                <div class="mt-6 border-t pt-4">
+                    <h3 class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="ph ph-file-xls text-xl text-green-600"></i> Thêm Hàng Loạt</h3>
+                    <p class="text-sm text-gray-500 mb-3">Tải lên file Excel (.xlsx) với 3 cột theo thứ tự: <b>Chức Vụ</b>, <b>Họ Tên</b>, <b>Thứ Tự</b>.</p>
+                    
+                    <div class="flex gap-2">
+                        <!-- Nút tải file mẫu -->
+                        <button type="button" onclick="downloadSampleFile()" class="flex-1 bg-blue-50 text-blue-700 py-2 rounded font-semibold hover:bg-blue-100 transition flex justify-center items-center gap-2 border border-blue-300">
+                            <i class="ph ph-download-simple text-lg"></i> Tải File Mẫu
+                        </button>
+                        
+                        <!-- Nút nhập dữ liệu -->
+                        <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="hidden">
+                        <button type="button" onclick="document.getElementById('file-upload').click()" class="flex-1 bg-green-600 text-white py-2 rounded font-semibold hover:bg-green-700 transition flex justify-center items-center gap-2 shadow-sm border border-green-700">
+                            <i class="ph ph-upload-simple text-lg"></i> Nhập Dữ Liệu
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-50 text-blue-800 rounded-md text-sm border border-blue-200">
+                    <p class="font-bold flex items-center gap-1 mb-1"><i class="ph ph-info"></i> Hướng dẫn:</p>
+                    <ul class="list-disc pl-4 space-y-1">
+                        <li>Dữ liệu được lưu tự động lên Firebase.</li>
+                        <li>Trường "Thứ tự" quyết định vị trí thẻ khi in.</li>
+                        <li>Chữ dài sẽ tự động co lại cho vừa khung thẻ.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Cột phải: Danh sách thẻ -->
+            <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h2 class="text-xl font-bold text-gray-700">Danh Sách Thẻ (Đã lưu)</h2>
+                    <span id="total-count" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">0 thẻ</span>
+                </div>
+                
+                <div class="overflow-x-auto h-[600px] overflow-y-auto relative">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-100 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="p-3 border-b">Thứ Tự</th>
+                                <th class="p-3 border-b">Chức Vụ</th>
+                                <th class="p-3 border-b">Họ Tên</th>
+                                <th class="p-3 border-b text-center w-24">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Data from Firebase will render here -->
+                            <tr>
+                                <td colspan="4" class="text-center p-8 text-gray-500">Đang tải dữ liệu từ Firestore...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- KHU VỰC 2: GIAO DIỆN IN (Chỉ hiện khi bấm xem in hoặc in thật) -->
+    <div id="print-area">
+        <div id="badges-container" class="flex flex-col items-center gap-8 py-8">
+            <!-- Badges will render here grouped by pages -->
+        </div>
+    </div>
+
+    <!-- Nút nổi khi ở chế độ xem trước -->
+    <div class="preview-controls">
+        <button onclick="exportPDF()" class="bg-red-500 text-white px-6 py-3 rounded-full shadow-lg font-bold hover:bg-red-600 transition flex items-center gap-2 text-lg border-2 border-red-700">
+            <i class="ph ph-file-pdf"></i> XUẤT PDF
+        </button>
+        <button onclick="triggerPrint()" class="bg-yellow-400 text-blue-900 px-6 py-3 rounded-full shadow-lg font-bold hover:bg-yellow-300 transition flex items-center gap-2 text-lg border-2 border-blue-900">
+            <i class="ph ph-printer"></i> IN NGAY
+        </button>
+        <button onclick="togglePreview()" class="bg-gray-500 text-white px-6 py-3 rounded-full shadow-lg font-bold hover:bg-gray-600 transition flex items-center gap-2 text-lg border-2 border-white">
+            <i class="ph ph-x"></i> THOÁT
+        </button>
+    </div>
+
+    <!-- Toast Container (Custom Alerts) -->
+    <div id="toast-container" class="flex flex-col gap-2"></div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 class="text-lg font-bold mb-2">Xác nhận xóa</h3>
+            <p class="text-gray-600 mb-6">Bạn có chắc chắn muốn xóa thẻ này không? Thao tác không thể hoàn tác.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-gray-800">Hủy</button>
+                <button id="confirm-btn" class="px-4 py-2 bg-red-600 rounded hover:bg-red-700 text-white font-bold">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Logic Scripts -->
+    <script type="module">
+        // 1. Nhập Firebase Modular SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch } 
+            from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 2. Cấu hình Firebase theo yêu cầu
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        // 3. Khởi tạo
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const colRef = collection(db, "thecoithi");
+
+        // 4. State Management
+        let badges = [];
+        let isEditing = false;
+        let deleteTargetId = null;
+
+        // 5. DOM Elements
+        const form = document.getElementById('badge-form');
+        const inputId = document.getElementById('badge-id');
+        const inputChucVu = document.getElementById('chucVu');
+        const inputHoTen = document.getElementById('hoTen');
+        const inputThuTu = document.getElementById('thuTu');
+        const btnSubmit = document.getElementById('btn-submit');
+        const btnCancel = document.getElementById('btn-cancel');
+        const formTitle = document.getElementById('form-title');
+        const tableBody = document.getElementById('table-body');
+        const badgesContainer = document.getElementById('badges-container');
+        const totalCount = document.getElementById('total-count');
+
+        // ==========================================
+        // FIREBASE LOGIC (REAL-TIME LISTENER)
+        // ==========================================
+        const q = query(colRef, orderBy("thuTu", "asc"));
+        
+        onSnapshot(q, (snapshot) => {
+            badges = [];
+            snapshot.forEach((doc) => {
+                badges.push({ id: doc.id, ...doc.data() });
+            });
+            updateUI();
+        }, (error) => {
+            console.error("Lỗi lấy dữ liệu:", error);
+            showToast("Lỗi kết nối CSDL. Vui lòng kiểm tra rule Firestore.", "error");
+        });
+
+        // ==========================================
+        // FORM SUBMIT LOGIC (ADD / UPDATE)
+        // ==========================================
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Xử lý uppercase để chữ luôn in hoa
+            const data = {
+                chucVu: inputChucVu.value.trim().toUpperCase(),
+                hoTen: inputHoTen.value.trim().toUpperCase(),
+                thuTu: Number(inputThuTu.value)
+            };
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Đang xử lý...';
+
+            try {
+                if (isEditing && inputId.value) {
+                    // Update
+                    const docRef = doc(db, "thecoithi", inputId.value);
+                    await updateDoc(docRef, data);
+                    showToast("Cập nhật thẻ thành công!", "success");
+                    window.resetForm();
+                } else {
+                    // Add
+                    await addDoc(colRef, data);
+                    showToast("Thêm thẻ mới thành công!", "success");
+                    
+                    // Tự động tăng thứ tự cho lần nhập tiếp theo
+                    let nextThuTu = data.thuTu + 1;
+                    window.resetForm();
+                    inputThuTu.value = nextThuTu; 
+                }
+            } catch (error) {
+                console.error("Lỗi:", error);
+                showToast("Lỗi: " + error.message, "error");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = isEditing ? 'Cập nhật' : 'Thêm Thẻ';
+            }
+        });
+
+        // ==========================================
+        // THÊM HÀNG LOẠT TỪ FILE EXCEL (SheetJS)
+        // ==========================================
+        const fileInput = document.getElementById('file-upload');
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showToast("Đang đọc file...", "success");
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // Đọc theo mảng 2 chiều
+
+                    if (jsonData.length < 2) throw new Error("File không có dữ liệu hoặc thiếu dòng tiêu đề.");
+
+                    const batch = writeBatch(db);
+                    let count = 0;
+                    let currentMax = badges.length > 0 ? Math.max(...badges.map(b => b.thuTu)) : 0;
+
+                    // Bỏ qua dòng 0 (thường là tiêu đề: Chức Vụ, Họ Tên, Thứ Tự), bắt đầu đọc từ dòng 1
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        // Nếu dòng trống thì bỏ qua
+                        if (!row || row.length === 0 || (!row[0] && !row[1])) continue;
+
+                        const chucVu = (row[0] || "").toString().trim().toUpperCase();
+                        const hoTen = (row[1] || "").toString().trim().toUpperCase();
+                        
+                        // Nếu trong file không có số thứ tự, sẽ tự động tăng tiếp
+                        const thuTu = Number(row[2]) ? Number(row[2]) : (currentMax + count + 1);
+
+                        if (!chucVu || !hoTen) continue;
+
+                        const newDocRef = doc(colRef); // Tạo document trắng để lấy ID mới
+                        batch.set(newDocRef, { chucVu, hoTen, thuTu });
+                        count++;
+                    }
+
+                    if (count > 0) {
+                        await batch.commit(); // Gửi toàn bộ dữ liệu lên Firebase trong 1 lần
+                        showToast(`Đã thêm thành công ${count} thẻ từ file!`, "success");
+                        inputThuTu.value = currentMax + count + 1; // update form
+                    } else {
+                        showToast("Không tìm thấy dữ liệu hợp lệ. Vui lòng kiểm tra file.", "error");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast("Lỗi đọc file: " + err.message, "error");
+                } finally {
+                    fileInput.value = ""; // Reset input để có thể up file cùng tên lần sau
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // ==========================================
+        // UI UPDATE FUNCTIONS
+        // ==========================================
+        function updateUI() {
+            renderTable();
+            renderBadgesForPrint();
+            totalCount.innerText = `${badges.length} thẻ`;
+            
+            // Nếu form trống, gợi ý số thứ tự tiếp theo
+            if (!isEditing && !inputThuTu.value && badges.length > 0) {
+                const maxThuTu = Math.max(...badges.map(b => b.thuTu));
+                inputThuTu.value = maxThuTu + 1;
+            } else if (!isEditing && !inputThuTu.value) {
+                inputThuTu.value = 1;
+            }
+        }
+
+        function renderTable() {
+            if (badges.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-gray-500 bg-gray-50">Chưa có dữ liệu thẻ nào. Vui lòng thêm mới.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            badges.forEach((badge) => {
+                html += `
+                    <tr class="border-b hover:bg-blue-50 transition">
+                        <td class="p-3 font-semibold text-center">${badge.thuTu}</td>
+                        <td class="p-3">${badge.chucVu}</td>
+                        <td class="p-3 font-bold">${badge.hoTen}</td>
+                        <td class="p-3 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="startEdit('${badge.id}')" class="text-blue-600 hover:text-blue-800 bg-blue-100 p-1.5 rounded" title="Sửa">
+                                    <i class="ph ph-pencil-simple"></i>
+                                </button>
+                                <button onclick="confirmDelete('${badge.id}')" class="text-red-600 hover:text-red-800 bg-red-100 p-1.5 rounded" title="Xóa">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
+        }
+
+        function renderBadgesForPrint() {
+            if (badges.length === 0) {
+                badgesContainer.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            const itemsPerPage = 8; // Tối đa 8 thẻ (2 cột x 4 dòng) trên 1 trang A4
+            
+            // Chia thẻ thành từng nhóm, mỗi nhóm là 1 trang
+            for (let i = 0; i < badges.length; i += itemsPerPage) {
+                const chunk = badges.slice(i, i + itemsPerPage);
+                
+                html += `<div class="print-page">`;
+                chunk.forEach((badge) => {
+                    html += `
+                        <div class="badge-card">
+                            <div class="badge-inner">
+                                <div class="badge-line-1">KỲ THI TUYỂN SINH VÀO LỚP 10</div>
+                                <div class="badge-line-2">ĐIỂM THI: T185 – THCS TÂN BÌNH</div>
+                                <div class="badge-line-3">${badge.chucVu}</div>
+                                <div class="badge-line-4-container">
+                                    <div class="badge-line-4">${badge.hoTen}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            
+            badgesContainer.innerHTML = html;
+            
+            // Gọi hàm auto resize chữ sau khi render xong DOM
+            setTimeout(autoResizeText, 100);
+        }
+
+        // ==========================================
+        // THUẬT TOÁN TỰ ĐỘNG CO GIÃN CHỮ NẾU QUÁ DÀI
+        // ==========================================
+        function autoResizeText() {
+            const containers = document.querySelectorAll('.badge-line-4-container');
+            containers.forEach(container => {
+                const textEl = container.querySelector('.badge-line-4');
+                let fontSize = 26; // Cỡ chữ max ban đầu (pt)
+                textEl.style.fontSize = fontSize + 'pt';
+
+                // Giảm dần cỡ chữ cho đến khi chiều rộng chữ nhỏ hơn chiều rộng container
+                while (textEl.scrollWidth > container.clientWidth && fontSize > 10) {
+                    fontSize -= 1;
+                    textEl.style.fontSize = fontSize + 'pt';
+                }
+            });
+        }
+
+        // Đảm bảo chạy lại resize khi màn hình thay đổi để luôn chính xác
+        window.addEventListener('resize', autoResizeText);
+
+        // ==========================================
+        // GLOBAL FUNCTIONS (For inline HTML event calls)
+        // ==========================================
+        
+        // Hàm tạo và tải file mẫu Excel
+        window.downloadSampleFile = () => {
+            const data = [
+                ["Chức Vụ", "Họ Tên", "Thứ Tự"],
+                ["TRƯỞNG ĐIỂM", "PHẠM THỊ MINH TUYẾN", 1],
+                ["PHÓ TRƯỞNG ĐIỂM", "LÊ QUANG VINH", 2],
+                ["CÁN BỘ COI THI", "NGUYỄN VĂN AN", 3],
+                ["NHÂN VIÊN Y TẾ", "TRẦN THỊ BÍCH", ""] // Ví dụ để trống thứ tự
+            ];
+            
+            // Tạo worksheet
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Chỉnh độ rộng cột cho dễ nhìn
+            ws['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 10 }];
+            
+            // Tạo workbook và xuất file
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "DanhSach");
+            XLSX.writeFile(wb, "File_Mau_The_Coi_Thi.xlsx");
+            
+            showToast("Đã tải file Excel mẫu!", "success");
+        };
+
+        window.startEdit = (id) => {
+            const badge = badges.find(b => b.id === id);
+            if (!badge) return;
+
+            isEditing = true;
+            inputId.value = badge.id;
+            inputChucVu.value = badge.chucVu;
+            inputHoTen.value = badge.hoTen;
+            inputThuTu.value = badge.thuTu;
+
+            formTitle.innerText = "Cập Nhật Thẻ";
+            btnSubmit.innerText = "Cập Nhật";
+            btnSubmit.classList.replace('bg-blue-600', 'bg-green-600');
+            btnSubmit.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+            btnCancel.classList.remove('hidden');
+            
+            // Cuộn lên form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.resetForm = () => {
+            isEditing = false;
+            inputId.value = '';
+            inputChucVu.value = '';
+            inputHoTen.value = '';
+            
+            formTitle.innerText = "Thêm Thẻ Mới";
+            btnSubmit.innerText = "Thêm Thẻ";
+            btnSubmit.classList.replace('bg-green-600', 'bg-blue-600');
+            btnSubmit.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+            btnCancel.classList.add('hidden');
+        };
+
+        window.confirmDelete = (id) => {
+            deleteTargetId = id;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        };
+
+        window.closeConfirmModal = () => {
+            deleteTargetId = null;
+            document.getElementById('confirm-modal').classList.add('hidden');
+        };
+
+        // Gắn sự kiện cho nút xóa trong modal
+        document.getElementById('confirm-btn').addEventListener('click', async () => {
+            if (!deleteTargetId) return;
+            try {
+                const docRef = doc(db, "thecoithi", deleteTargetId);
+                await deleteDoc(docRef);
+                showToast("Đã xóa thẻ!", "success");
+            } catch (error) {
+                console.error("Lỗi xóa:", error);
+                showToast("Không thể xóa: " + error.message, "error");
+            } finally {
+                window.closeConfirmModal();
+            }
+        });
+
+        window.togglePreview = () => {
+            document.body.classList.toggle('preview-mode');
+            // Cần resize lại chữ vì khi ẩn/hiện display:none kích thước element thay đổi
+            if(document.body.classList.contains('preview-mode')){
+                setTimeout(autoResizeText, 50);
+            }
+        };
+
+        window.triggerPrint = () => {
+            // Nếu đang không ở chế độ preview, cần tạm bật print area để trình duyệt nhận diện CSS
+            // Tuy nhiên CSS @media print đã handle việc này. Chỉ cần đảm bảo autoResizeText chuẩn.
+            autoResizeText();
+            setTimeout(() => {
+                window.print();
+            }, 300); // Đợi render xong font
+        };
+
+        // Hàm xuất file PDF dùng html2pdf.js
+        window.exportPDF = () => {
+            if (badges.length === 0) {
+                showToast("Chưa có thẻ nào để xuất PDF!", "error");
+                return;
+            }
+
+            const wasPreview = document.body.classList.contains('preview-mode');
+
+            // CUỘN LÊN TRÊN CÙNG: Đảm bảo không bị lệch tọa độ Y
+            window.scrollTo(0, 0);
+
+            // Thêm class để ẩn UI chuẩn bị chụp PDF
+            document.body.classList.add('pdf-exporting');
+
+            autoResizeText();
+            showToast("Đang tạo file PDF, vui lòng đợi giây lát...", "success");
+
+            setTimeout(() => {
+                const element = document.getElementById('print-area');
+                
+                const opt = {
+                    margin:       0,
+                    filename:     'DanhSach_TheCoiThi.pdf',
+                    image:        { type: 'jpeg', quality: 1 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        scrollX: 0, 
+                        scrollY: 0,
+                        // Thêm thuộc tính windowWidth để giả lập màn hình máy tính nếu dùng trên thiết bị nhỏ
+                        windowWidth: document.documentElement.offsetWidth
+                    },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak:    { mode: ['css', 'legacy'] }
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    showToast("Đã tải xuống file PDF thành công!", "success");
+                    document.body.classList.remove('pdf-exporting');
+                    
+                    if (!wasPreview) {
+                        document.body.classList.remove('preview-mode');
+                    }
+                }).catch(err => {
+                    document.body.classList.remove('pdf-exporting');
+                    showToast("Lỗi khi xuất PDF", "error");
+                    console.error("Lỗi xuất PDF:", err);
+                });
+            }, 800); // Đợi 800ms để trình duyệt áp dụng CSS hoàn tất trước khi xuất file
+        };
+
+        // CUSTOM TOAST NOTIFICATION
+        function showToast(message, type = "success") {
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const icon = type === 'success' ? 'ph-check-circle' : 'ph-warning-circle';
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded shadow-lg flex items-center gap-2 transform transition-all duration-300 translate-y-10 opacity-0`;
+            toast.innerHTML = `<i class="ph ${icon} text-xl"></i> <span>${message}</span>`;
+            
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+            
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            });
+            
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

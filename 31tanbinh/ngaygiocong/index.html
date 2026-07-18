@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Điểm Danh- Mr Cường</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Khai báo biến cấu hình */
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            gap: 30px;
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .table-container {
+            max-width: 1000px; /* Bảng cần rộng hơn form */
+        }
+
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 5px;
+            background: var(--primary-color);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2d3436;
+            margin-bottom: 25px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .intro-text {
+            text-align: center;
+            font-size: 0.95rem;
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-style: italic;
+            background: rgba(108, 92, 231, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #636e72;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            outline: none;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 8px rgba(108, 92, 231, 0.2);
+        }
+
+        textarea {
+            padding-left: 15px;
+            height: 80px;
+            resize: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button:hover {
+            background: #5b4bc4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Tùy chỉnh màu cho nút Thêm mới và Hủy */
+        #showFormBtn {
+            background: #00b894;
+            margin-bottom: 10px;
+        }
+        #showFormBtn:hover {
+            background: #019e7f;
+            box-shadow: 0 5px 15px rgba(0, 184, 148, 0.4);
+        }
+        #cancelBtn {
+            background: #ff7675;
+        }
+        #cancelBtn:hover {
+            background: #d63031;
+            box-shadow: 0 5px 15px rgba(255, 118, 117, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #636e72;
+        }
+
+        /* Bảng hiển thị dữ liệu */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+
+        .glass-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .glass-table th, .glass-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            white-space: nowrap;
+        }
+
+        .glass-table th {
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .glass-table tbody tr {
+            transition: 0.2s;
+        }
+
+        .glass-table tbody tr:hover {
+            background: rgba(108, 92, 231, 0.05);
+        }
+
+        .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        #loader { display: none; }
+        
+        .success-msg {
+            display: none;
+            color: #00b894;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        /* Style cho text được highlight */
+        mark {
+            background-color: #ffeaa7;
+            color: #d63031;
+            padding: 0 3px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        /* Thêm style cho bộ điều khiển lọc */
+        .filter-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .search-box {
+            flex: 2;
+        }
+
+        .filter-box {
+            flex: 1;
+        }
+
+        @media (max-width: 600px) {
+            .filter-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CONTAINER 1: FORM NHẬP LIỆU -->
+    <div class="container">
+        <h2><i class="fas fa-user-check"></i> Điểm Danh, ngày giờ công</h2>
+        
+        <!-- Nút mở form ẩn -->
+        <button type="button" id="showFormBtn">
+            <i class="fas fa-plus-circle"></i> Thêm mới điểm danh
+        </button>
+
+        <!-- Form được ẩn đi bằng display: none -->
+        <form id="attendanceForm" style="display: none;">
+            <div class="form-group">
+                <label>1. Họ và tên <span style="color: red;">*</span></label>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="fullName" placeholder="Nhập họ và tên..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>2. Tổ <span style="color: red;">*</span></label>
+                <div class="input-group">
+                    <i class="fas fa-sitemap"></i>
+                    <select id="department" required>
+                        <option value="" disabled selected>-- Chọn tổ chuyên môn --</option>
+                        <option value="Toán">Toán</option>
+                        <option value="Ngữ Văn - CN">Ngữ Văn - CN</option>
+                        <option value="KHTN">KHTN</option>
+                        <option value="KHXH">KHXH</option>
+                        <option value="NT - TD">NT - TD</option>
+                        <option value="Tin - Anh">Tin - Anh</option>
+                        <option value="Văn Phòng">Văn Phòng</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>3. Ngày <span style="color: red;">*</span></label>
+                <div class="input-group">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="date" id="date" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>4. Loại sự việc <span style="color: red;">*</span></label>
+                <div class="input-group">
+                    <i class="fas fa-clipboard-list"></i>
+                    <input type="text" id="eventType" list="eventTypesList" placeholder="Nhập hoặc chọn sự việc..." required>
+                    <datalist id="eventTypesList">
+                        <option value="Nghỉ dạy"></option>
+                        <option value="Vắng họp CM"></option>
+                        <option value="Vắng họp HĐ"></option>
+                        <option value="Vắng họp TT"></option>
+                        <option value="Vắng họp Đảng"></option>
+                        <option value="Đi trễ"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>5. Buổi/Tiết <span style="color: red;">*</span></label>
+                <div class="input-group">
+                    <i class="fas fa-clock"></i>
+                    <input type="text" id="session" list="sessionList" placeholder="Ví dụ: Sáng, Chiều, Cả ngày..." required>
+                    <datalist id="sessionList">
+                        <option value="Sáng"></option>
+                        <option value="Chiều"></option>
+                        <option value="Tối"></option>
+                        <option value="Cả ngày"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>6. Lớp dạy </label>
+                <div class="input-group">
+                    <i class="fas fa-users"></i>
+                    <input type="text" id="className" placeholder="Ví dụ: 8A7, 9A7...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>7. Lý do</label>
+                <div class="input-group">
+                    <i class="fas fa-edit"></i>
+                    <input type="text" id="content" placeholder="Bệnh, nằm viện...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>8. Người ghi nhận <span style="color: red;">*</span></label>
+                <div class="input-group">
+                    <i class="fas fa-user-edit"></i>
+                    <input type="text" id="recorder" placeholder="Giám thị, Cô Quỳnh Trang..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>9. Ghi chú</label>
+                <textarea id="notes" placeholder="Đã báo cô Trâm, giám thị..."></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                <span id="btnText">Gửi</span>
+                <i class="fas fa-paper-plane"></i>
+                <i class="fas fa-spinner fa-spin" id="loader"></i>
+            </button>
+            <button type="button" id="cancelBtn">
+                <i class="fas fa-times"></i> Hủy / Đóng
+            </button>
+        </form>
+
+        <div id="successMsg" class="success-msg">
+            <i class="fas fa-check-circle"></i> Gửi dữ liệu thành công!
+        </div>
+    </div>
+
+    <!-- CONTAINER 2: BẢNG DỮ LIỆU -->
+    <div class="container table-container">
+        <h2><i class="fas fa-list-alt"></i> Bảng Dữ Liệu</h2>
+        <div class="intro-text">
+            "Toàn bộ dữ liệu được lưu trữ và đồng bộ theo thời gian thực, giúp mọi thay đổi được cập nhật ngay lập tức trên tất cả thiết bị, tạo sự minh bạch và tăng tính tự giác. Dữ liệu được hiện bên dưới"
+        </div>
+        
+        <!-- Bộ lọc và tìm kiếm -->
+        <div class="filter-controls">
+            <div class="search-box">
+                <div class="input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm nhanh họ tên, tổ, sự việc, lớp, nội dung...">
+                </div>
+            </div>
+            <div class="filter-box">
+                <div class="input-group">
+                    <i class="fas fa-filter"></i>
+                    <select id="departmentFilter">
+                        <option value="">-- Tất cả các tổ --</option>
+                        <option value="Toán">Toán</option>
+                        <option value="Ngữ Văn - CN">Ngữ Văn - CN</option>
+                        <option value="KHTN">KHTN</option>
+                        <option value="KHXH">KHXH</option>
+                        <option value="NT - TD">NT - TD</option>
+                        <option value="Tin - Anh">Tin - Anh</option>
+                        <option value="Văn Phòng">Văn Phòng</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="glass-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Thời gian báo</th>
+                        <th>Họ tên</th>
+                        <th>Tổ</th>
+                        <th>Ngày</th>
+                        <th>Sự việc</th>
+                        <th>Buổi/Tiết</th>
+                        <th>Lớp dạy</th>
+                        <th>Lý do (Nội dung)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #636e72;">Đang kết nối dữ liệu máy chủ...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            Thiết kế bởi <strong>Thầy Nguyễn Cường dạy Toán</strong>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycby89PYwF2ivLm4fydXBAjHKYFIhFwdu2-Ql7wUZAFB3OWQlBBi3FBRhCI37ZRwqdk4/exec';
+
+        const form = document.getElementById('attendanceForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const showFormBtn = document.getElementById('showFormBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const loader = document.getElementById('loader');
+        const btnText = document.getElementById('btnText');
+        const successMsg = document.getElementById('successMsg');
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput'); // Lấy phần tử ô tìm kiếm
+        const departmentFilter = document.getElementById('departmentFilter'); // Lấy phần tử lọc theo tổ
+
+        let globalData = []; // Biến lưu trữ dữ liệu gốc
+
+        // Hàm tô sáng văn bản
+        function highlightText(text, filter) {
+            if (!filter || text === undefined || text === null) return text || '';
+            const strText = String(text);
+            // Xử lý các ký tự đặc biệt trong regex
+            const safeFilter = filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${safeFilter})`, 'gi');
+            return strText.replace(regex, '<mark>$1</mark>');
+        }
+
+        // Hàm render lại bảng và highlight
+        function renderTable() {
+            const searchText = searchInput.value.toLowerCase().trim();
+            const filterDept = departmentFilter.value;
+
+            if (globalData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Chưa có dữ liệu điểm danh nào.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            let hasVisibleRow = false;
+
+            globalData.forEach(row => {
+                const timeStr = row[0] ? new Date(row[0]).toLocaleString('vi-VN') : '';
+                const rowDept = row[2] || '';
+                
+                // Nối tất cả dữ liệu dòng thành 1 chuỗi để kiểm tra tìm kiếm
+                const rowText = [timeStr, row[1], rowDept, row[3], row[4], row[5], row[6], row[7]].join(' ').toLowerCase();
+
+                // Kiểm tra điều kiện lọc theo tổ (nếu có chọn tổ cụ thể)
+                const matchesDept = (filterDept === "") || (rowDept === filterDept);
+                // Kiểm tra điều kiện tìm kiếm từ khóa
+                const matchesSearch = rowText.includes(searchText);
+
+                if (matchesDept && matchesSearch) {
+                    hasVisibleRow = true;
+                    html += `<tr>
+                        <td>${highlightText(timeStr, searchText)}</td>
+                        <td><strong>${highlightText(row[1], searchText)}</strong></td>
+                        <td>${highlightText(rowDept, searchText)}</td>
+                        <td>${highlightText(row[3], searchText)}</td>
+                        <td><span class="badge">${highlightText(row[4], searchText)}</span></td>
+                        <td>${highlightText(row[5], searchText)}</td>
+                        <td>${highlightText(row[6], searchText)}</td>
+                        <td>${highlightText(row[7], searchText)}</td>
+                    </tr>`;
+                }
+            });
+
+            if (!hasVisibleRow) {
+                html = '<tr><td colspan="8" style="text-align: center; color: #d63031;">Không tìm thấy kết quả nào phù hợp với bộ lọc hiện tại.</td></tr>';
+            }
+
+            tableBody.innerHTML = html;
+        }
+
+        // Lắng nghe sự kiện người dùng gõ phím hoặc đổi bộ lọc
+        searchInput.addEventListener('input', renderTable);
+        departmentFilter.addEventListener('change', renderTable);
+
+        // Logic Ẩn/Hiện Form
+        showFormBtn.addEventListener('click', () => {
+            form.style.display = 'block';
+            showFormBtn.style.display = 'none';
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            form.style.display = 'none';
+            showFormBtn.style.display = 'flex';
+            form.reset(); // Xóa trắng form khi đóng
+        });
+
+        // Hàm Tải Dữ Liệu Từ Google Sheet
+        function loadData() {
+            // Thêm tham số thời gian để tránh bị trình duyệt cache dữ liệu cũ
+            const url = GAS_URL + '?t=' + new Date().getTime();
+
+            fetch(url, { method: 'GET', redirect: 'follow' })
+                .then(response => {
+                    if (!response.ok) throw new Error('Mạng lỗi hoặc cấu hình server không đúng');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.result === 'success') {
+                        globalData = data.data || [];
+                        renderTable(); // Gọi hàm vẽ lại bảng
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi lấy dữ liệu:', error);
+                    tableBody.innerHTML = `<tr>
+                        <td colspan="8" style="text-align: center; color: #d63031; padding: 20px; line-height: 1.6;">
+                            <strong><i class="fas fa-exclamation-triangle"></i> Lỗi kết nối máy chủ (Failed to fetch)</strong><br><br>
+                            Để bảng dữ liệu hiện ra, anh vui lòng kiểm tra lại 3 bước sau trên Google Apps Script:<br>
+                            1. Đảm bảo đã copy toàn bộ code mới (có hàm <code>doGet(e)</code>) vào <b>Code.gs</b>.<br>
+                            2. Khi bấm <b>Deploy</b> (Triển khai) -> Sửa -> Bắt buộc chọn <b>New version</b> (Phiên bản mới).<br>
+                            3. Ở mục "Who has access" (Người có quyền truy cập), bắt buộc phải chọn <b>"Anyone" (Bất kỳ ai)</b>.
+                        </td>
+                    </tr>`;
+                });
+        }
+
+        // Tải dữ liệu lần đầu khi vào trang
+        loadData();
+
+        // Tự động đồng bộ mỗi 10 giây (Tạo hiệu ứng Real-time)
+        setInterval(loadData, 10000);
+
+        // Xử lý gửi Form
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            loader.style.display = 'inline-block';
+            btnText.textContent = 'Đang xử lý...';
+            successMsg.style.display = 'none';
+
+            const payload = {
+                fullName: document.getElementById('fullName').value,
+                department: document.getElementById('department').value,
+                date: document.getElementById('date').value,
+                eventType: document.getElementById('eventType').value,
+                session: document.getElementById('session').value,
+                className: document.getElementById('className').value,
+                content: document.getElementById('content').value,
+                recorder: document.getElementById('recorder').value,
+                notes: document.getElementById('notes').value
+            };
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                form.reset();
+                
+                // Ẩn form đi và hiện lại nút Thêm mới sau khi gửi thành công
+                form.style.display = 'none';
+                showFormBtn.style.display = 'flex';
+
+                successMsg.style.display = 'block';
+                setTimeout(() => { successMsg.style.display = 'none'; }, 5000);
+                
+                // Tải lại bảng ngay lập tức sau 1.5 giây để Sheet kịp xử lý dữ liệu mới
+                setTimeout(loadData, 1500);
+            })
+            .catch(error => {
+                alert('Có lỗi xảy ra: ' + error);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                loader.style.display = 'none';
+                btnText.textContent = 'Gửi Điểm Danh';
+            });
+        });
+    </script>
+</body>
+</html>

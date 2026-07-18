@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quy Ước Trình Bày Toán THCS</title>
+    
+    <!-- Cấu hình MathJax trước khi load thư viện -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            startup: {
+                // Tắt tự động render ban đầu vì dữ liệu sẽ được load bất đồng bộ từ Firebase
+                typeset: false 
+            }
+        };
+    </script>
+    <!-- Tải MathJax từ CDN -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Tải SheetJS từ CDN để hỗ trợ xuất file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        /* CSS Cơ bản & Reset */
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-left: #f8fafc;
+            --bg-right: #f1f5f9;
+            --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            background-color: var(--bg-right);
+            padding: 2rem 1rem;
+            overflow-y: auto;
+        }
+
+        /* Bố cục Container (Chứa 2 mục trên - dưới) */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Tabs UI */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px; /* Đè lên border-bottom của .tabs */
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--text-main);
+            border-bottom-color: #cbd5e1;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .panel {
+            display: none; /* Ẩn mặc định */
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .panel.active-panel {
+            display: block; /* Hiện panel active */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel h2 {
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .btn-submit {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-submit:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* Bảng dữ liệu */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge-class {
+            background-color: #e0e7ff;
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        /* Nút hành động (Sửa/Xóa) */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            color: white;
+        }
+
+        .btn-action:hover {
+            opacity: 0.8;
+        }
+
+        .btn-edit { background-color: #f59e0b; }
+        .btn-delete { background-color: #ef4444; }
+
+        /* Modal & Toast (Thay thế alert/confirm) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 2rem; border-radius: 8px;
+            width: 90%; max-width: 400px; text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        
+        /* Modal riêng cho Lời Giải (Rộng hơn, dễ đọc hơn) */
+        .modal-solution-content {
+            background: white; padding: 2rem; border-radius: 12px;
+            width: 90%; max-width: 800px; max-height: 90vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            position: relative;
+        }
+        .solution-viewer {
+            overflow-y: auto;
+            flex: 1;
+            text-align: left;
+            color: var(--text-main); /* Chữ đen đậm, không bị mờ */
+            font-size: 1.1rem; /* Cỡ chữ to dễ đọc */
+            line-height: 1.8;
+            padding-right: 1rem;
+            margin-top: 1rem;
+        }
+
+        .modal-actions {
+            display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;
+        }
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            padding: 1rem 1.5rem; border-radius: 6px; color: white;
+            font-weight: 600; z-index: 1001; transition: opacity 0.3s;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .toast.success { background-color: #10b981; }
+        .toast.error { background-color: #ef4444; }
+
+        /* Modal Mật Khẩu (Tái sử dụng style modal chung) */
+        .password-input {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        .password-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Nút Xem lời giải */
+        .btn-view-solution {
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+        .btn-view-solution:hover {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        /* Nút Xem code hình */
+        .btn-view-code {
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #059669; /* Màu xanh lá để phân biệt với Lời giải */
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+        }
+        .btn-view-code:hover {
+            background-color: #ecfdf5;
+            border-color: #6ee7b7;
+        }
+
+        /* Nút Copy trong Modal Lời Giải */
+        .btn-copy-modal {
+            background: #e2e8f0;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #475569;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-copy-modal:hover {
+            background: #cbd5e1;
+            color: var(--primary);
+        }
+
+        /* Trạng thái Loading */
+        .loading-text {
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            padding: 2rem !important;
+        }
+
+        /* CSS cho môi trường LaTeX List */
+        .latex-list {
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        .latex-list li {
+            margin-bottom: 0.25rem;
+            line-height: 1.6;
+        }
+
+        /* Tùy chỉnh thanh cuộn cho đẹp */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" data-target="panel-form">📝 Nhập Quy Ước Mới</button>
+            <button class="tab-btn" data-target="panel-list">📚 Danh Sách Thống Nhất</button>
+            <button class="tab-btn" data-target="panel-problem-list">💡 Bài Toán Minh Hoạ</button>
+        </div>
+
+        <!-- Mục 1: Form Nhập Liệu (Tab Mặc định) -->
+        <div id="panel-form" class="panel active-panel">
+            <h2 id="formTitle">📝 Nhập Quy Ước Mới</h2>
+            <form id="ruleForm">
+                <div class="form-group">
+                    <label for="lop">Lớp áp dụng:</label>
+                    <select id="lop" class="form-control" required>
+                        <option value="" disabled selected>-- Chọn lớp --</option>
+                        <option value="Lớp 6">Lớp 6</option>
+                        <option value="Lớp 7">Lớp 7</option>
+                        <option value="Lớp 8">Lớp 8</option>
+                        <option value="Lớp 9">Lớp 9</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mota">Mô tả (Dạng toán/Chủ đề):</label>
+                    <input type="text" id="mota" class="form-control" placeholder="Ví dụ: Cách trình bày phân số" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="thongnhat">Thống nhất / Cách trình bày (Hỗ trợ LaTeX):</label>
+                    <textarea id="thongnhat" class="form-control" placeholder="Ví dụ: Phân số viết dạng $\frac{a}{b}$..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Minh hoạ (Tùy chọn - Chữ hoặc Ảnh):</label>
+                    <textarea id="minhhoa" class="form-control" placeholder="Nhập văn bản/LaTeX..." style="min-height: 80px; margin-bottom: 0.5rem;"></textarea>
+                    
+                    <!-- Khung dán ảnh / chọn ảnh cho Cloudinary -->
+                    <div id="pasteZone" style="border: 2px dashed var(--border); padding: 1.5rem; text-align: center; border-radius: 6px; cursor: pointer; background-color: #f8fafc; transition: background-color 0.2s; color: var(--text-muted);">
+                        <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">📸</span>
+                        <span>Nhấp vào đây để chọn ảnh hoặc nhấn <b>Ctrl+V</b> để dán ảnh</span>
+                        <input type="file" id="minhhoa_img" class="form-control" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <!-- Khung xem trước ảnh -->
+                    <div id="imgPreviewContainer" style="display: none; margin-top: 1rem; position: relative; width: fit-content;">
+                        <img id="imgPreview" src="" alt="Preview" style="max-height: 150px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <button type="button" id="removeImgBtn" style="position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; line-height: 1;">&times;</button>
+                    </div>
+                    
+                    <!-- Lưu trữ tạm URL ảnh cũ khi sửa -->
+                    <input type="hidden" id="currentImgUrl">
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" id="submitBtn" class="btn-submit">Lưu quy ước</button>
+                    <button type="button" id="cancelEditBtn" class="btn-submit" style="background-color: #94a3b8; display: none;">Hủy sửa</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Mục 2: Hiển Thị Dữ Liệu -->
+        <div id="panel-list" class="panel">
+            <h2 style="color: var(--text-main);">📚 Danh Sách Thống Nhất</h2>
+            
+            <!-- Khung tìm kiếm và lọc lớp thông minh -->
+            <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div style="position: relative; flex: 1; min-width: 250px;">
+                    <input type="text" id="searchInput" class="form-control" placeholder="🔍 Tìm kiếm theo Mô tả, nội dung Thống nhất..." style="padding-left: 2.5rem;">
+                    <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;">🔍</span>
+                </div>
+                <div style="width: 200px;">
+                    <select id="filterLop" class="form-control">
+                        <option value="">-- Tất cả các lớp --</option>
+                        <option value="Lớp 6">Lớp 6</option>
+                        <option value="Lớp 7">Lớp 7</option>
+                        <option value="Lớp 8">Lớp 8</option>
+                        <option value="Lớp 9">Lớp 9</option>
+                    </select>
+                </div>
+                <button id="btnExportExcel" class="btn-submit" style="width: auto; padding: 0.75rem 1rem; background-color: #10b981;" title="Xuất danh sách hiện tại ra Excel">📥 Tải Excel</button>
+            </div>
+
+            <div class="table-container">
+                <table id="ruleTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%">Lớp</th>
+                            <th style="width: 20%">Mô tả</th>
+                            <th style="width: 35%">Thống nhất</th>
+                            <th style="width: 20%">Minh hoạ</th>
+                            <th style="width: 15%">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ruleList">
+                        <tr>
+                            <td colspan="5" class="loading-text">Đang tải dữ liệu...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mục 3: Danh Sách Bài Toán Minh Hoạ -->
+        <div id="panel-problem-list" class="panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.75rem;">
+                <h2 style="margin: 0; border: none; padding: 0; color: var(--text-main);">💡 Bài Toán Minh Hoạ</h2>
+                <button id="btnAddNewProblem" class="btn-submit" style="width: auto; padding: 0.5rem 1rem;">+ Thêm bài toán</button>
+            </div>
+            
+            <!-- Khung tìm kiếm thông minh bài toán -->
+            <div style="margin-bottom: 1.5rem; position: relative;">
+                <input type="text" id="searchProbInput" class="form-control" placeholder="🔍 Tìm kiếm theo Lớp, Mức độ, Đề bài, Lời giải..." style="padding-left: 2.5rem;">
+                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;">🔍</span>
+            </div>
+
+            <div class="table-container">
+                <table id="problemTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%">Lớp</th>
+                            <th style="width: 10%">Mức độ</th>
+                            <th style="width: 15%">Mô tả</th>
+                            <th style="width: 20%">Đề bài</th>
+                            <th style="width: 15%">Lời giải</th>
+                            <th style="width: 12%">Code hình</th>
+                            <th style="width: 12%">Ảnh đính kèm</th>
+                            <th style="width: 8%">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="problemList">
+                        <tr>
+                            <td colspan="8" class="loading-text">Đang tải dữ liệu...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mục 4: Form Nhập Bài Toán -->
+        <div id="panel-problem-form" class="panel">
+            <h2 id="formProblemTitle">✏️ Thêm Bài Toán Mới</h2>
+            <form id="problemForm">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="prob_lop">Lớp áp dụng:</label>
+                        <select id="prob_lop" class="form-control" required>
+                            <option value="" disabled selected>-- Chọn lớp --</option>
+                            <option value="Lớp 6">Lớp 6</option>
+                            <option value="Lớp 7">Lớp 7</option>
+                            <option value="Lớp 8">Lớp 8</option>
+                            <option value="Lớp 9">Lớp 9</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="prob_mucdo">Mức độ:</label>
+                        <select id="prob_mucdo" class="form-control" required>
+                            <option value="" disabled selected>-- Chọn mức độ --</option>
+                            <option value="Nhận biết">Nhận biết</option>
+                            <option value="Thông hiểu">Thông hiểu</option>
+                            <option value="Vận dụng">Vận dụng</option>
+                            <option value="Nâng cao">Nâng cao</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prob_mota">Mô tả (Dạng toán/Chủ đề):</label>
+                    <input type="text" id="prob_mota" class="form-control" placeholder="Ví dụ: Rút gọn biểu thức chứa căn..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="de_bai">Đề bài (Hỗ trợ LaTeX):</label>
+                    <textarea id="de_bai" class="form-control" placeholder="Nhập đề bài..." required style="min-height: 100px;"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loi_giai">Lời giải (Hỗ trợ LaTeX):</label>
+                    <textarea id="loi_giai" class="form-control" placeholder="Nhập lời giải..." required style="min-height: 150px;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="prob_code_hinh">Code hình (Tùy chọn - Ví dụ code TikZ, GeoGebra...):</label>
+                    <textarea id="prob_code_hinh" class="form-control" placeholder="Nhập đoạn code vẽ hình..." style="min-height: 80px; font-family: monospace;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Ảnh đính kèm (Tùy chọn - Chữ hoặc Ảnh):</label>
+                    
+                    <!-- Khung dán ảnh / chọn ảnh cho Cloudinary (Bài toán) -->
+                    <div id="pasteZoneProb" style="border: 2px dashed var(--border); padding: 1.5rem; text-align: center; border-radius: 6px; cursor: pointer; background-color: #f8fafc; transition: background-color 0.2s; color: var(--text-muted);">
+                        <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">📸</span>
+                        <span>Nhấp vào đây để chọn ảnh hoặc nhấn <b>Ctrl+V</b> để dán ảnh</span>
+                        <input type="file" id="prob_img" class="form-control" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <!-- Khung xem trước ảnh (Bài toán) -->
+                    <div id="imgPreviewContainerProb" style="display: none; margin-top: 1rem; position: relative; width: fit-content;">
+                        <img id="imgPreviewProb" src="" alt="Preview" style="max-height: 150px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <button type="button" id="removeImgBtnProb" style="position: absolute; top: -10px; right: -10px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; line-height: 1;">&times;</button>
+                    </div>
+                    <input type="hidden" id="currentImgUrlProb">
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" id="submitProbBtn" class="btn-submit">Lưu bài toán</button>
+                    <button type="button" id="cancelEditProbBtn" class="btn-submit" style="background-color: #94a3b8; display: none;">Hủy sửa</button>
+                    <button type="button" id="backToProbListBtn" class="btn-submit" style="background-color: #64748b; width: auto;">Quay lại danh sách</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Xóa -->
+    <div id="deleteModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 1rem; color: var(--text-main);">Xác nhận xóa</h3>
+            <p style="color: var(--text-muted);">Bạn có chắc chắn muốn xóa quy ước này không?</p>
+            <div class="modal-actions">
+                <button id="cancelDeleteBtn" class="btn-action" style="background-color: #94a3b8; padding: 0.5rem 1.5rem;">Hủy</button>
+                <button id="confirmDeleteBtn" class="btn-action btn-delete" style="padding: 0.5rem 1.5rem;">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Yêu Cầu Mật Khẩu -->
+    <div id="passwordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">🔒 Yêu cầu xác thực</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Vui lòng nhập mật khẩu quản trị để thực hiện thao tác này.</p>
+            <input type="password" id="adminPassword" class="password-input" placeholder="Nhập mật khẩu...">
+            <div class="modal-actions">
+                <button id="cancelPwdBtn" class="btn-action" style="background-color: #94a3b8; padding: 0.5rem 1.5rem;">Hủy</button>
+                <button id="confirmPwdBtn" class="btn-action" style="background-color: var(--primary); padding: 0.5rem 1.5rem;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem Lời Giải (Tab Riêng) -->
+    <div id="solutionModal" class="modal-overlay" style="display: none;">
+        <div class="modal-solution-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 1rem;">
+                <h2 style="color: var(--primary); margin: 0;">📖 Chi tiết Lời giải</h2>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button id="btnCopySolution" class="btn-copy-modal" data-raw="">📋 Copy Code LaTeX</button>
+                    <button id="closeSolutionBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+                </div>
+            </div>
+            
+            <div id="solutionViewerContent" class="solution-viewer">
+                <!-- Nội dung lời giải sẽ được chèn vào đây -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem Code Hình (Tab Riêng) -->
+    <div id="codeModal" class="modal-overlay" style="display: none;">
+        <div class="modal-solution-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 1rem;">
+                <h2 style="color: #059669; margin: 0;">📐 Code Hình (TikZ, GeoGebra...)</h2>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button id="btnCopyCodeModal" class="btn-copy-modal" data-raw="">📋 Copy Code</button>
+                    <button id="closeCodeBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+                </div>
+            </div>
+            
+            <div id="codeViewerContent" class="solution-viewer" style="font-family: monospace; white-space: pre-wrap; background-color: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid var(--border);">
+                <!-- Code hình sẽ được chèn vào đây -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tích hợp Firebase Module SDK v10 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // Bỏ import Firebase Storage vì đã dùng Cloudinary
+
+        // Cấu hình Firebase theo yêu cầu
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        // Khởi tạo Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const COLLECTION_NAME = "demo1"; // Data Quy ước
+
+        // Cấu hình Cloudinary
+        const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/de9a28vmi/image/upload";
+        const CLOUDINARY_PRESET = "Game Show1";
+
+        const COLLECTION_PROBLEMS = "bai_toan_minh_hoa"; // Data Bài toán
+
+        // Tham chiếu các elements DOM
+        const form = document.getElementById('ruleForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const formTitle = document.getElementById('formTitle');
+        const ruleList = document.getElementById('ruleList');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.panel');
+        const searchInput = document.getElementById('searchInput'); 
+        const filterLop = document.getElementById('filterLop'); // Bộ lọc lớp tab quy ước
+        const btnExportExcel = document.getElementById('btnExportExcel'); // Nút xuất Excel
+        
+        // DOM cho Ảnh
+        const pasteZone = document.getElementById('pasteZone');
+        const minhhoaImgInput = document.getElementById('minhhoa_img');
+        const imgPreviewContainer = document.getElementById('imgPreviewContainer');
+        const imgPreview = document.getElementById('imgPreview');
+        const removeImgBtn = document.getElementById('removeImgBtn');
+        let selectedFile = null;
+
+        // DOM cho Bài Toán
+        const problemForm = document.getElementById('problemForm');
+        const submitProbBtn = document.getElementById('submitProbBtn');
+        const cancelEditProbBtn = document.getElementById('cancelEditProbBtn');
+        const formProblemTitle = document.getElementById('formProblemTitle');
+        const problemList = document.getElementById('problemList');
+        const btnAddNewProblem = document.getElementById('btnAddNewProblem');
+        const backToProbListBtn = document.getElementById('backToProbListBtn');
+        const searchProbInput = document.getElementById('searchProbInput'); // Khai báo ô tìm kiếm bài toán
+        
+        const pasteZoneProb = document.getElementById('pasteZoneProb');
+        const probImgInput = document.getElementById('prob_img');
+        const imgPreviewContainerProb = document.getElementById('imgPreviewContainerProb');
+        const imgPreviewProb = document.getElementById('imgPreviewProb');
+        const removeImgBtnProb = document.getElementById('removeImgBtnProb');
+        let selectedFileProb = null;
+
+        // Trạng thái cục bộ
+        let currentRules = [];
+        let filteredRulesState = []; // Lưu trạng thái mảng đã lọc để xuất Excel
+        let editingId = null;
+        
+        let currentProblems = [];
+        let editingProblemId = null;
+        
+        // Cấu trúc dùng chung cho Modal Xóa
+        let deleteTarget = { id: null, type: null }; 
+
+        // Cấu hình Mật Khẩu và Trạng thái chờ
+        const ADMIN_PASS = "0788095095";
+        let pendingAction = null; // Lưu tạm thao tác người dùng muốn làm { action, type, id }
+
+        // 0. HÀM XỬ LÝ CHUYỂN TAB
+        function switchTab(targetId) {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active-panel'));
+
+            const targetBtn = document.querySelector(`[data-target="${targetId}"]`);
+            if (targetBtn) targetBtn.classList.add('active');
+
+            const targetPanel = document.getElementById(targetId);
+            if (targetPanel) targetPanel.classList.add('active-panel');
+        }
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.target));
+        });
+
+        // HÀM HIỂN THỊ THÔNG BÁO (TOAST) THAY THẾ ALERT
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300); // Tự động ẩn sau 3 giây
+            }, 3000);
+        }
+
+        // HÀM XỬ LÝ MODAL MẬT KHẨU
+        const pwdModal = document.getElementById('passwordModal');
+        const pwdInput = document.getElementById('adminPassword');
+        
+        function showPasswordModal() {
+            pwdInput.value = '';
+            pwdModal.style.display = 'flex';
+            pwdInput.focus();
+        }
+
+        document.getElementById('cancelPwdBtn').addEventListener('click', () => {
+            pwdModal.style.display = 'none';
+            pendingAction = null;
+        });
+
+        document.getElementById('confirmPwdBtn').addEventListener('click', handlePasswordCheck);
+        pwdInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handlePasswordCheck();
+        });
+
+        function handlePasswordCheck() {
+            if (pwdInput.value === ADMIN_PASS) {
+                pwdModal.style.display = 'none';
+                executePendingAction(); // Mật khẩu đúng -> Thực hiện thao tác đã lưu tạm
+            } else {
+                showToast("❌ Mật khẩu không chính xác!", "error");
+                pwdInput.value = '';
+                pwdInput.focus();
+            }
+        }
+
+        // Thực thi thao tác Sửa/Xóa sau khi đã xác thực xong
+        function executePendingAction() {
+            if (!pendingAction) return;
+            const { action, type, id } = pendingAction;
+
+            if (action === 'delete') {
+                deleteTarget = { id: id, type: type };
+                document.getElementById('deleteModal').style.display = 'flex';
+            } 
+            else if (action === 'edit') {
+                if (type === 'rule') {
+                    const rule = currentRules.find(r => r.id === id);
+                    if (rule) {
+                        editingId = id;
+                        document.getElementById('lop').value = rule.lop || '';
+                        document.getElementById('mota').value = rule.mo_ta || '';
+                        document.getElementById('thongnhat').value = rule.thong_nhat || '';
+                        document.getElementById('minhhoa').value = rule.minh_hoa || '';
+                        
+                        resetImagePreview();
+                        if (rule.minh_hoa_img) {
+                            imgPreview.src = rule.minh_hoa_img;
+                            imgPreviewContainer.style.display = 'block';
+                            pasteZone.style.display = 'none';
+                            document.getElementById('currentImgUrl').value = rule.minh_hoa_img;
+                        } else {
+                            document.getElementById('currentImgUrl').value = '';
+                        }
+                        
+                        formTitle.textContent = "✏️ Cập Nhật Quy Ước";
+                        submitBtn.textContent = "Cập nhật quy ước";
+                        cancelEditBtn.style.display = 'block';
+                        switchTab('panel-form');
+                    }
+                } else if (type === 'problem') {
+                    const prob = currentProblems.find(r => r.id === id);
+                    if (prob) {
+                        editingProblemId = id;
+                        document.getElementById('prob_lop').value = prob.lop || '';
+                        document.getElementById('prob_mucdo').value = prob.muc_do || '';
+                        document.getElementById('prob_mota').value = prob.mo_ta || '';
+                        document.getElementById('de_bai').value = prob.de_bai;
+                        document.getElementById('loi_giai').value = prob.loi_giai;
+                        document.getElementById('prob_code_hinh').value = prob.code_hinh || '';
+                        
+                        resetImagePreviewProb();
+                        if (prob.anh_minh_hoa) {
+                            imgPreviewProb.src = prob.anh_minh_hoa;
+                            imgPreviewContainerProb.style.display = 'block';
+                            pasteZoneProb.style.display = 'none';
+                            document.getElementById('currentImgUrlProb').value = prob.anh_minh_hoa;
+                        } else {
+                            document.getElementById('currentImgUrlProb').value = '';
+                        }
+                        
+                        formProblemTitle.textContent = "✏️ Cập Nhật Bài Toán";
+                        submitProbBtn.textContent = "Cập nhật bài toán";
+                        cancelEditProbBtn.style.display = 'block';
+                        switchTab('panel-problem-form');
+                    }
+                }
+            }
+            pendingAction = null; // Xóa trạng thái chờ sau khi làm xong
+        }
+
+        // HỦY SỬA
+        cancelEditBtn.addEventListener('click', () => {
+            editingId = null;
+            form.reset();
+            formTitle.textContent = "📝 Nhập Quy Ước Mới";
+            submitBtn.textContent = "Lưu quy ước";
+            cancelEditBtn.style.display = 'none';
+            resetImagePreview();
+        });
+
+        // 0.1 HÀM XỬ LÝ ẢNH TRƯỚC KHI LƯU (Click & Paste)
+        // Khi click vào vùng dán ảnh thì mở hộp thoại chọn file
+        pasteZone.addEventListener('click', () => {
+            minhhoaImgInput.click();
+        });
+        // Bắt sự kiện nhấn Ctrl+V để dán ảnh (Cho cả 2 form)
+        document.addEventListener('paste', (e) => {
+            const isRuleFormActive = document.getElementById('panel-form').classList.contains('active-panel');
+            const isProbFormActive = document.getElementById('panel-problem-form').classList.contains('active-panel');
+            
+            if (!isRuleFormActive && !isProbFormActive) return;
+            
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    if (isRuleFormActive) {
+                        handleFileSelection(blob);
+                    } else {
+                        handleFileSelectionProb(blob);
+                    }
+                    break; 
+                }
+            }
+        });
+
+        function handleFileSelection(file) {
+            if (file) {
+                selectedFile = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imgPreview.src = e.target.result;
+                    imgPreviewContainer.style.display = 'block';
+                    pasteZone.style.display = 'none'; // Ẩn vùng dán khi đã có ảnh
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        removeImgBtn.addEventListener('click', () => {
+            resetImagePreview();
+            document.getElementById('currentImgUrl').value = '';
+        });
+
+        function resetImagePreview() {
+            selectedFile = null;
+            minhhoaImgInput.value = '';
+            imgPreviewContainer.style.display = 'none';
+            imgPreview.src = '';
+            pasteZone.style.display = 'block'; 
+        }
+
+        // --- Logic Ảnh cho Form Bài Toán ---
+        pasteZoneProb.addEventListener('click', () => probImgInput.click());
+        probImgInput.addEventListener('change', (e) => handleFileSelectionProb(e.target.files[0]));
+        removeImgBtnProb.addEventListener('click', () => {
+            resetImagePreviewProb();
+            document.getElementById('currentImgUrlProb').value = '';
+        });
+
+        function handleFileSelectionProb(file) {
+            if (file) {
+                selectedFileProb = file;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imgPreviewProb.src = e.target.result;
+                    imgPreviewContainerProb.style.display = 'block';
+                    pasteZoneProb.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function resetImagePreviewProb() {
+            selectedFileProb = null;
+            probImgInput.value = '';
+            imgPreviewContainerProb.style.display = 'none';
+            imgPreviewProb.src = '';
+            pasteZoneProb.style.display = 'block'; 
+        }
+
+        // --- Helper Upload Cloudinary ---
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", CLOUDINARY_PRESET);
+            const response = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+            const data = await response.json();
+            if (data.secure_url) return data.secure_url;
+            throw new Error("Không nhận được URL từ Cloudinary");
+        }
+
+        // Hàm tiện ích để parse văn bản LaTeX sang HTML
+        function parseLatexText(text) {
+            if (!text) return '';
+            let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            safeText = safeText.replace(/\\begin\{itemize\}/g, '<ul class="latex-list">');
+            safeText = safeText.replace(/\\end\{itemize\}/g, '</ul>');
+            safeText = safeText.replace(/\\begin\{enumerate\}/g, '<ol class="latex-list">');
+            safeText = safeText.replace(/\\end\{enumerate\}/g, '</ol>');
+            safeText = safeText.replace(/\\item/g, '<li>');
+            
+            safeText = safeText.replace(/\\textbf\{([^}]+)\}/g, '<strong>$1</strong>');
+            safeText = safeText.replace(/\\textit\{([^}]+)\}/g, '<em>$1</em>');
+            safeText = safeText.replace(/\\underline\{([^}]+)\}/g, '<u>$1</u>');
+
+            safeText = safeText.replace(/\n/g, "<br>");
+            safeText = safeText.replace(/<br>\s*(<ul|<ol|<li>|<\/ul>|<\/ol>)/g, '$1');
+            safeText = safeText.replace(/(<ul[^>]*>|<ol[^>]*>|<li>|<\/ul>|<\/ol>)\s*<br>/g, '$1');
+            return safeText;
+        }
+
+        // Hàm loại bỏ dấu tiếng Việt để tìm kiếm thông minh
+        function removeVietnameseTones(str) {
+            if (!str) return "";
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
+            str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
+            str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
+            str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
+            str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
+            str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
+            str = str.replace(/Đ/g, "D");
+            str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ""); // Huyền sắc hỏi ngã nặng 
+            str = str.replace(/\u02C6|\u0306|\u031B/g, ""); // Â, Ê, Ă, Ơ, Ư
+            return str.toLowerCase().trim();
+        }
+
+        // Hàm hiển thị danh sách (được tách ra để dùng chung cho render gốc và tìm kiếm)
+        function renderTable(rulesToRender) {
+            if (!rulesToRender || rulesToRender.length === 0) {
+                ruleList.innerHTML = '<tr><td colspan="5" class="loading-text">Không tìm thấy quy ước nào.</td></tr>';
+                return;
+            }
+
+            let htmlContent = '';
+            rulesToRender.forEach(rule => {
+                const moTaStr = rule.mo_ta || '';
+                const thongNhatStr = rule.thong_nhat || '';
+                const minhHoaStr = rule.minh_hoa || '';
+
+                const safeMoTa = moTaStr.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const safeThongNhat = parseLatexText(thongNhatStr);
+                const safeMinhHoaText = parseLatexText(minhHoaStr);
+                
+                // Hiển thị ảnh (nếu có)
+                const imgHtml = rule.minh_hoa_img ? `<div style="margin-top: 0.75rem;"><img src="${rule.minh_hoa_img}" style="max-width: 100%; max-height: 200px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" onclick="window.open('${rule.minh_hoa_img}', '_blank')" title="Nhấp để xem ảnh lớn"></div>` : '';
+                
+                let combinedMinhHoa = safeMinhHoaText + imgHtml;
+                if (!combinedMinhHoa) combinedMinhHoa = '<em style="color: var(--text-muted);">Không có</em>';
+
+                htmlContent += `
+                    <tr>
+                        <td><span class="badge-class">${rule.lop || 'Chưa rõ'}</span></td>
+                        <td style="font-weight: 600; color: #1e293b;">${safeMoTa}</td>
+                        <td style="line-height: 1.6;">${safeThongNhat}</td>
+                        <td style="line-height: 1.6; color: var(--text-main);">${combinedMinhHoa}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action btn-edit" data-id="${rule.id}">Sửa</button>
+                                <button class="btn-action btn-delete" data-id="${rule.id}">Xóa</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            ruleList.innerHTML = htmlContent;
+
+            // Render lại MathJax sau khi update DOM
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([ruleList]).catch((err) => console.error('Lỗi khi render MathJax: ', err));
+            }
+        }
+
+        // 1. XỬ LÝ LƯU / CẬP NHẬT DỮ LIỆU
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Lấy dữ liệu từ form
+            const lop = document.getElementById('lop').value;
+            const mo_ta = document.getElementById('mota').value.trim();
+            const thong_nhat = document.getElementById('thongnhat').value.trim();
+            const minh_hoa = document.getElementById('minhhoa').value.trim();
+
+            if (!lop || !mo_ta || !thong_nhat) return;
+
+            // Vô hiệu hóa nút bấm trong lúc lưu
+            submitBtn.disabled = true;
+            submitBtn.textContent = selectedFile ? "Đang đẩy ảnh lên Cloudinary..." : "Đang xử lý...";
+
+            try {
+                // Xử lý upload ảnh lên Cloudinary (nếu có chọn)
+                let imgUrl = document.getElementById('currentImgUrl').value;
+
+                if (selectedFile) {
+                    try {
+                        imgUrl = await uploadToCloudinary(selectedFile);
+                    } catch (uploadError) {
+                        console.error("LỖI TẢI ẢNH CLOUDINARY:", uploadError);
+                        alert("BỊ LỖI TẢI ẢNH:\n\n" + uploadError.message);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = editingId ? "Cập nhật quy ước" : "Lưu quy ước";
+                        return;
+                    }
+                }
+
+                // Payload dữ liệu
+                const docData = {
+                    lop: lop,
+                    mo_ta: mo_ta,
+                    thong_nhat: thong_nhat,
+                    minh_hoa: minh_hoa,
+                    minh_hoa_img: imgUrl || null
+                };
+
+                submitBtn.textContent = "Đang lưu dữ liệu...";
+
+                if (editingId) {
+                    // Chế độ CẬP NHẬT
+                    await updateDoc(doc(db, COLLECTION_NAME, editingId), docData);
+                    editingId = null;
+                    formTitle.textContent = "📝 Nhập Quy Ước Mới";
+                    cancelEditBtn.style.display = 'none';
+                } else {
+                    // Chế độ THÊM MỚI
+                    docData.createdAt = Date.now();
+                    await addDoc(collection(db, COLLECTION_NAME), docData);
+                }
+                
+                // Reset form sau khi thành công và chuyển qua tab danh sách
+                form.reset();
+                resetImagePreview();
+                document.getElementById('currentImgUrl').value = '';
+                
+                // Reset ô tìm kiếm nếu đang lọc để hiển thị ngay quy ước vừa thêm
+                searchInput.value = '';
+                filterLop.value = '';
+                
+                switchTab('panel-list');
+                showToast(editingId ? "Cập nhật thành công!" : "Lưu thành công!", "success");
+
+            } catch (error) {
+                console.error("Lỗi khi lưu quy ước: ", error);
+                showToast("Lỗi: Không thể lưu. Kiểm tra quyền Firebase (Rules).", "error");
+            } finally {
+                // Khôi phục nút bấm
+                submitBtn.disabled = false;
+                submitBtn.textContent = editingId ? "Cập nhật quy ước" : "Lưu quy ước";
+            }
+        });
+
+        // 2. LẮNG NGHE DỮ LIỆU REAL-TIME & RENDER
+        onSnapshot(collection(db, COLLECTION_NAME), (snapshot) => {
+            // Lấy dữ liệu và sắp xếp
+            const rules = [];
+            snapshot.forEach((doc) => {
+                rules.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Sắp xếp: Ưu tiên theo Lớp (tăng dần), nếu cùng Lớp thì theo Thời gian tạo (mới nhất lên trước)
+            rules.sort((a, b) => {
+                const lopA = a.lop || "";
+                const lopB = b.lop || "";
+                if (lopA !== lopB) {
+                    return lopA.localeCompare(lopB);
+                }
+                return (b.createdAt || 0) - (a.createdAt || 0);
+            });
+            
+            currentRules = rules; // Lưu lại mốc dữ liệu gốc
+
+            // Kích hoạt lại hàm tìm kiếm (Nếu người dùng đang gõ tìm kiếm thì vẫn giữ nguyên kết quả lọc)
+            handleSearch(searchInput.value);
+
+        }, (error) => {
+            console.error("Lỗi khi lắng nghe dữ liệu: ", error);
+            ruleList.innerHTML = '<tr><td colspan="5" class="loading-text" style="color: red;">Lỗi tải dữ liệu. Hãy kiểm tra quyền truy cập (Rules) trên Firestore.</td></tr>';
+        });
+
+        // HÀM XỬ LÝ TÌM KIẾM CÓ KẾT HỢP LỌC LỚP
+        function handleSearch(term) {
+            const selectedLop = filterLop.value;
+            let rulesToFilter = currentRules;
+
+            // Bước 1: Lọc theo lớp (nếu có chọn)
+            if (selectedLop) {
+                rulesToFilter = rulesToFilter.filter(rule => rule.lop === selectedLop);
+            }
+
+            // Bước 2: Lọc theo từ khóa (nếu có nhập)
+            if (term) {
+                const normalizedTerm = removeVietnameseTones(term);
+                rulesToFilter = rulesToFilter.filter(rule => {
+                    const searchStr = `${rule.lop || ''} ${rule.mo_ta || ''} ${rule.thong_nhat || ''} ${rule.minh_hoa || ''}`.toLowerCase();
+                    return removeVietnameseTones(searchStr).includes(normalizedTerm);
+                });
+            }
+            
+            filteredRulesState = rulesToFilter; // Cập nhật danh sách hiển thị hiện tại để tiện xuất Excel
+            renderTable(rulesToFilter);
+        }
+
+        // LẮNG NGHE SỰ KIỆN NHẬP PHÍM VÀO Ô TÌM KIẾM VÀ CHỌN LỚP
+        searchInput.addEventListener('input', (e) => {
+            handleSearch(e.target.value);
+        });
+
+        filterLop.addEventListener('change', () => {
+            handleSearch(searchInput.value);
+        });
+
+        // XUẤT FILE EXCEL
+        btnExportExcel.addEventListener('click', () => {
+            if (filteredRulesState.length === 0) {
+                showToast("Không có dữ liệu để xuất!", "error");
+                return;
+            }
+
+            try {
+                // Định dạng dữ liệu trước khi đẩy vào Excel
+                const dataForExcel = filteredRulesState.map((rule, index) => ({
+                    "STT": index + 1,
+                    "Lớp": rule.lop || "",
+                    "Mô tả": rule.mo_ta || "",
+                    "Thống nhất (LaTeX)": rule.thong_nhat || "",
+                    "Minh họa": rule.minh_hoa || "",
+                    "Link Ảnh (Nếu có)": rule.minh_hoa_img || ""
+                }));
+
+                // Tạo worksheet từ JSON
+                const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+                
+                // Tùy chỉnh độ rộng cột cho đẹp
+                const wscols = [
+                    {wch: 5},  // STT
+                    {wch: 10}, // Lớp
+                    {wch: 30}, // Mô tả
+                    {wch: 50}, // Thống nhất
+                    {wch: 40}, // Minh họa
+                    {wch: 40}  // Link ảnh
+                ];
+                worksheet['!cols'] = wscols;
+
+                // Tạo workbook và thêm worksheet vào
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Danh_Sach_Thong_Nhat");
+
+                // Xuất file
+                XLSX.writeFile(workbook, "Quy_Uoc_Toan_THCS.xlsx");
+                showToast("📥 Đã tải xuống file Excel!", "success");
+            } catch (error) {
+                console.error("Lỗi khi xuất Excel:", error);
+                showToast("❌ Có lỗi xảy ra khi xuất Excel!", "error");
+            }
+        });
+
+        // ---------------------------------------------------------
+        // PHẦN LOGIC CHO TAB BÀI TOÁN MINH HOẠ
+        // ---------------------------------------------------------
+
+        // Nút thêm mới bài toán
+        btnAddNewProblem.addEventListener('click', () => {
+            editingProblemId = null;
+            problemForm.reset();
+            resetImagePreviewProb();
+            document.getElementById('currentImgUrlProb').value = '';
+            formProblemTitle.textContent = "✏️ Thêm Bài Toán Mới";
+            submitProbBtn.textContent = "Lưu bài toán";
+            cancelEditProbBtn.style.display = 'none';
+            switchTab('panel-problem-form');
+        });
+
+        backToProbListBtn.addEventListener('click', () => {
+            switchTab('panel-problem-list');
+        });
+
+        cancelEditProbBtn.addEventListener('click', () => {
+            editingProblemId = null;
+            problemForm.reset();
+            formProblemTitle.textContent = "✏️ Thêm Bài Toán Mới";
+            submitProbBtn.textContent = "Lưu bài toán";
+            cancelEditProbBtn.style.display = 'none';
+            resetImagePreviewProb();
+            switchTab('panel-problem-list');
+        });
+
+        // Submit form Bài Toán
+        problemForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const prob_lop = document.getElementById('prob_lop').value;
+            const prob_mucdo = document.getElementById('prob_mucdo').value;
+            const prob_mota = document.getElementById('prob_mota').value.trim();
+            const de_bai = document.getElementById('de_bai').value.trim();
+            const loi_giai = document.getElementById('loi_giai').value.trim();
+            const prob_code_hinh = document.getElementById('prob_code_hinh').value.trim();
+            
+            if (!prob_lop || !prob_mucdo || !prob_mota || !de_bai || !loi_giai) return;
+
+            submitProbBtn.disabled = true;
+            submitProbBtn.textContent = selectedFileProb ? "Đang đẩy ảnh lên Cloudinary..." : "Đang xử lý...";
+
+            try {
+                let imgUrl = document.getElementById('currentImgUrlProb').value;
+                if (selectedFileProb) {
+                    try {
+                        imgUrl = await uploadToCloudinary(selectedFileProb);
+                    } catch (uploadError) {
+                        alert("LỖI TẢI ẢNH:\n\n" + uploadError.message);
+                        submitProbBtn.disabled = false;
+                        submitProbBtn.textContent = editingProblemId ? "Cập nhật bài toán" : "Lưu bài toán";
+                        return;
+                    }
+                }
+
+                const probData = {
+                    lop: prob_lop,
+                    muc_do: prob_mucdo,
+                    mo_ta: prob_mota,
+                    de_bai: de_bai,
+                    loi_giai: loi_giai,
+                    code_hinh: prob_code_hinh,
+                    anh_minh_hoa: imgUrl || null
+                };
+
+                submitProbBtn.textContent = "Đang lưu dữ liệu...";
+
+                if (editingProblemId) {
+                    await updateDoc(doc(db, COLLECTION_PROBLEMS, editingProblemId), probData);
+                    editingProblemId = null;
+                } else {
+                    probData.createdAt = Date.now();
+                    await addDoc(collection(db, COLLECTION_PROBLEMS), probData);
+                }
+                
+                problemForm.reset();
+                resetImagePreviewProb();
+                document.getElementById('currentImgUrlProb').value = '';
+                
+                // Reset ô tìm kiếm nếu đang lọc để hiển thị ngay bài toán vừa thêm
+                searchProbInput.value = '';
+                
+                switchTab('panel-problem-list');
+                showToast("Đã lưu bài toán thành công!", "success");
+
+            } catch (error) {
+                console.error("Lỗi khi lưu bài toán: ", error);
+                showToast("Lỗi: Không thể lưu bài toán.", "error");
+            } finally {
+                submitProbBtn.disabled = false;
+                submitProbBtn.textContent = editingProblemId ? "Cập nhật bài toán" : "Lưu bài toán";
+            }
+        });
+
+        // HÀM HIỂN THỊ DANH SÁCH BÀI TOÁN (Tách ra để dùng cho Tìm kiếm)
+        function renderProblemTable(problemsToRender) {
+            if (!problemsToRender || problemsToRender.length === 0) {
+                problemList.innerHTML = '<tr><td colspan="8" class="loading-text">Không tìm thấy bài toán nào.</td></tr>';
+                return;
+            }
+
+            let htmlContent = '';
+            problemsToRender.forEach(prob => {
+                const moTaStr = prob.mo_ta || '';
+                const safeMoTa = moTaStr.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                const safeDeBai = parseLatexText(prob.de_bai);
+                const safeLoiGiai = parseLatexText(prob.loi_giai);
+                
+                const codeHinhHtml = prob.code_hinh 
+                    ? `<button class="btn-view-code" data-id="${prob.id}">👁️ Xem code hình</button>` 
+                    : '<em style="color: var(--text-muted);">Không có</em>';
+
+                const imgHtml = prob.anh_minh_hoa ? `<img src="${prob.anh_minh_hoa}" style="max-width: 100%; border-radius: 6px; cursor: pointer; border: 1px solid var(--border);" onclick="window.open('${prob.anh_minh_hoa}', '_blank')">` : '<em style="color: var(--text-muted);">Không có</em>';
+
+                let mucDoColor = "background-color: #f1f5f9; color: #475569;"; 
+                if(prob.muc_do === 'Nhận biết') mucDoColor = "background-color: #dcfce7; color: #166534;";
+                if(prob.muc_do === 'Thông hiểu') mucDoColor = "background-color: #dbeafe; color: #1e40af;";
+                if(prob.muc_do === 'Vận dụng') mucDoColor = "background-color: #fef9c3; color: #854d0e;";
+                if(prob.muc_do === 'Nâng cao') mucDoColor = "background-color: #fee2e2; color: #991b1b;";
+
+                htmlContent += `
+                    <tr>
+                        <td><span class="badge-class">${prob.lop || 'Chưa rõ'}</span></td>
+                        <td><span class="badge-class" style="${mucDoColor}">${prob.muc_do || 'Chưa rõ'}</span></td>
+                        <td style="font-weight: 600; color: #1e293b;">${safeMoTa}</td>
+                        <td style="line-height: 1.6; font-weight: 500;">${safeDeBai}</td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <button class="btn-view-solution" data-id="${prob.id}">👁️ Xem lời giải</button>
+                        </td>
+                        <td style="text-align: center; vertical-align: middle;">${codeHinhHtml}</td>
+                        <td style="text-align: center;">${imgHtml}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-action btn-edit-prob" data-id="${prob.id}">Sửa</button>
+                                <button class="btn-action btn-delete-prob" data-id="${prob.id}">Xóa</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            problemList.innerHTML = htmlContent;
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([problemList]).catch(err => console.error(err));
+            }
+        }
+
+        // Render Danh sách bài toán (Real-time)
+        onSnapshot(collection(db, COLLECTION_PROBLEMS), (snapshot) => {
+            currentProblems = [];
+            snapshot.forEach((doc) => currentProblems.push({ id: doc.id, ...doc.data() }));
+            
+            // Sắp xếp: Ưu tiên theo Lớp (tăng dần), nếu cùng Lớp thì theo Thời gian tạo (mới nhất lên trước)
+            currentProblems.sort((a, b) => {
+                const lopA = a.lop || "";
+                const lopB = b.lop || "";
+                if (lopA !== lopB) {
+                    return lopA.localeCompare(lopB);
+                }
+                return (b.createdAt || 0) - (a.createdAt || 0);
+            });
+
+            // Kích hoạt hàm tìm kiếm để hiển thị
+            handleProbSearch(searchProbInput.value);
+        });
+
+        // HÀM XỬ LÝ TÌM KIẾM BÀI TOÁN
+        function handleProbSearch(term) {
+            if (!term) {
+                renderProblemTable(currentProblems);
+                return;
+            }
+            
+            const normalizedTerm = removeVietnameseTones(term);
+            const filteredProbs = currentProblems.filter(prob => {
+                const searchStr = `${prob.lop || ''} ${prob.muc_do || ''} ${prob.mo_ta || ''} ${prob.de_bai || ''} ${prob.loi_giai || ''}`.toLowerCase();
+                return removeVietnameseTones(searchStr).includes(normalizedTerm);
+            });
+            
+            renderProblemTable(filteredProbs);
+        }
+
+        // LẮNG NGHE SỰ KIỆN NHẬP PHÍM VÀO Ô TÌM KIẾM BÀI TOÁN
+        searchProbInput.addEventListener('input', (e) => {
+            handleProbSearch(e.target.value);
+        });
+
+        // 3. XỬ LÝ SỰ KIỆN XÓA / SỬA (Event Delegation)
+        // Lắng nghe cho cả 2 bảng (Quy Ước & Bài Toán)
+        document.body.addEventListener('click', async (e) => {
+            const target = e.target;
+            
+            // --- XEM CODE HÌNH (MỞ KHUNG MODAL) ---
+            const viewCodeBtn = target.closest('.btn-view-code');
+            if (viewCodeBtn) {
+                e.preventDefault();
+                const id = viewCodeBtn.getAttribute('data-id');
+                const prob = currentProblems.find(r => r.id === id);
+                if (prob) {
+                    const safeCode = prob.code_hinh.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    
+                    // Gắn nội dung vào khung
+                    document.getElementById('codeViewerContent').innerHTML = safeCode;
+                    // Gắn code gốc vào nút Copy
+                    document.getElementById('btnCopyCodeModal').setAttribute('data-raw', encodeURIComponent(prob.code_hinh));
+                    
+                    // Hiển thị khung
+                    document.getElementById('codeModal').style.display = 'flex';
+                }
+                return;
+            }
+
+            // --- COPY CODE HÌNH (TRONG MODAL) ---
+            const copyCodeModalBtn = target.closest('#btnCopyCodeModal');
+            if (copyCodeModalBtn) {
+                e.preventDefault();
+                const rawText = decodeURIComponent(copyCodeModalBtn.getAttribute('data-raw'));
+                
+                const textArea = document.createElement("textarea");
+                textArea.value = rawText;
+                textArea.style.position = "fixed"; 
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast("📋 Đã copy code hình!", "success");
+                    
+                    const originalText = copyCodeModalBtn.innerHTML;
+                    copyCodeModalBtn.innerHTML = "✅ Đã Copy!";
+                    setTimeout(() => copyCodeModalBtn.innerHTML = originalText, 2000);
+                } catch (err) {
+                    showToast("❌ Lỗi copy!", "error");
+                }
+                document.body.removeChild(textArea);
+                return;
+            }
+
+            // ĐÓNG MODAL XEM CODE KHI BẤM NÚT X HOẶC BẤM RA NGOÀI
+            const closeCodeBtn = target.closest('#closeCodeBtn');
+            if (closeCodeBtn || target.id === 'codeModal') {
+                document.getElementById('codeModal').style.display = 'none';
+                return;
+            }
+
+            // --- XEM LỜI GIẢI (MỞ KHUNG MODAL) ---
+            const viewSolutionBtn = target.closest('.btn-view-solution');
+            if (viewSolutionBtn) {
+                e.preventDefault();
+                const id = viewSolutionBtn.getAttribute('data-id');
+                const prob = currentProblems.find(r => r.id === id);
+                if (prob) {
+                    const safeLoiGiai = parseLatexText(prob.loi_giai);
+                    
+                    // Gắn nội dung vào khung
+                    document.getElementById('solutionViewerContent').innerHTML = safeLoiGiai;
+                    // Gắn code gốc vào nút Copy
+                    document.getElementById('btnCopySolution').setAttribute('data-raw', encodeURIComponent(prob.loi_giai));
+                    
+                    // Hiển thị khung
+                    document.getElementById('solutionModal').style.display = 'flex';
+                    
+                    // Render lại MathJax CỰC KỲ QUAN TRỌNG để công thức hiển thị sắc nét trong khung mới
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        window.MathJax.typesetPromise([document.getElementById('solutionViewerContent')]).catch(err => console.error(err));
+                    }
+                }
+                return;
+            }
+
+            // --- COPY LỜI GIẢI (TRONG MODAL) ---
+            const copyBtn = target.closest('#btnCopySolution');
+            if (copyBtn) {
+                e.preventDefault();
+                const rawText = decodeURIComponent(copyBtn.getAttribute('data-raw'));
+                
+                const textArea = document.createElement("textarea");
+                textArea.value = rawText;
+                textArea.style.position = "fixed"; 
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast("📋 Đã copy mã LaTeX lời giải!", "success");
+                    
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = "✅ Đã Copy!";
+                    setTimeout(() => copyBtn.innerHTML = originalText, 2000);
+                } catch (err) {
+                    showToast("❌ Lỗi copy!", "error");
+                }
+                document.body.removeChild(textArea);
+                return;
+            }
+
+            // ĐÓNG MODAL XEM LỜI GIẢI KHI BẤM NÚT X HOẶC BẤM RA NGOÀI
+            const closeBtn = target.closest('#closeSolutionBtn');
+            if (closeBtn || target.id === 'solutionModal') {
+                document.getElementById('solutionModal').style.display = 'none';
+                return;
+            }
+
+            // --- XÓA QUY ƯỚC ---
+            const deleteBtn = target.closest('.btn-delete');
+            if (deleteBtn) {
+                e.preventDefault(); 
+                pendingAction = { action: 'delete', type: 'rule', id: deleteBtn.getAttribute('data-id') };
+                showPasswordModal();
+                return; 
+            }
+            
+            // --- XÓA BÀI TOÁN ---
+            const deleteProbBtn = target.closest('.btn-delete-prob');
+            if (deleteProbBtn) {
+                e.preventDefault(); 
+                pendingAction = { action: 'delete', type: 'problem', id: deleteProbBtn.getAttribute('data-id') };
+                showPasswordModal();
+                return; 
+            }
+            
+            // --- SỬA QUY ƯỚC ---
+            const editBtn = target.closest('.btn-edit');
+            if (editBtn) {
+                e.preventDefault();
+                pendingAction = { action: 'edit', type: 'rule', id: editBtn.getAttribute('data-id') };
+                showPasswordModal();
+                return;
+            }
+
+            // --- SỬA BÀI TOÁN ---
+            const editProbBtn = target.closest('.btn-edit-prob');
+            if (editProbBtn) {
+                e.preventDefault();
+                pendingAction = { action: 'edit', type: 'problem', id: editProbBtn.getAttribute('data-id') };
+                showPasswordModal();
+                return;
+            }
+        });
+
+        // 4. XỬ LÝ NÚT TRONG MODAL XÓA (Dùng chung)
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+            document.getElementById('deleteModal').style.display = 'none';
+            deleteTarget = { id: null, type: null };
+        });
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            if (!deleteTarget.id) return;
+            
+            const btn = document.getElementById('confirmDeleteBtn');
+            btn.textContent = "Đang xóa...";
+            btn.disabled = true;
+
+            try {
+                const targetCollection = deleteTarget.type === 'rule' ? COLLECTION_NAME : COLLECTION_PROBLEMS;
+                await deleteDoc(doc(db, targetCollection, deleteTarget.id));
+                showToast("Đã xóa thành công!", "success");
+            } catch (error) {
+                console.error("Chi tiết lỗi khi xóa: ", error);
+                showToast("Lỗi xóa: Kiểm tra quyền (Rules) Firestore!", "error");
+            } finally {
+                document.getElementById('deleteModal').style.display = 'none';
+                deleteTarget = { id: null, type: null };
+                btn.textContent = "Xóa";
+                btn.disabled = false;
+            }
+        });
+
+    </script>
+</body>
+</html>

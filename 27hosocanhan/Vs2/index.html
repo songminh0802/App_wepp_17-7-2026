@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Cá Nhân - Quản Lý Lương & Viên Chức</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        primary: '#059669', // Emerald 600
+                        secondary: '#4f46e5', // Indigo 600
+                        accent: '#f59e0b', // Amber 500
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { 
+            background-color: #f0fdf4; 
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); 
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Cấu hình bảng hiển thị đẹp */
+        th, td { border: 1px solid #e2e8f0; vertical-align: middle; white-space: normal; word-wrap: break-word; }
+        th { position: sticky; top: 0; z-index: 10; }
+        
+        /* Sticky Cột Thao Tác */
+        .sticky-action { position: sticky; right: 0; z-index: 11; box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
+
+        /* Bảng lương */
+        #content-luong th { background-color: #d1fae5; color: #064e3b; border-bottom: 2px solid #a7f3d0; }
+        #content-luong .sticky-action { background-color: #ecfdf5; }
+
+        /* Bảng viên chức có header khác màu một chút */
+        #content-ketquavc th { background-color: #fef3c7; color: #92400e; border-bottom: 2px solid #fde68a; }
+        #content-ketquavc .sticky-action { background-color: #fffbeb; }
+
+        /* Bảng giấy tờ */
+        #content-giayto th { background-color: #e0f2fe; color: #075985; border-bottom: 2px solid #bae6fd; }
+        #content-giayto .sticky-action { background-color: #f0f9ff; }
+
+        /* Bảng văn bằng */
+        #content-vanbang th { background-color: #dcfce3; color: #166534; border-bottom: 2px solid #bbf7d0; }
+        #content-vanbang .sticky-action { background-color: #f0fdf4; }
+
+        /* Bảng thành tích */
+        #content-thanhtich th { background-color: #f3e8ff; color: #6b21a8; border-bottom: 2px solid #e9d5ff; }
+        #content-thanhtich .sticky-action { background-color: #faf5ff; }
+        
+        .tab-btn { white-space: nowrap; }
+        .tab-btn.active {
+            border-bottom: 2px solid #059669; color: #059669; font-weight: 700;
+        }
+
+        /* Hiệu ứng Form cuộn Inline */
+        @keyframes slideDownInline {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-down-anim {
+            animation: slideDownInline 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased h-screen flex flex-col">
+
+    <!-- MODAL QUẢN LÝ LINK DRIVE -->
+    <div id="drive-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-md transform scale-95 transition-transform duration-300 relative">
+            <div class="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
+                <h3 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                    <i class="fa-brands fa-google-drive text-blue-500"></i> Kho Drive
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="showDriveLinkForm()" class="text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 transition-colors border border-emerald-200" title="Thêm liên kết">
+                        <i class="fa-solid fa-plus"></i> Thêm
+                    </button>
+                    <button onclick="closeDriveLinks()" class="text-slate-400 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-full flex items-center justify-center transition-colors border border-transparent hover:border-red-100">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <p class="text-sm text-slate-500 mb-4">Danh sách các liên kết thư mục minh chứng. Nhấn <i class="fa-solid fa-pen text-[10px] mx-1"></i> để sửa hoặc <i class="fa-solid fa-plus text-[10px] mx-1"></i> Thêm để tạo mới.</p>
+
+            <div id="drive-links-container" class="space-y-3 max-h-[55vh] overflow-y-auto custom-scrollbar pr-2 pb-2">
+                <!-- Nội dung Drive Links sẽ được tự động render vào đây -->
+            </div>
+            
+            <div class="mt-5 pt-3 border-t border-slate-100 text-center">
+                <button onclick="closeDriveLinks()" class="text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors">Đóng cửa sổ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH CHÍNH -->
+    <div id="main-app" class="flex-1 flex flex-col h-full overflow-hidden max-w-[1500px] mx-auto w-full p-2 sm:p-4 transition-opacity duration-500">
+        
+        <!-- HEADER -->
+        <header class="glass-card rounded-2xl px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 mb-4 border-t-4 border-primary shadow-sm relative overflow-hidden">
+            <div class="absolute right-[-20px] top-[-20px] opacity-10">
+                <i class="fa-solid fa-id-card text-9xl text-emerald-600"></i>
+            </div>
+            
+            <div class="flex items-center gap-4 z-10 w-full">
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shadow-sm border border-emerald-200 shrink-0">
+                    <i class="fa-solid fa-user-tie text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Hồ Sơ Cá Nhân & Quá Trình Công Tác</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-[11px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase tracking-wider">Trường THCS Tân Bình</span>
+                        <span class="text-xs text-slate-500 font-medium border-l border-slate-300 pl-2">Quản lý và đồng bộ trực tuyến</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="z-10 shrink-0 flex flex-wrap gap-2 justify-end">
+                <button onclick="openDriveLinks()" class="bg-blue-50 text-blue-600 hover:text-blue-700 hover:bg-blue-100 px-4 py-2 rounded-xl font-bold transition-colors shadow-sm flex items-center gap-2 border border-blue-200" title="Truy cập kho minh chứng">
+                    <i class="fa-brands fa-google-drive text-sm"></i> Kho Drive
+                </button>
+                <button onclick="openForm(-1)" class="bg-white text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-xl font-bold transition-colors shadow-sm flex items-center gap-2 border border-emerald-200">
+                    <i class="fa-solid fa-plus text-sm"></i> Thêm mới
+                </button>
+                <button onclick="saveToCloud()" class="bg-primary hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-bold transition-all shadow-md flex items-center gap-2 transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-cloud-arrow-up text-sm"></i> Lưu lên mây
+                </button>
+                <button onclick="fetchData()" class="bg-white text-slate-600 hover:text-primary hover:bg-emerald-50 p-2 rounded-xl font-bold transition-colors shadow-sm border border-slate-200" title="Tải lại dữ liệu">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- TABS -->
+        <div class="flex gap-2 sm:gap-4 shrink-0 border-b border-slate-200 px-2 overflow-x-auto custom-scrollbar pb-1 mb-3">
+            <button onclick="switchTab('luong')" id="tab-luong" class="tab-btn active pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-money-check-dollar"></i> Lịch Sử Lương
+            </button>
+            <button onclick="switchTab('ketquavc')" id="tab-ketquavc" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-award"></i> Kết Quả Viên Chức
+            </button>
+            <button onclick="switchTab('giayto')" id="tab-giayto" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-file-signature"></i> Tổng Hợp Giấy Tờ
+            </button>
+            <button onclick="switchTab('vanbang')" id="tab-vanbang" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-graduation-cap"></i> Văn Bằng Chứng Chỉ
+            </button>
+            <button onclick="switchTab('thanhtich')" id="tab-thanhtich" class="tab-btn pb-2 px-2 text-slate-500 font-medium transition-colors flex items-center gap-2 hover:text-emerald-600">
+                <i class="fa-solid fa-trophy"></i> Bảng Thành Tích
+            </button>
+        </div>
+
+        <!-- NỘI DUNG TAB LƯƠNG -->
+        <div id="content-luong" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-emerald-100">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1300px]">
+                    <thead class="bg-emerald-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Bậc</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Hệ số</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Mã ngạch</th>
+                            <th class="p-3 text-left font-bold min-w-[200px]">Nội dung</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số QĐ</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày cấp</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày hiệu lực</th>
+                            <th class="p-3 text-left font-bold min-w-[150px]">Người ký QĐ</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Nâng bậc</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Nâng tiếp theo</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Phần trăm</th>
+                            <th class="p-3 text-center font-bold w-[100px] sticky-action text-emerald-800 border-l border-emerald-200">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="luong-tbody">
+                        <tr><td colspan="13" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB VIÊN CHỨC (ketquavc) -->
+        <div id="content-ketquavc" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-amber-100 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1100px]">
+                    <thead class="bg-amber-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-center font-bold w-[120px] whitespace-nowrap">Năm học</th>
+                            <th class="p-3 text-left font-bold min-w-[250px]">Nhiệm vụ được giao</th>
+                            <th class="p-3 text-center font-bold w-[150px]">Đăng ký thi đua</th>
+                            <th class="p-3 text-center font-bold w-[150px]">Kết quả thi đua</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Đăng ký BM</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Tỷ lệ</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Hạng lớp CN</th>
+                            <th class="p-3 text-center font-bold w-[100px] sticky-action text-amber-800 border-l border-amber-200">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ketquavc-tbody">
+                        <tr><td colspan="9" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-amber-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB GIẤY TỜ (giayto) -->
+        <div id="content-giayto" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-sky-100 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[900px]">
+                    <thead class="bg-sky-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-left font-bold min-w-[250px]">Nội dung</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">SỐ QUYẾT ĐỊNH</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">NGÀY THÁNG NĂM CẤP</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">NGÀY CÓ HIỆU LỰC</th>
+                            <th class="p-3 text-left font-bold min-w-[150px]">NGƯỜI KÝ QĐ</th>
+                            <th class="p-3 text-center font-bold w-[100px] sticky-action text-sky-800 border-l border-sky-200">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="giayto-tbody">
+                        <tr><td colspan="7" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-sky-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB VĂN BẰNG (vanbang) -->
+        <div id="content-vanbang" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-green-200 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1300px]">
+                    <thead class="bg-green-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-left font-bold min-w-[180px]">Tên VBCC</th>
+                            <th class="p-3 text-left font-bold min-w-[180px]">Nơi cấp VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày cấp VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số hiệu VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số vào sổ</th>
+                            <th class="p-3 text-left font-bold min-w-[180px]">HĐ kiểm tra - khóa thi</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Thời gian đào tạo</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Hình thức đào tạo</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Tình trạng VBCC</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Xếp loại</th>
+                            <th class="p-3 text-center font-bold w-[100px] sticky-action text-green-800 border-l border-green-200">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vanbang-tbody">
+                        <tr><td colspan="12" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-green-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NỘI DUNG TAB THÀNH TÍCH (thanhtich) -->
+        <div id="content-thanhtich" class="flex-1 overflow-hidden flex flex-col glass-card rounded-2xl border border-purple-200 hidden">
+            <div class="overflow-auto custom-scrollbar flex-1 relative z-0">
+                <table class="w-full text-left border-collapse text-sm min-w-[1100px]">
+                    <thead class="bg-purple-100/90 backdrop-blur-md shadow-sm">
+                        <tr>
+                            <th class="p-3 text-center font-bold w-[60px] whitespace-nowrap">STT</th>
+                            <th class="p-3 text-center font-bold w-[120px] whitespace-nowrap">NĂM HỌC</th>
+                            <th class="p-3 text-left font-bold min-w-[250px]">NỘI DUNG</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Đạt cấp</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số Quyết định</th>
+                            <th class="p-3 text-center font-bold min-w-[120px]">Nơi cấp</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Ngày</th>
+                            <th class="p-3 text-center font-bold whitespace-nowrap">Số vào sổ</th>
+                            <th class="p-3 text-center font-bold w-[100px] sticky-action text-purple-800 border-l border-purple-200">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="thanhtich-tbody">
+                        <tr><td colspan="9" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-purple-500 mb-2"></i><br>Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- FOOTER -->
+        <footer class="mt-4 text-center shrink-0">
+            <p class="text-sm text-slate-500 font-medium">Được phát triển bởi <span class="font-bold text-emerald-700">Thầy Nguyễn Cường dạy Toán</span></p>
+        </footer>
+    </div>
+
+    <script>
+        // KẾT NỐI API
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw1GdrjxcvuOVW4j-Jk56yPqnMM0jmS-UMo6SlLqEOpvvla0jFCKLXXiLC4EKn6mgIr/exec"; 
+
+        // QUẢN LÝ DỮ LIỆU LOCAL
+        window.cachedData = {
+            luong: [], ketquavc: [], giayto: [], vanbang: [], thanhtich: []
+        };
+        let currentActiveTab = 'luong';
+        let currentEditIndex = -1; 
+        let isCreatingNew = false; 
+
+        // CẤU HÌNH CÁC TRƯỜNG NHẬP LIỆU
+        const tabConfigs = {
+            'luong': ['STT', 'Bậc', 'Hệ số', 'Mã ngạch', 'Nội dung', 'Số Quyết định', 'Ngày tháng năm cấp', 'Ngày tháng năm có hiệu lực', 'Người ký Quyết định', 'Thời điểm nâng bậc', 'Thời điểm nâng tiếp theo', 'Phần trăm'],
+            'ketquavc': ['STT', 'NĂM HỌC', 'NHIỆM VỤ ĐƯỢC GIAO', 'ĐĂNG KÝ', 'THI ĐUA', 'ĐĂNG KÝ BM', 'TỶ LỆ', 'Hạng lớp CN'],
+            'giayto': ['STT', 'Nội dung', 'SỐ QUYẾT ĐỊNH', 'NGÀY THÁNG NĂM CẤP', 'NGÀY THÁNG NĂM CÓ HIỆU LỰC', 'NGƯỜI KÝ QUYẾT ĐỊNH'],
+            'vanbang': ['STT', 'Tên VBCC', 'Nơi cấp VBCC', 'Ngày cấp VBCC', 'Số hiệu VBCC', 'Số vào sổ', 'Hội đồng kiểm tra - khóa thi', 'Thời gian đào tạo', 'Hình thức đào tạo', 'Tình trạng VBCC', 'Xếp loại'],
+            'thanhtich': ['STT', 'NĂM HỌC', 'NỘI DUNG', 'Đạt cấp', 'Số Quyết định', 'Nơi cấp', 'Ngày', 'Số vào sổ']
+        };
+
+        // KHO DRIVE LINKS DEFAULT & QUẢN LÝ LOCALSTORAGE
+        const defaultDriveLinks = [
+            { id: 1, title: 'Thư mục Lương', desc: 'Quyết định lương, nâng bậc...', url: '#', icon: 'fa-money-check-dollar', color: 'emerald' },
+            { id: 2, title: 'Thư mục Viên Chức', desc: 'Đánh giá, thi đua, kết quả VC...', url: '#', icon: 'fa-award', color: 'amber' },
+            { id: 3, title: 'Thư mục Giấy Tờ', desc: 'Giấy tờ tùy thân, quyết định khác...', url: '#', icon: 'fa-file-signature', color: 'sky' },
+            { id: 4, title: 'Thư mục Văn Bằng', desc: 'Bằng cấp, chứng chỉ bồi dưỡng...', url: '#', icon: 'fa-graduation-cap', color: 'green' },
+            { id: 5, title: 'Thư mục Thành Tích', desc: 'Bằng khen, giấy khen, minh chứng...', url: '#', icon: 'fa-trophy', color: 'purple' }
+        ];
+
+        const driveThemes = {
+            'emerald': { bg: 'bg-emerald-50', border: 'border-emerald-200', hover: 'hover:bg-emerald-100', iconBg: 'bg-emerald-500', title: 'text-emerald-900 group-hover:text-emerald-700', desc: 'text-emerald-600/80', iconText: 'text-emerald-400 group-hover:text-emerald-600' },
+            'amber': { bg: 'bg-amber-50', border: 'border-amber-200', hover: 'hover:bg-amber-100', iconBg: 'bg-amber-500', title: 'text-amber-900 group-hover:text-amber-700', desc: 'text-amber-600/80', iconText: 'text-amber-400 group-hover:text-amber-600' },
+            'sky': { bg: 'bg-sky-50', border: 'border-sky-200', hover: 'hover:bg-sky-100', iconBg: 'bg-sky-500', title: 'text-sky-900 group-hover:text-sky-700', desc: 'text-sky-600/80', iconText: 'text-sky-400 group-hover:text-sky-600' },
+            'green': { bg: 'bg-green-50', border: 'border-green-200', hover: 'hover:bg-green-100', iconBg: 'bg-green-500', title: 'text-green-900 group-hover:text-green-700', desc: 'text-green-600/80', iconText: 'text-green-400 group-hover:text-green-600' },
+            'purple': { bg: 'bg-purple-50', border: 'border-purple-200', hover: 'hover:bg-purple-100', iconBg: 'bg-purple-500', title: 'text-purple-900 group-hover:text-purple-700', desc: 'text-purple-600/80', iconText: 'text-purple-400 group-hover:text-purple-600' },
+            'rose': { bg: 'bg-rose-50', border: 'border-rose-200', hover: 'hover:bg-rose-100', iconBg: 'bg-rose-500', title: 'text-rose-900 group-hover:text-rose-700', desc: 'text-rose-600/80', iconText: 'text-rose-400 group-hover:text-rose-600' },
+            'blue': { bg: 'bg-blue-50', border: 'border-blue-200', hover: 'hover:bg-blue-100', iconBg: 'bg-blue-500', title: 'text-blue-900 group-hover:text-blue-700', desc: 'text-blue-600/80', iconText: 'text-blue-400 group-hover:text-blue-600' }
+        };
+
+        let myDriveLinks = JSON.parse(localStorage.getItem('app_drive_links')) || defaultDriveLinks;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+            renderDriveLinks();
+        });
+
+        /* ======================== QUẢN LÝ KHO DRIVE (THÊM, SỬA, XÓA) ======================== */
+        function renderDriveLinks() {
+            const container = document.getElementById('drive-links-container');
+            container.innerHTML = '';
+            
+            if (myDriveLinks.length === 0) {
+                container.innerHTML = '<div class="text-center p-6 text-slate-500 text-sm">Chưa có liên kết nào. Hãy bấm nút Thêm để tạo mới.</div>';
+                return;
+            }
+
+            myDriveLinks.forEach(link => {
+                const t = driveThemes[link.color] || driveThemes['blue'];
+                container.innerHTML += `
+                    <div class="relative group">
+                        <a href="${link.url}" target="_blank" class="flex items-center justify-between p-3 rounded-xl border ${t.border} ${t.bg} ${t.hover} hover:shadow-md transition-all">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg ${t.iconBg} text-white flex items-center justify-center shadow-sm"><i class="fa-solid ${link.icon}"></i></div>
+                                <div class="pr-8">
+                                    <h4 class="font-bold ${t.title}">${link.title}</h4>
+                                    <p class="text-[11px] ${t.desc} line-clamp-1">${link.desc}</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-arrow-up-right-from-square ${t.iconText} mr-2 group-hover:-translate-y-0.5 transition-transform duration-300"></i>
+                        </a>
+                        
+                        <!-- Nút Thao tác nổi lên khi Hover -->
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white p-1 rounded-lg shadow-sm border border-slate-100">
+                            <button onclick="showDriveLinkForm(${link.id}, event)" class="w-7 h-7 rounded bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors flex items-center justify-center" title="Sửa liên kết"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteDriveLink(${link.id}, event)" class="w-7 h-7 rounded bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center" title="Xóa liên kết"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function showDriveLinkForm(id = null, e = null) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            
+            let link = id ? myDriveLinks.find(l => l.id === id) : { title: '', desc: '', url: '', color: 'emerald', icon: 'fa-folder' };
+            
+            const { value: formValues } = await Swal.fire({
+                title: id ? 'Sửa Liên Kết Drive' : 'Thêm Liên Kết Drive',
+                html: `
+                    <div class="flex flex-col gap-3 text-left">
+                        <div><label class="text-xs font-bold text-slate-600 mb-1 block">Tên hiển thị:</label>
+                        <input id="swal-d-title" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none text-sm" placeholder="VD: Thư mục Lương" value="${link.title}"></div>
+                        
+                        <div><label class="text-xs font-bold text-slate-600 mb-1 block">Mô tả ngắn gọn:</label>
+                        <input id="swal-d-desc" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none text-sm" placeholder="VD: Quyết định, nâng bậc..." value="${link.desc}"></div>
+                        
+                        <div><label class="text-xs font-bold text-slate-600 mb-1 block">Đường dẫn Google Drive:</label>
+                        <input id="swal-d-url" type="url" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none text-sm" placeholder="https://drive.google.com/..." value="${link.url}"></div>
+                        
+                        <div class="flex gap-2">
+                            <div class="flex-1"><label class="text-xs font-bold text-slate-600 mb-1 block">Màu sắc:</label>
+                            <select id="swal-d-color" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none text-sm">
+                                <option value="emerald" ${link.color==='emerald'?'selected':''}>Ngọc lục bảo</option>
+                                <option value="amber" ${link.color==='amber'?'selected':''}>Hổ phách</option>
+                                <option value="sky" ${link.color==='sky'?'selected':''}>Xanh da trời</option>
+                                <option value="green" ${link.color==='green'?'selected':''}>Xanh lá</option>
+                                <option value="purple" ${link.color==='purple'?'selected':''}>Màu tím</option>
+                                <option value="rose" ${link.color==='rose'?'selected':''}>Hồng đỏ</option>
+                                <option value="blue" ${link.color==='blue'?'selected':''}>Xanh dương</option>
+                            </select></div>
+                            
+                            <div class="w-1/3"><label class="text-xs font-bold text-slate-600 mb-1 block">Icon:</label>
+                            <input id="swal-d-icon" class="w-full px-3 py-2 border rounded-lg focus:ring-2 outline-none text-sm" placeholder="fa-folder" value="${link.icon}"></div>
+                        </div>
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonColor: '#059669',
+                confirmButtonText: 'Lưu thay đổi',
+                cancelButtonText: 'Hủy',
+                preConfirm: () => {
+                    const title = document.getElementById('swal-d-title').value.trim();
+                    if (!title) { Swal.showValidationMessage('Vui lòng nhập tên hiển thị'); return false; }
+                    return {
+                        title: title,
+                        desc: document.getElementById('swal-d-desc').value.trim(),
+                        url: document.getElementById('swal-d-url').value.trim() || '#',
+                        color: document.getElementById('swal-d-color').value,
+                        icon: document.getElementById('swal-d-icon').value.trim() || 'fa-folder'
+                    }
+                }
+            });
+
+            if (formValues) {
+                if (id) {
+                    let idx = myDriveLinks.findIndex(l => l.id === id);
+                    myDriveLinks[idx] = { ...myDriveLinks[idx], ...formValues };
+                } else {
+                    myDriveLinks.push({ id: Date.now(), ...formValues });
+                }
+                localStorage.setItem('app_drive_links', JSON.stringify(myDriveLinks));
+                renderDriveLinks();
+            }
+        }
+
+        function deleteDriveLink(id, e) {
+            e.preventDefault(); e.stopPropagation();
+            Swal.fire({
+                title: 'Xóa liên kết này?',
+                text: "Sau khi xóa bạn sẽ phải tự thêm lại nếu muốn dùng tiếp.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    myDriveLinks = myDriveLinks.filter(l => l.id !== id);
+                    localStorage.setItem('app_drive_links', JSON.stringify(myDriveLinks));
+                    renderDriveLinks();
+                }
+            });
+        }
+
+        // Bật/tắt Modal Drive
+        function openDriveLinks() {
+            const modal = document.getElementById('drive-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeDriveLinks() {
+            const modal = document.getElementById('drive-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        /* ======================== CHỨC NĂNG FORM CUỘN INLINE ======================== */
+        function openForm(index = -1) {
+            currentEditIndex = index;
+            isCreatingNew = (index === -1);
+            
+            reRenderActiveTab();
+
+            setTimeout(() => {
+                const editForm = document.getElementById('inline-edit-form');
+                if(editForm) {
+                    editForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const firstInput = editForm.querySelector('input, textarea');
+                    if(firstInput) firstInput.focus();
+                }
+            }, 50);
+        }
+
+        function closeForm() {
+            currentEditIndex = -1;
+            isCreatingNew = false;
+            reRenderActiveTab();
+        }
+
+        function submitForm() {
+            const fields = tabConfigs[currentActiveTab];
+            let newData = {};
+            fields.forEach(field => {
+                let el = document.getElementById(`inputField-${field}`);
+                if (el) newData[field] = el.value;
+            });
+
+            if (currentEditIndex >= 0) {
+                window.cachedData[currentActiveTab][currentEditIndex] = newData;
+            } else {
+                window.cachedData[currentActiveTab].push(newData);
+            }
+            
+            closeForm();
+            Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: 'Đã lưu tạm. Bấm "Lưu Lên Mây" để hoàn tất.', showConfirmButton: false, timer: 3000 });
+        }
+
+        function getFormHtml(tab, index) {
+            let thm = { bg: 'bg-emerald-50', border: 'border-emerald-500', borderLg: 'border-emerald-200', text: 'text-emerald-800', textL: 'text-emerald-700', focus: 'focus:border-emerald-500 focus:ring-emerald-500', btn: 'bg-emerald-600 hover:bg-emerald-700' };
+            if (tab === 'ketquavc') thm = { bg: 'bg-amber-50', border: 'border-amber-500', borderLg: 'border-amber-200', text: 'text-amber-800', textL: 'text-amber-700', focus: 'focus:border-amber-500 focus:ring-amber-500', btn: 'bg-amber-600 hover:bg-amber-700' };
+            if (tab === 'giayto') thm = { bg: 'bg-sky-50', border: 'border-sky-500', borderLg: 'border-sky-200', text: 'text-sky-800', textL: 'text-sky-700', focus: 'focus:border-sky-500 focus:ring-sky-500', btn: 'bg-sky-600 hover:bg-sky-700' };
+            if (tab === 'vanbang') thm = { bg: 'bg-green-50', border: 'border-green-500', borderLg: 'border-green-200', text: 'text-green-800', textL: 'text-green-700', focus: 'focus:border-green-500 focus:ring-green-500', btn: 'bg-green-600 hover:bg-green-700' };
+            if (tab === 'thanhtich') thm = { bg: 'bg-purple-50', border: 'border-purple-500', borderLg: 'border-purple-200', text: 'text-purple-800', textL: 'text-purple-700', focus: 'focus:border-purple-500 focus:ring-purple-500', btn: 'bg-purple-600 hover:bg-purple-700' };
+
+            const fields = tabConfigs[tab];
+            let rowData = index >= 0 ? window.cachedData[tab][index] : {};
+            if (index === -1) rowData['STT'] = window.cachedData[tab].length + 1;
+
+            let fieldsHtml = fields.map(field => {
+                let val = rowData[field] || '';
+                val = String(val).replace(/"/g, '&quot;');
+                let isTextarea = field.toLowerCase().includes('nội dung') || field.toLowerCase().includes('nhiệm vụ') || field.toLowerCase().includes('tên vbcc');
+                let inputHtml = isTextarea 
+                    ? `<textarea id="inputField-${field}" class="w-full px-3 py-2 rounded-lg border ${thm.borderLg} ${thm.focus} focus:ring-1 outline-none transition-all text-sm h-16 bg-white shadow-sm">${val}</textarea>`
+                    : `<input type="text" id="inputField-${field}" value="${val}" class="w-full px-3 py-2 rounded-lg border ${thm.borderLg} ${thm.focus} focus:ring-1 outline-none transition-all text-sm bg-white shadow-sm">`;
+
+                let wrapperClass = isTextarea ? 'md:col-span-2 lg:col-span-3 xl:col-span-4' : '';
+                return `
+                    <div class="flex flex-col gap-1 ${wrapperClass}">
+                        <label class="text-[11px] font-bold ${thm.textL} uppercase tracking-wide">${field}</label>
+                        ${inputHtml}
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div id="inline-edit-form" class="slide-down-anim p-6 ${thm.bg} border-y-4 ${thm.border} shadow-inner w-full relative z-20">
+                    <button onclick="closeForm()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm border border-slate-200 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+                    <h3 class="text-lg font-extrabold ${thm.text} mb-4 border-b ${thm.borderLg} pb-2"><i class="fa-solid ${index >= 0 ? 'fa-pen-to-square' : 'fa-plus-circle'}"></i> ${index >= 0 ? 'Chỉnh sửa bản ghi' : 'Thêm mới bản ghi'}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        ${fieldsHtml}
+                    </div>
+                    <div class="mt-5 flex gap-3 justify-end border-t ${thm.borderLg} pt-4">
+                        <button onclick="closeForm()" class="px-5 py-2.5 bg-white font-bold text-slate-600 rounded-xl hover:bg-slate-100 transition-colors shadow-sm border border-slate-200">Hủy thao tác</button>
+                        <button onclick="submitForm()" class="px-5 py-2.5 ${thm.btn} font-bold text-white rounded-xl transition-colors shadow-md flex items-center gap-2"><i class="fa-solid fa-check"></i> Xác nhận & Lưu tạm</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function deleteRecord(tab, index) {
+            Swal.fire({
+                title: 'Xóa bản ghi này?',
+                text: "Dữ liệu sẽ bị xóa khỏi bảng hiện tại.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonText: 'Hủy',
+                confirmButtonText: 'Đồng ý xóa'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.cachedData[tab].splice(index, 1);
+                    if (currentEditIndex === index) closeForm();
+                    else reRenderActiveTab();
+                    Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: 'Đã xóa bản ghi!', showConfirmButton: false, timer: 2000 });
+                }
+            });
+        }
+
+        function reRenderActiveTab() {
+            if(currentActiveTab === 'luong') renderTableLuong(window.cachedData.luong);
+            if(currentActiveTab === 'ketquavc') renderTableKetQuaVc(window.cachedData.ketquavc);
+            if(currentActiveTab === 'giayto') renderTableGiayTo(window.cachedData.giayto);
+            if(currentActiveTab === 'vanbang') renderTableVanBang(window.cachedData.vanbang);
+            if(currentActiveTab === 'thanhtich') renderTableThanhTich(window.cachedData.thanhtich);
+        }
+
+        /* ======================== XỬ LÝ LƯU TRỮ VÀ API ======================== */
+        async function saveToCloud() {
+            Swal.fire({ title: 'Đang đẩy lên mây...', text: 'Hệ thống đang đồng bộ với Google Sheets.', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'saveData', data: window.cachedData }) 
+                });
+                
+                const res = await response.json();
+                if(!res.success) throw new Error(res.message);
+                
+                Swal.fire({ icon: 'success', title: 'Tuyệt vời!', text: 'Tất cả thay đổi đã được lưu an toàn lên Google Sheets.', timer: 2000, showConfirmButton: false });
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Lỗi đồng bộ', 'Không thể lưu dữ liệu: ' + err.message, 'error');
+            }
+        }
+
+        async function fetchData() {
+            closeForm(); // Đóng form nếu đang mở
+            const tbodyLuong = document.getElementById('luong-tbody');
+            const tbodyKetQuaVc = document.getElementById('ketquavc-tbody');
+            const tbodyGiayTo = document.getElementById('giayto-tbody');
+            const tbodyVanBang = document.getElementById('vanbang-tbody');
+            const tbodyThanhTich = document.getElementById('thanhtich-tbody');
+            
+            tbodyLuong.innerHTML = `<tr><td colspan="13" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i><br>Đang đồng bộ...</td></tr>`;
+            tbodyKetQuaVc.innerHTML = `<tr><td colspan="9" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-amber-500 mb-2"></i><br>Đang đồng bộ...</td></tr>`;
+            tbodyGiayTo.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-sky-500 mb-2"></i><br>Đang đồng bộ...</td></tr>`;
+            tbodyVanBang.innerHTML = `<tr><td colspan="12" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-green-500 mb-2"></i><br>Đang đồng bộ...</td></tr>`;
+            tbodyThanhTich.innerHTML = `<tr><td colspan="9" class="p-12 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl text-purple-500 mb-2"></i><br>Đang đồng bộ...</td></tr>`;
+            
+            try {
+                if (!GAS_URL || GAS_URL.includes("YOUR_GAS_URL_HERE")) throw new Error("Chưa cấu hình GAS_URL");
+
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'getData' }) 
+                });
+                
+                const res = await response.json();
+                if(!res.success) throw new Error(res.message);
+                
+                if (res.data && !Array.isArray(res.data)) {
+                    window.cachedData.luong = res.data.luong || [];
+                    window.cachedData.ketquavc = res.data.ketquavc || [];
+                    window.cachedData.giayto = res.data.giayto || [];
+                    window.cachedData.vanbang = res.data.vanbang || [];
+                    window.cachedData.thanhtich = res.data.thanhtich || [];
+                }
+                reRenderActiveTab(); // Render tất cả vì đang fetch mới
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ toast: true, position: 'bottom-end', icon: 'error', title: 'Lỗi tải dữ liệu: ' + err.message, showConfirmButton: false, timer: 3000 });
+            }
+        }
+
+        // Action Buttons Template (Sinh mã tái sử dụng)
+        function getActionButtons(tab, index) {
+            return `
+                <div class="flex justify-center items-center gap-1">
+                    <button onclick="openForm(${index})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1.5 rounded border border-blue-100 transition-colors" title="Chỉnh sửa"><i class="fa-solid fa-pen text-xs"></i></button>
+                    <button onclick="deleteRecord('${tab}', ${index})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded border border-red-100 transition-colors" title="Xóa dòng"><i class="fa-solid fa-trash text-xs"></i></button>
+                </div>
+            `;
+        }
+
+        // Render Bảng Lương
+        function renderTableLuong(data) {
+            const tbody = document.getElementById('luong-tbody');
+            let html = '';
+            
+            if (isCreatingNew) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('luong', -1)}</td></tr>`;
+
+            if(!data || data.length === 0) {
+                if (!isCreatingNew) html += `<tr><td colspan="13" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi nào. Hãy bấm "Thêm mới"</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    let isEditingThis = (index === currentEditIndex);
+                    let rowBg = isEditingThis ? 'bg-emerald-50/50' : 'bg-white hover:bg-emerald-50/50';
+
+                    html += `
+                    <tr class="${rowBg} transition-colors border-b border-slate-100 group">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-center font-semibold text-emerald-700">${row['Bậc'] || ''}</td>
+                        <td class="p-3 text-center font-bold text-indigo-600 bg-indigo-50/50">${row['Hệ số'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Mã ngạch'] || ''}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[300px]">${row['Nội dung'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Số Quyết định'] || row['Số QĐ'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['Ngày tháng năm cấp'] || row['Ngày cấp'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 font-medium whitespace-nowrap">${row['Ngày tháng năm có hiệu lực'] || row['Ngày hiệu lực'] || ''}</td>
+                        <td class="p-3 text-left whitespace-pre-wrap max-w-[150px]">${row['Người ký Quyết định'] || row['Người ký'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Thời điểm nâng bậc'] || ''}</td>
+                        <td class="p-3 text-center font-medium text-amber-600 whitespace-nowrap">${row['Thời điểm nâng tiếp theo'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Phần trăm'] || ''}</td>
+                        <td class="p-2 sticky-action ${isEditingThis ? 'bg-emerald-50/50' : 'bg-white group-hover:bg-emerald-50/50'} border-l border-emerald-100">${getActionButtons('luong', index)}</td>
+                    </tr>`;
+
+                    if (isEditingThis) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('luong', index)}</td></tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Viên Chức
+        function renderTableKetQuaVc(data) {
+            const tbody = document.getElementById('ketquavc-tbody');
+            let html = '';
+            
+            if (isCreatingNew) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('ketquavc', -1)}</td></tr>`;
+
+            if(!data || data.length === 0) {
+                if (!isCreatingNew) html += `<tr><td colspan="9" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi nào. Hãy bấm "Thêm mới"</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    let isEditingThis = (index === currentEditIndex);
+                    let rowBg = isEditingThis ? 'bg-amber-50/50' : 'bg-white hover:bg-amber-50/50';
+
+                    html += `
+                    <tr class="${rowBg} transition-colors border-b border-slate-100 group">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-center font-bold text-indigo-700 bg-indigo-50/50 whitespace-nowrap">${row['NĂM HỌC'] || ''}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[300px]">${row['NHIỆM VỤ ĐƯỢC GIAO'] || ''}</td>
+                        <td class="p-3 text-center text-amber-600 font-medium whitespace-pre-wrap max-w-[150px]">${row['ĐĂNG KÝ'] || ''}</td>
+                        <td class="p-3 text-center font-bold text-emerald-600 whitespace-pre-wrap max-w-[150px]">${row['THI ĐUA'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['ĐĂNG KÝ BM'] || ''}</td>
+                        <td class="p-3 text-center font-medium whitespace-nowrap">${row['TỶ LỆ'] || ''}</td>
+                        <td class="p-3 text-center font-semibold text-slate-700 whitespace-nowrap">${row['Hạng lớp CN'] || ''}</td>
+                        <td class="p-2 sticky-action ${isEditingThis ? 'bg-amber-50/50' : 'bg-white group-hover:bg-amber-50/50'} border-l border-amber-100">${getActionButtons('ketquavc', index)}</td>
+                    </tr>`;
+
+                    if (isEditingThis) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('ketquavc', index)}</td></tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Giấy Tờ
+        function renderTableGiayTo(data) {
+            const tbody = document.getElementById('giayto-tbody');
+            let html = '';
+            
+            if (isCreatingNew) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('giayto', -1)}</td></tr>`;
+
+            if(!data || data.length === 0) {
+                if (!isCreatingNew) html += `<tr><td colspan="7" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi nào. Hãy bấm "Thêm mới"</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    let isEditingThis = (index === currentEditIndex);
+                    let rowBg = isEditingThis ? 'bg-sky-50/50' : 'bg-white hover:bg-sky-50/50';
+
+                    html += `
+                    <tr class="${rowBg} transition-colors border-b border-slate-100 group">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[350px]">${row['Nội dung'] || ''}</td>
+                        <td class="p-3 text-center font-semibold text-sky-700 bg-sky-50/50 whitespace-nowrap">${row['SỐ QUYẾT ĐỊNH'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['NGÀY THÁNG NĂM CẤP'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['NGÀY THÁNG NĂM CÓ HIỆU LỰC'] || ''}</td>
+                        <td class="p-3 text-left font-medium text-slate-700 whitespace-pre-wrap max-w-[200px]">${row['NGƯỜI KÝ QUYẾT ĐỊNH'] || ''}</td>
+                        <td class="p-2 sticky-action ${isEditingThis ? 'bg-sky-50/50' : 'bg-white group-hover:bg-sky-50/50'} border-l border-sky-100">${getActionButtons('giayto', index)}</td>
+                    </tr>`;
+
+                    if (isEditingThis) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('giayto', index)}</td></tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Văn Bằng
+        function renderTableVanBang(data) {
+            const tbody = document.getElementById('vanbang-tbody');
+            let html = '';
+            
+            if (isCreatingNew) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('vanbang', -1)}</td></tr>`;
+
+            if(!data || data.length === 0) {
+                if (!isCreatingNew) html += `<tr><td colspan="12" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi nào. Hãy bấm "Thêm mới"</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    let isEditingThis = (index === currentEditIndex);
+                    let rowBg = isEditingThis ? 'bg-green-50/50' : 'bg-white hover:bg-green-50/50';
+
+                    html += `
+                    <tr class="${rowBg} transition-colors border-b border-slate-100 group">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-left font-medium text-blue-600 whitespace-pre-wrap max-w-[200px]">${row['Tên VBCC'] || ''}</td>
+                        <td class="p-3 text-left font-medium text-amber-700 whitespace-pre-wrap max-w-[200px]">${row['Nơi cấp VBCC'] || ''}</td>
+                        <td class="p-3 text-center text-slate-700 whitespace-nowrap">${row['Ngày cấp VBCC'] || ''}</td>
+                        <td class="p-3 text-center font-medium whitespace-nowrap">${row['Số hiệu VBCC'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Số vào sổ'] || ''}</td>
+                        <td class="p-3 text-left text-slate-700 whitespace-pre-wrap max-w-[200px]">${row['Hội đồng kiểm tra - khóa thi'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Thời gian đào tạo'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Hình thức đào tạo'] || ''}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${row['Tình trạng VBCC'] || ''}</td>
+                        <td class="p-3 text-center font-bold text-slate-800 whitespace-nowrap">${row['Xếp loại'] || ''}</td>
+                        <td class="p-2 sticky-action ${isEditingThis ? 'bg-green-50/50' : 'bg-white group-hover:bg-green-50/50'} border-l border-green-100">${getActionButtons('vanbang', index)}</td>
+                    </tr>`;
+
+                    if (isEditingThis) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('vanbang', index)}</td></tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Render Bảng Thành Tích
+        function renderTableThanhTich(data) {
+            const tbody = document.getElementById('thanhtich-tbody');
+            let html = '';
+            
+            if (isCreatingNew) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('thanhtich', -1)}</td></tr>`;
+
+            if(!data || data.length === 0) {
+                if (!isCreatingNew) html += `<tr><td colspan="9" class="p-12 text-center text-slate-500 bg-white/40">Chưa có bản ghi nào. Hãy bấm "Thêm mới"</td></tr>`;
+            } else {
+                data.forEach((row, index) => {
+                    let isEditingThis = (index === currentEditIndex);
+                    let rowBg = isEditingThis ? 'bg-purple-50/50' : 'bg-white hover:bg-purple-50/50';
+
+                    html += `
+                    <tr class="${rowBg} transition-colors border-b border-slate-100 group">
+                        <td class="p-3 text-center font-bold text-slate-500">${row['STT'] || (index + 1)}</td>
+                        <td class="p-3 text-center font-bold text-purple-700 bg-purple-50/50 whitespace-nowrap">${row['NĂM HỌC'] || ''}</td>
+                        <td class="p-3 text-left font-medium whitespace-pre-wrap max-w-[350px]">${row['NỘI DUNG'] || ''}</td>
+                        <td class="p-3 text-center text-purple-600 font-medium whitespace-nowrap">${row['Đạt cấp'] || ''}</td>
+                        <td class="p-3 text-center font-semibold text-slate-700 whitespace-nowrap">${row['Số Quyết định'] || ''}</td>
+                        <td class="p-3 text-center whitespace-pre-wrap max-w-[150px]">${row['Nơi cấp'] || ''}</td>
+                        <td class="p-3 text-center text-slate-600 whitespace-nowrap">${row['Ngày'] || ''}</td>
+                        <td class="p-3 text-center font-medium whitespace-nowrap">${row['Số vào sổ'] || ''}</td>
+                        <td class="p-2 sticky-action ${isEditingThis ? 'bg-purple-50/50' : 'bg-white group-hover:bg-purple-50/50'} border-l border-purple-100">${getActionButtons('thanhtich', index)}</td>
+                    </tr>`;
+
+                    if (isEditingThis) html += `<tr><td colspan="20" class="!p-0 !border-0">${getFormHtml('thanhtich', index)}</td></tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Chuyển Tab
+        function switchTab(tabId) {
+            closeForm(); // Ẩn form khi đổi tab
+            currentActiveTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            ['luong', 'ketquavc', 'giayto', 'vanbang', 'thanhtich'].forEach(t => {
+                document.getElementById('content-' + t).classList.add('hidden');
+            });
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            reRenderActiveTab(); // Render lại tab mới chuyển qua
+        }
+    </script>
+</body>
+</html>

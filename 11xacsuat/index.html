@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Xác Suất STEM - Không Gian Mẫu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Hiệu ứng hoạt họa khi gieo */
+        @keyframes roll-shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-10deg); }
+            20% { transform: translate(-3px, 0px) rotate(10deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(10deg); }
+            50% { transform: translate(-1px, 2px) rotate(-10deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-10deg); }
+            80% { transform: translate(-1px, -1px) rotate(10deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-10deg); }
+        }
+        .animating {
+            animation: roll-shake 0.4s;
+            animation-iteration-count: 1;
+        }
+        
+        /* CSS cho Vật thể */
+        .item-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 12px;
+            margin: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .coin-n { background: linear-gradient(135deg, #fef08a, #eab308); color: #854d0e; border-radius: 50%; }
+        .coin-s { background: linear-gradient(135deg, #cbd5e1, #94a3b8); color: #1e293b; border-radius: 50%; }
+        .dice { background: white; color: #111827; border: 2px solid #e5e7eb; }
+        
+        /* Giao diện cho Thẻ (Card) */
+        .card { 
+            background: linear-gradient(135deg, #a7f3d0, #34d399); 
+            color: #064e3b; 
+            border-radius: 6px; 
+            width: 46px; 
+            height: 66px; 
+            border: 2px solid #10b981;
+            box-shadow: 2px 2px 0px #047857;
+        }
+
+        /* Giao diện cho Tấm bìa quay (Spinner) */
+        .spinner {
+            background: conic-gradient(#fca5a5 0deg 120deg, #fef08a 120deg 240deg, #93c5fd 240deg 360deg);
+            color: #1e293b;
+            border-radius: 50%;
+            border: 3px solid #64748b;
+            position: relative;
+        }
+        .spinner::after {
+            content: '';
+            position: absolute;
+            top: 12px; left: 12px; right: 12px; bottom: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            z-index: 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .spinner span { position: relative; z-index: 1; font-size: 22px; }
+
+        /* Giao diện cho Học sinh */
+        .student {
+            background: linear-gradient(135deg, #e9d5ff, #a855f7);
+            color: #4c1d95;
+            border-radius: 12px;
+            border: 2px solid #9333ea;
+        }
+
+        /* Giao diện Thẻ tên (Cho tuỳ chọn Nhóm/Tên cụ thể) */
+        .name-tag {
+            width: auto;
+            min-width: 80px;
+            height: 50px;
+            padding: 0 16px;
+            font-size: 16px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+        .group1-tag { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e3a8a; border: 2px solid #60a5fa; }
+        .group2-tag { background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #831843; border: 2px solid #f472b6; }
+        .student-tag { background: linear-gradient(135deg, #f3e8ff, #d8b4fe); color: #581c87; border: 2px solid #a855f7; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-indigo-700 mb-2">🎲 Phòng Thí Nghiệm Xác Suất 🪙</h1>
+            <p class="text-slate-500 text-lg">Khám phá Không gian mẫu và Xác suất thực nghiệm qua mô phỏng tương tác</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Cột Trái: Cài đặt & Thao tác -->
+            <div class="space-y-6">
+                <!-- Box Cài đặt (Menu Thu Gọn) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <button onclick="toggleSettings()" class="w-full px-6 py-4 flex justify-between items-center hover:bg-slate-50 transition-colors focus:outline-none">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">⚙️</span>
+                            <h2 class="text-xl font-bold text-slate-700">1. Cài đặt thí nghiệm</h2>
+                        </div>
+                        <svg id="settingsChevron" class="w-5 h-5 text-slate-500 transition-transform duration-300 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <div id="settingsMenu" class="px-6 pb-6 pt-2 space-y-4 border-t border-slate-100 bg-white">
+                        
+                        <!-- Bộ chọn loại thí nghiệm -->
+                        <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                            <label class="block font-medium text-indigo-900 mb-2">📌 Chọn chủ đề bài toán:</label>
+                            <select id="experimentSelector" onchange="selectExperimentType()" class="w-full p-2 border border-indigo-200 rounded-lg font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-400 bg-white shadow-sm outline-none">
+                                <option value="student_names">🪑 Xếp ghế / Xếp hàng (Nhập tên)</option>
+                                <option value="student">👨‍🎓 Xếp vị trí (A, B, C...)</option>
+                                <option value="coin">🪙 Gieo Đồng xu</option>
+                                <option value="dice">🎲 Gieo Xúc sắc</option>
+                                <option value="coin_dice">🎲🪙 Xúc sắc & Đồng xu</option>
+                                <option value="two_groups">👥 Chọn từ 2 Nhóm (Nhập tên)</option>
+                                <option value="card_simul">🃏 Rút Thẻ (Đồng thời)</option>
+                                <option value="card">🃏 Rút Thẻ (Lần lượt)</option>
+                                <option value="spinner">🎡 Quay Tấm bìa</option>
+                                <option value="custom">✨ Tùy chỉnh (Kết hợp tự do)</option>
+                            </select>
+                        </div>
+
+                        <!-- Panel: Xếp ghế (Nhập tên) -->
+                        <div id="panel-student-names" class="setting-panel hidden space-y-2">
+                            <div class="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                                <label class="font-medium text-purple-800">Nhập tên các bạn (cách nhau bởi dấu phẩy):</label>
+                                <input type="text" id="studentNamesList" value="Mai, Việt, Lan" oninput="setupExperiment()" class="w-full mt-1 p-2 border rounded-md font-medium text-purple-900 focus:ring-2 focus:ring-purple-400 outline-none">
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-sm text-purple-700">Số vị trí ghế cần xếp:</span>
+                                    <input type="number" id="studentNamesCount" value="3" min="0" max="10" oninput="setupExperiment()" class="w-16 p-1 border rounded-md text-center font-bold text-purple-900">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel: Học sinh (A, B, C) -->
+                        <div id="panel-student" class="setting-panel hidden space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="font-medium text-purple-700">Chọn Học sinh (có thứ tự):</label>
+                                <input type="number" id="studentCount" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-2 border rounded-lg text-center font-bold focus:ring-2 focus:ring-purple-400">
+                            </div>
+                            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <label class="text-sm font-medium text-slate-600">↳ Từ tổng số học sinh (A, B...):</label>
+                                <input type="number" id="studentMax" value="5" min="2" max="10" oninput="setupExperiment()" class="w-16 p-1 border rounded-md text-center text-sm font-bold focus:ring-2 focus:ring-purple-400">
+                            </div>
+                        </div>
+
+                        <!-- Panel: 2 Nhóm Tùy chỉnh (Nhập tên) -->
+                        <div id="panel-two-groups" class="setting-panel hidden space-y-3">
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <label class="font-medium text-blue-800">Nhóm I (Ví dụ: Nam):</label>
+                                <input type="text" id="group1Elements" value="Huy, Sơn, Tùng" oninput="setupExperiment()" class="w-full mt-1 p-2 border rounded-md font-medium text-blue-900 focus:ring-2 focus:ring-blue-400 outline-none">
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-sm text-blue-700">Số lượng chọn:</span>
+                                    <input type="number" id="group1Count" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-1 border rounded-md text-center font-bold text-blue-900">
+                                </div>
+                            </div>
+                            <div class="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                <label class="font-medium text-pink-800">Nhóm II (Ví dụ: Nữ):</label>
+                                <input type="text" id="group2Elements" value="Hồng, Phương, Linh" oninput="setupExperiment()" class="w-full mt-1 p-2 border rounded-md font-medium text-pink-900 focus:ring-2 focus:ring-pink-400 outline-none">
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-sm text-pink-700">Số lượng chọn:</span>
+                                    <input type="number" id="group2Count" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-1 border rounded-md text-center font-bold text-pink-900">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel: Đồng xu -->
+                        <div id="panel-coin" class="setting-panel hidden space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="font-medium text-yellow-700">Số lượng Đồng xu (N/S):</label>
+                                <input type="number" id="coinCount" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-2 border rounded-lg text-center font-bold focus:ring-2 focus:ring-yellow-400">
+                            </div>
+                        </div>
+
+                        <!-- Panel: Xúc sắc -->
+                        <div id="panel-dice" class="setting-panel hidden space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="font-medium text-slate-700">Số lượng Xúc sắc (1-6):</label>
+                                <input type="number" id="diceCount" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-2 border rounded-lg text-center font-bold focus:ring-2 focus:ring-slate-400">
+                            </div>
+                        </div>
+                        
+                        <!-- Panel: Thẻ rút -->
+                        <div id="panel-card" class="setting-panel hidden space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="font-medium text-emerald-700">Thẻ rút (lần lượt, không hoàn lại):</label>
+                                <input type="number" id="cardCount" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-2 border rounded-lg text-center font-bold focus:ring-2 focus:ring-emerald-400">
+                            </div>
+                            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <label class="text-sm font-medium text-slate-600">↳ Hộp thẻ đánh số từ 1 đến:</label>
+                                <input type="number" id="cardMax" value="5" min="2" max="20" oninput="setupExperiment()" class="w-16 p-1 border rounded-md text-center text-sm font-bold focus:ring-2 focus:ring-emerald-400">
+                            </div>
+                        </div>
+
+                        <!-- Panel: Thẻ rút đồng thời -->
+                        <div id="panel-card-simul" class="setting-panel hidden space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="font-medium text-emerald-700">Thẻ rút (đồng thời):</label>
+                                <input type="number" id="cardSimulCount" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-2 border rounded-lg text-center font-bold focus:ring-2 focus:ring-emerald-400">
+                            </div>
+                            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <label class="text-sm font-medium text-slate-600">↳ Hộp thẻ đánh số từ 1 đến:</label>
+                                <input type="number" id="cardSimulMax" value="5" min="2" max="20" oninput="setupExperiment()" class="w-16 p-1 border rounded-md text-center text-sm font-bold focus:ring-2 focus:ring-emerald-400">
+                            </div>
+                        </div>
+
+                        <!-- Panel: Tấm bìa quay -->
+                        <div id="panel-spinner" class="setting-panel hidden space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label class="font-medium text-pink-600">Số lượng Tấm bìa quay:</label>
+                                <input type="number" id="spinnerCount" value="0" min="0" max="5" oninput="setupExperiment()" class="w-16 p-2 border rounded-lg text-center font-bold focus:ring-2 focus:ring-pink-400">
+                            </div>
+                            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                <label class="text-sm font-medium text-slate-600">↳ Số hình quạt (từ 1 đến):</label>
+                                <input type="number" id="spinnerMax" value="3" min="2" max="10" oninput="setupExperiment()" class="w-16 p-1 border rounded-md text-center text-sm font-bold focus:ring-2 focus:ring-pink-400">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Box Thao tác -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold text-slate-700 mb-4 border-b pb-2">2. Thực hiện mô phỏng</h2>
+                    
+                    <div id="visualArea" class="flex flex-wrap justify-center items-end min-h-[80px] mb-6 p-4 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 gap-2">
+                        <!-- Cấu hình vật thể sẽ hiển thị ở đây -->
+                        <span class="text-slate-400 italic mt-2">Đang tải...</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="roll(1)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform transform active:scale-95 flex items-center justify-center gap-2">
+                            <span>Thực hiện 1 lần</span>
+                        </button>
+                        <button onclick="roll(100)" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform transform active:scale-95">
+                            Lặp 100 lần
+                        </button>
+                        <button onclick="roll(1000)" class="col-span-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform transform active:scale-95">
+                            Lặp 1000 lần (Thử định luật số lớn)
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between items-center text-sm">
+                        <span class="font-medium text-slate-500">Tổng số lần đã thử:</span>
+                        <span id="totalRolls" class="font-bold text-xl text-indigo-600">0</span>
+                    </div>
+                    <button onclick="resetStats()" class="mt-2 text-xs text-red-500 hover:text-red-700 underline w-full text-right">Xóa lịch sử</button>
+                </div>
+            </div>
+
+            <!-- Cột Phải: Không gian mẫu & Thống kê -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Không gian mẫu -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-slate-700">Không Gian Mẫu <span class="italic font-serif">&Omega;</span></h2>
+                        <span id="sampleSpaceSize" class="bg-indigo-100 text-indigo-800 text-sm font-bold px-3 py-1 rounded-full">n(&Omega;) = 0</span>
+                    </div>
+                    <div id="sampleSpaceDisplay" class="bg-slate-50 p-4 rounded-xl text-lg font-mono text-slate-700 break-words leading-relaxed border border-slate-200 h-32 overflow-y-auto">
+                        ...
+                    </div>
+                </div>
+
+                <!-- Thống kê & Phân tích Biến cố -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h2 class="text-xl font-bold text-slate-700 mb-4 border-b pb-2">Thống Kê & Phân Tích Biến Cố</h2>
+                    
+                    <!-- Tính xác suất biến cố -->
+                    <div class="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <label class="block text-sm font-bold text-blue-800 mb-2">Chọn một biến cố (kết quả) để xem chi tiết:</label>
+                        <select id="eventSelect" onchange="updateEventAnalysis()" class="w-full p-2 rounded-lg border border-blue-200 bg-white font-mono text-lg focus:ring-2 focus:ring-blue-400">
+                            <option value="">-- Chọn một kết quả --</option>
+                        </select>
+                        
+                        <div id="eventAnalysis" class="mt-4 hidden grid-cols-2 gap-4 text-center">
+                            <div class="bg-white p-3 rounded-lg shadow-sm">
+                                <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Xác suất Lý thuyết</div>
+                                <div id="theoProb" class="text-2xl font-bold text-indigo-600 mt-1">0%</div>
+                                <div id="theoFraction" class="text-sm text-slate-400 mt-1">0/0</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg shadow-sm">
+                                <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">Xác suất Thực nghiệm</div>
+                                <div id="empProb" class="text-2xl font-bold text-emerald-600 mt-1">0%</div>
+                                <div id="empFraction" class="text-sm text-slate-400 mt-1">0/0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bảng tần số -->
+                    <div class="overflow-x-auto max-h-80 overflow-y-auto border border-slate-200 rounded-xl">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-slate-700 uppercase bg-slate-100 sticky top-0">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Kết quả</th>
+                                    <th scope="col" class="px-6 py-3 text-center">Tần số (Lần)</th>
+                                    <th scope="col" class="px-6 py-3 text-center">Tần suất (%)</th>
+                                    <th scope="col" class="px-6 py-3 text-center">XS Lý thuyết (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statsTableBody">
+                                <!-- Dữ liệu bảng sẽ được chèn vào đây -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Trạng thái ứng dụng
+        let currentSetup = []; 
+        let sampleSpace = [];  
+        let historyCounts = {}; 
+        let totalRollsCount = 0;
+
+        // Khởi tạo ban đầu
+        window.onload = () => {
+            selectExperimentType(); // Thiết lập menu dựa trên dropdown mặc định
+        };
+
+        // Hàm Xử lý khi chọn loại thí nghiệm ở Dropdown
+        function selectExperimentType() {
+            const type = document.getElementById('experimentSelector').value;
+
+            // Ẩn tất cả các panel cài đặt
+            const panels = document.querySelectorAll('.setting-panel');
+            panels.forEach(p => p.classList.add('hidden'));
+
+            // Đưa tất cả biến đếm về 0
+            document.getElementById('coinCount').value = 0;
+            document.getElementById('diceCount').value = 0;
+            document.getElementById('cardCount').value = 0;
+            document.getElementById('cardSimulCount').value = 0;
+            document.getElementById('spinnerCount').value = 0;
+            document.getElementById('studentCount').value = 0;
+            document.getElementById('studentNamesCount').value = 0;
+            document.getElementById('group1Count').value = 0;
+            document.getElementById('group2Count').value = 0;
+
+            // Hiển thị panel tương ứng và đặt giá trị mặc định hợp lý
+            if (type === 'student_names') {
+                document.getElementById('panel-student-names').classList.remove('hidden');
+                document.getElementById('studentNamesCount').value = 3;
+                document.getElementById('studentNamesList').value = "Mai, Việt, Lan";
+            } else if (type === 'student') {
+                document.getElementById('panel-student').classList.remove('hidden');
+                document.getElementById('studentCount').value = 2;
+                document.getElementById('studentMax').value = 5;
+            } else if (type === 'coin') {
+                document.getElementById('panel-coin').classList.remove('hidden');
+                document.getElementById('coinCount').value = 2;
+            } else if (type === 'dice') {
+                document.getElementById('panel-dice').classList.remove('hidden');
+                document.getElementById('diceCount').value = 2;
+            } else if (type === 'coin_dice') {
+                document.getElementById('panel-coin').classList.remove('hidden');
+                document.getElementById('panel-dice').classList.remove('hidden');
+                document.getElementById('coinCount').value = 1;
+                document.getElementById('diceCount').value = 1;
+            } else if (type === 'two_groups') {
+                document.getElementById('panel-two-groups').classList.remove('hidden');
+                document.getElementById('group1Count').value = 1;
+                document.getElementById('group2Count').value = 1;
+                document.getElementById('group1Elements').value = "Huy, Sơn, Tùng";
+                document.getElementById('group2Elements').value = "Hồng, Phương, Linh";
+            } else if (type === 'card_simul') {
+                document.getElementById('panel-card-simul').classList.remove('hidden');
+                document.getElementById('cardSimulCount').value = 2;
+                document.getElementById('cardSimulMax').value = 5;
+            } else if (type === 'card') {
+                document.getElementById('panel-card').classList.remove('hidden');
+                document.getElementById('cardCount').value = 2;
+                document.getElementById('cardMax').value = 5;
+            } else if (type === 'spinner') {
+                document.getElementById('panel-spinner').classList.remove('hidden');
+                document.getElementById('spinnerCount').value = 2;
+                document.getElementById('spinnerMax').value = 3;
+            } else if (type === 'custom') {
+                // Hiển thị TẤT CẢ các panel để người dùng tự do kết hợp
+                panels.forEach(p => p.classList.remove('hidden'));
+                
+                // Gợi ý một kết hợp mẫu (1 xúc sắc + 1 đồng xu + 1 thẻ)
+                document.getElementById('coinCount').value = 1;
+                document.getElementById('diceCount').value = 1;
+                document.getElementById('cardCount').value = 1;
+                document.getElementById('cardMax').value = 3;
+            }
+
+            // Gọi hàm tính toán cập nhật giao diện
+            setupExperiment();
+        }
+
+        // Hàm Tạo Không Gian Mẫu
+        function generateSampleSpace(arrays, setupTypes) {
+            if (arrays.length === 0) return [];
+            
+            const productArr = arrays.reduce((acc, curr, index) => {
+                let res = [];
+                acc.forEach(a => {
+                    curr.forEach(c => {
+                        if (setupTypes[index] === 'card_simul') {
+                            // Rút đồng thời: Không quan tâm thứ tự, KHÔNG trùng lặp.
+                            // Quy ước sắp xếp tăng dần để đại diện cho tổ hợp.
+                            let isValid = true;
+                            for (let i = 0; i < index; i++) {
+                                if (setupTypes[i] === 'card_simul') {
+                                    if (parseInt(c) <= parseInt(a[i])) {
+                                        isValid = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (isValid) {
+                                res.push([...a, c]);
+                            }
+                        } else if (setupTypes[index] === 'card' || setupTypes[index] === 'student' || setupTypes[index] === 'group1' || setupTypes[index] === 'group2' || setupTypes[index] === 'student_names') {
+                            // Rút lần lượt không hoàn lại (hoặc chọn có thứ tự, xếp ghế):
+                            // Có phân biệt thứ tự, KHÔNG trùng lặp.
+                            let prevItems = [];
+                            for (let i = 0; i < index; i++) {
+                                if (setupTypes[i] === setupTypes[index]) {
+                                    prevItems.push(a[i]);
+                                }
+                            }
+                            if (!prevItems.includes(c)) {
+                                res.push([...a, c]);
+                            }
+                        } else {
+                            // Xúc sắc, đồng xu, và TẤM BÌA QUAY là các sự kiện độc lập
+                            res.push([...a, c]); 
+                        }
+                    });
+                });
+                return res;
+            }, [[]]);
+
+            // Trình bày lại dưới dạng chuỗi toán học
+            return productArr.map(arr => {
+                if (arr.length === 1) return arr[0];
+                return `(${arr.join(', ')})`;
+            });
+        }
+
+        // Cập nhật cấu hình thí nghiệm
+        function setupExperiment() {
+            const coins = parseInt(document.getElementById('coinCount').value) || 0;
+            const dices = parseInt(document.getElementById('diceCount').value) || 0;
+            const cards = parseInt(document.getElementById('cardCount').value) || 0;
+            const cardSimuls = parseInt(document.getElementById('cardSimulCount').value) || 0;
+            const spinners = parseInt(document.getElementById('spinnerCount').value) || 0;
+            
+            const students = parseInt(document.getElementById('studentCount').value) || 0;
+            const studentNamesCount = parseInt(document.getElementById('studentNamesCount').value) || 0;
+            const group1Count = parseInt(document.getElementById('group1Count').value) || 0;
+            const group2Count = parseInt(document.getElementById('group2Count').value) || 0;
+            
+            const sNames = document.getElementById('studentNamesList').value.split(',').map(s=>s.trim()).filter(s=>s);
+            const g1Elements = document.getElementById('group1Elements').value.split(',').map(s=>s.trim()).filter(s=>s);
+            const g2Elements = document.getElementById('group2Elements').value.split(',').map(s=>s.trim()).filter(s=>s);
+            
+            let cardMax = parseInt(document.getElementById('cardMax').value) || 4;
+            let cardSimulMax = parseInt(document.getElementById('cardSimulMax').value) || 4;
+            let spinnerMax = parseInt(document.getElementById('spinnerMax').value) || 3;
+            let studentMax = parseInt(document.getElementById('studentMax').value) || 5;
+            
+            if (cardMax < 2) cardMax = 2; // Tối thiểu 2 thẻ trong hộp
+            if (cardSimulMax < 2) cardSimulMax = 2; // Tối thiểu 2 thẻ trong hộp
+            if (spinnerMax < 2) spinnerMax = 2; // Tối thiểu 2 hình quạt
+            if (studentMax < 2) studentMax = 2; // Tối thiểu 2 học sinh
+
+            if (cards > cardMax) {
+                showError(`Lỗi: Không thể rút lần lượt ${cards} thẻ từ hộp chỉ có ${cardMax} thẻ!`);
+                return;
+            }
+            if (cardSimuls > cardSimulMax) {
+                showError(`Lỗi: Không thể rút đồng thời ${cardSimuls} thẻ từ hộp chỉ có ${cardSimulMax} thẻ!`);
+                return;
+            }
+            if (students > studentMax) {
+                showError(`Lỗi: Không thể xếp vị trí cho ${students} học sinh từ nhóm chỉ có ${studentMax} học sinh!`);
+                return;
+            }
+            if (studentNamesCount > sNames.length) {
+                showError(`Lỗi: Không thể xếp ${studentNamesCount} vị trí trong khi chỉ nhập tên ${sNames.length} bạn!`);
+                return;
+            }
+            if (group1Count > g1Elements.length) {
+                showError(`Lỗi: Không thể chọn ${group1Count} người từ Nhóm I chỉ có ${g1Elements.length} người!`);
+                return;
+            }
+            if (group2Count > g2Elements.length) {
+                showError(`Lỗi: Không thể chọn ${group2Count} người từ Nhóm II chỉ có ${g2Elements.length} người!`);
+                return;
+            }
+
+            if (coins === 0 && dices === 0 && cards === 0 && cardSimuls === 0 && spinners === 0 && students === 0 && studentNamesCount === 0 && group1Count === 0 && group2Count === 0) {
+                showError('Vui lòng nhập số lượng vật thể/người lớn hơn 0 để thực hiện mô phỏng!');
+                return;
+            }
+
+            // Kiểm soát kích thước không gian mẫu để tránh treo trình duyệt
+            let expectedSize = 1;
+            if(coins > 0) expectedSize *= Math.pow(2, coins);
+            if(dices > 0) expectedSize *= Math.pow(6, dices);
+            if(spinners > 0) expectedSize *= Math.pow(spinnerMax, spinners);
+            
+            // Tính số lượng Chỉnh hợp cho thẻ và học sinh
+            if(cards > 0) {
+                let cardPermutations = 1;
+                for(let i=0; i<cards; i++) cardPermutations *= (cardMax - i);
+                expectedSize *= cardPermutations;
+            }
+            // Tính số lượng Tổ hợp cho thẻ rút đồng thời
+            if(cardSimuls > 0) {
+                let cardCombinations = 1;
+                for(let i=1; i<=cardSimuls; i++) {
+                    cardCombinations = cardCombinations * (cardSimulMax - i + 1) / i;
+                }
+                expectedSize *= cardCombinations;
+            }
+            if(students > 0) {
+                let studentPermutations = 1;
+                for(let i=0; i<students; i++) studentPermutations *= (studentMax - i);
+                expectedSize *= studentPermutations;
+            }
+            if(studentNamesCount > 0) {
+                let snPermutations = 1;
+                for(let i=0; i<studentNamesCount; i++) snPermutations *= (sNames.length - i);
+                expectedSize *= snPermutations;
+            }
+            if(group1Count > 0) {
+                let g1Permutations = 1;
+                for(let i=0; i<group1Count; i++) g1Permutations *= (g1Elements.length - i);
+                expectedSize *= g1Permutations;
+            }
+            if(group2Count > 0) {
+                let g2Permutations = 1;
+                for(let i=0; i<group2Count; i++) g2Permutations *= (g2Elements.length - i);
+                expectedSize *= g2Permutations;
+            }
+
+            if (expectedSize > 2500) {
+                showError(`⚠️ Kích thước Không gian mẫu quá lớn (${expectedSize} kết quả) sẽ làm đứng trình duyệt. Vui lòng giảm số lượng!`, expectedSize);
+                return;
+            }
+
+            // Xóa dữ liệu cũ
+            resetStats();
+            currentSetup = [];
+            let arraysForProduct = [];
+
+            // Thiết lập vật thể
+            // 1. Học sinh (Nhập tên cụ thể)
+            for(let i=0; i<studentNamesCount; i++) {
+                currentSetup.push('student_names');
+                arraysForProduct.push(sNames);
+            }
+            // 2. Học sinh (Dùng chữ cái A, B, C...)
+            for(let i=0; i<students; i++) {
+                currentSetup.push('student');
+                let studentArr = [];
+                for(let j=0; j<studentMax; j++) {
+                    studentArr.push(String.fromCharCode(65 + j)); 
+                }
+                arraysForProduct.push(studentArr);
+            }
+            // 3. Xúc sắc
+            for(let i=0; i<dices; i++) {
+                currentSetup.push('dice');
+                arraysForProduct.push(['1', '2', '3', '4', '5', '6']);
+            }
+            // 4. Đồng xu
+            for(let i=0; i<coins; i++) {
+                currentSetup.push('coin');
+                arraysForProduct.push(['N', 'S']);
+            }
+            // 5. Thẻ
+            for(let i=0; i<cards; i++) {
+                currentSetup.push('card');
+                let cardArr = [];
+                for(let j=1; j<=cardMax; j++) {
+                    cardArr.push(j.toString());
+                }
+                arraysForProduct.push(cardArr);
+            }
+            // 6. Thẻ rút đồng thời
+            for(let i=0; i<cardSimuls; i++) {
+                currentSetup.push('card_simul');
+                let cardArr = [];
+                for(let j=1; j<=cardSimulMax; j++) {
+                    cardArr.push(j.toString());
+                }
+                arraysForProduct.push(cardArr);
+            }
+            // 7. Bìa quay
+            for(let i=0; i<spinners; i++) {
+                currentSetup.push('spinner');
+                let spinArr = [];
+                for(let j=1; j<=spinnerMax; j++) {
+                    spinArr.push(j.toString());
+                }
+                arraysForProduct.push(spinArr);
+            }
+            // 8. Nhóm tùy chỉnh 1 và 2
+            for(let i=0; i<group1Count; i++) {
+                currentSetup.push('group1');
+                arraysForProduct.push(g1Elements);
+            }
+            for(let i=0; i<group2Count; i++) {
+                currentSetup.push('group2');
+                arraysForProduct.push(g2Elements);
+            }
+
+            // 1. Tạo Không gian mẫu
+            sampleSpace = generateSampleSpace(arraysForProduct, currentSetup);
+            
+            // 2. Khởi tạo bộ đếm
+            sampleSpace.forEach(outcome => {
+                historyCounts[outcome] = 0;
+            });
+
+            // Cập nhật UI
+            renderSampleSpace();
+            renderVisualPlaceholders();
+            populateEventDropdown();
+            renderStatsTable();
+        }
+
+        function showError(msg, size = 0) {
+            document.getElementById('sampleSpaceDisplay').innerHTML = `<span class="text-red-500 font-bold">${msg}</span>`;
+            document.getElementById('sampleSpaceSize').innerText = `n(Ω) = ${size}`;
+            document.getElementById('visualArea').innerHTML = '<span class="text-slate-400 italic mt-2">Dữ liệu không hợp lệ...</span>';
+            sampleSpace = [];
+        }
+
+        function renderSampleSpace() {
+            document.getElementById('sampleSpaceSize').innerText = `n(Ω) = ${sampleSpace.length}`;
+            const formatted = `Ω = { ${sampleSpace.join(', ')} }`;
+            document.getElementById('sampleSpaceDisplay').innerText = formatted;
+        }
+
+        function renderVisualPlaceholders() {
+            const area = document.getElementById('visualArea');
+            area.innerHTML = '';
+            
+            currentSetup.forEach((type, index) => {
+                const el = document.createElement('div');
+                el.id = `item-${index}`;
+                
+                if (type === 'dice') {
+                    el.className = 'item-box dice shadow-md';
+                    el.innerText = '?';
+                } else if (type === 'coin') {
+                    el.className = 'item-box coin-s shadow-md';
+                    el.innerText = '?';
+                } else if (type === 'card' || type === 'card_simul') {
+                    el.className = 'item-box card shadow-md';
+                    el.innerText = '?';
+                } else if (type === 'spinner') {
+                    el.className = 'item-box spinner shadow-md';
+                    el.innerHTML = '<span>?</span>';
+                } else if (type === 'student') {
+                    el.className = 'item-box student shadow-md';
+                    el.innerText = '?';
+                } else if (type === 'student_names') {
+                    el.className = 'item-box name-tag student-tag shadow-md';
+                    el.innerText = '?';
+                } else if (type === 'group1') {
+                    el.className = 'item-box name-tag group1-tag shadow-md';
+                    el.innerText = '?';
+                } else if (type === 'group2') {
+                    el.className = 'item-box name-tag group2-tag shadow-md';
+                    el.innerText = '?';
+                }
+                
+                area.appendChild(el);
+            });
+        }
+
+        function populateEventDropdown() {
+            const select = document.getElementById('eventSelect');
+            select.innerHTML = '<option value="">-- Chọn một kết quả --</option>';
+            sampleSpace.forEach(outcome => {
+                const opt = document.createElement('option');
+                opt.value = outcome;
+                opt.innerText = outcome;
+                select.appendChild(opt);
+            });
+            document.getElementById('eventAnalysis').classList.add('hidden');
+        }
+
+        // Thực hiện gieo / rút / quay / chọn (numTimes lần)
+        function roll(numTimes) {
+            if(sampleSpace.length === 0) return;
+
+            const area = document.getElementById('visualArea');
+            
+            if(numTimes === 1) {
+                Array.from(area.children).forEach(child => {
+                    child.classList.remove('animating');
+                    void child.offsetWidth;
+                    child.classList.add('animating');
+                });
+            }
+
+            setTimeout(() => {
+                for(let i=0; i<numTimes; i++) {
+                    let currentRollResultArr = [];
+                    let displayResults = [];
+
+                    // 1. Chuẩn bị Thẻ (Rút không hoàn lại)
+                    const maxCards = parseInt(document.getElementById('cardMax').value) || 4;
+                    let availableCards = Array.from({length: maxCards}, (_, i) => i + 1);
+                    let drawnCards = [];
+                    const numCardsToDraw = currentSetup.filter(t => t === 'card').length;
+                    for(let c=0; c<numCardsToDraw; c++) {
+                        let rIdx = Math.floor(Math.random() * availableCards.length);
+                        drawnCards.push(availableCards.splice(rIdx, 1)[0]);
+                    }
+                    let cardDrawIndex = 0;
+
+                    // 1b. Chuẩn bị Thẻ rút đồng thời (Rút không hoàn lại, SAU ĐÓ SẮP XẾP)
+                    const maxCardSimuls = parseInt(document.getElementById('cardSimulMax').value) || 4;
+                    let availableCardSimuls = Array.from({length: maxCardSimuls}, (_, i) => i + 1);
+                    let drawnCardSimuls = [];
+                    const numCardSimulsToDraw = currentSetup.filter(t => t === 'card_simul').length;
+                    for(let c=0; c<numCardSimulsToDraw; c++) {
+                        let rIdx = Math.floor(Math.random() * availableCardSimuls.length);
+                        drawnCardSimuls.push(availableCardSimuls.splice(rIdx, 1)[0]);
+                    }
+                    drawnCardSimuls.sort((a, b) => a - b); // Rút đồng thời thì sắp xếp tăng dần
+                    let cardSimulDrawIndex = 0;
+
+                    // 2a. Chuẩn bị Học sinh Nhập tên (Chọn không hoàn lại)
+                    const sNamesStr = document.getElementById('studentNamesList').value || '';
+                    let availableSNames = sNamesStr.split(',').map(s=>s.trim()).filter(s=>s);
+                    let pickedSNames = [];
+                    const numSNamesToPick = currentSetup.filter(t => t === 'student_names').length;
+                    for(let c=0; c<numSNamesToPick; c++) {
+                        let rIdx = Math.floor(Math.random() * availableSNames.length);
+                        pickedSNames.push(availableSNames.splice(rIdx, 1)[0]);
+                    }
+                    let sNamesPickIndex = 0;
+
+                    // 2b. Chuẩn bị Học sinh A, B, C... (Chọn không hoàn lại)
+                    const maxStudents = parseInt(document.getElementById('studentMax').value) || 5;
+                    let availableStudents = Array.from({length: maxStudents}, (_, i) => String.fromCharCode(65 + i));
+                    let pickedStudents = [];
+                    const numStudentsToPick = currentSetup.filter(t => t === 'student').length;
+                    for(let c=0; c<numStudentsToPick; c++) {
+                        let rIdx = Math.floor(Math.random() * availableStudents.length);
+                        pickedStudents.push(availableStudents.splice(rIdx, 1)[0]);
+                    }
+                    let studentPickIndex = 0;
+
+                    // 3. Chuẩn bị 2 Nhóm tùy chỉnh
+                    const g1ElementsStr = document.getElementById('group1Elements').value;
+                    let availableG1 = g1ElementsStr.split(',').map(s=>s.trim()).filter(s=>s);
+                    let pickedG1 = [];
+                    const numG1ToPick = currentSetup.filter(t => t === 'group1').length;
+                    for(let c=0; c<numG1ToPick; c++) {
+                        let rIdx = Math.floor(Math.random() * availableG1.length);
+                        pickedG1.push(availableG1.splice(rIdx, 1)[0]);
+                    }
+                    let g1PickIndex = 0;
+
+                    const g2ElementsStr = document.getElementById('group2Elements').value;
+                    let availableG2 = g2ElementsStr.split(',').map(s=>s.trim()).filter(s=>s);
+                    let pickedG2 = [];
+                    const numG2ToPick = currentSetup.filter(t => t === 'group2').length;
+                    for(let c=0; c<numG2ToPick; c++) {
+                        let rIdx = Math.floor(Math.random() * availableG2.length);
+                        pickedG2.push(availableG2.splice(rIdx, 1)[0]);
+                    }
+                    let g2PickIndex = 0;
+
+                    currentSetup.forEach(type => {
+                        if (type === 'dice') {
+                            const val = Math.floor(Math.random() * 6) + 1;
+                            currentRollResultArr.push(val.toString());
+                            displayResults.push(val);
+                        } else if (type === 'coin') {
+                            const val = Math.random() < 0.5 ? 'N' : 'S';
+                            currentRollResultArr.push(val);
+                            displayResults.push(val);
+                        } else if (type === 'card') {
+                            const val = drawnCards[cardDrawIndex++];
+                            currentRollResultArr.push(val.toString());
+                            displayResults.push(val);
+                        } else if (type === 'card_simul') {
+                            const val = drawnCardSimuls[cardSimulDrawIndex++];
+                            currentRollResultArr.push(val.toString());
+                            displayResults.push(val);
+                        } else if (type === 'spinner') {
+                            const maxSpinner = parseInt(document.getElementById('spinnerMax').value) || 3;
+                            const val = Math.floor(Math.random() * maxSpinner) + 1;
+                            currentRollResultArr.push(val.toString());
+                            displayResults.push(val);
+                        } else if (type === 'student_names') {
+                            const val = pickedSNames[sNamesPickIndex++];
+                            currentRollResultArr.push(val);
+                            displayResults.push(val);
+                        } else if (type === 'student') {
+                            const val = pickedStudents[studentPickIndex++];
+                            currentRollResultArr.push(val);
+                            displayResults.push(val);
+                        } else if (type === 'group1') {
+                            const val = pickedG1[g1PickIndex++];
+                            currentRollResultArr.push(val);
+                            displayResults.push(val);
+                        } else if (type === 'group2') {
+                            const val = pickedG2[g2PickIndex++];
+                            currentRollResultArr.push(val);
+                            displayResults.push(val);
+                        }
+                    });
+
+                    // Định dạng lại theo chuỗi toán học
+                    const currentRollResultStr = currentRollResultArr.length === 1 
+                        ? currentRollResultArr[0] 
+                        : `(${currentRollResultArr.join(', ')})`;
+
+                    historyCounts[currentRollResultStr]++;
+                    totalRollsCount++;
+                    
+                    if (i === numTimes - 1) {
+                        Array.from(area.children).forEach((child, index) => {
+                            if(currentSetup[index] === 'coin') {
+                                child.innerText = displayResults[index];
+                                child.className = `item-box ${displayResults[index] === 'N' ? 'coin-n' : 'coin-s'} shadow-md`;
+                            } else if (currentSetup[index] === 'card' || currentSetup[index] === 'card_simul') {
+                                child.innerText = displayResults[index];
+                                child.className = `item-box card shadow-md`;
+                            } else if (currentSetup[index] === 'spinner') {
+                                child.innerHTML = `<span>${displayResults[index]}</span>`;
+                                child.className = `item-box spinner shadow-md`;
+                            } else if (currentSetup[index] === 'student') {
+                                child.innerText = displayResults[index];
+                                child.className = `item-box student shadow-md`;
+                            } else if (currentSetup[index] === 'student_names') {
+                                child.innerText = displayResults[index];
+                                child.className = `item-box name-tag student-tag shadow-md`;
+                            } else if (currentSetup[index] === 'group1') {
+                                child.innerText = displayResults[index];
+                                child.className = `item-box name-tag group1-tag shadow-md`;
+                            } else if (currentSetup[index] === 'group2') {
+                                child.innerText = displayResults[index];
+                                child.className = `item-box name-tag group2-tag shadow-md`;
+                            } else {
+                                child.innerText = displayResults[index];
+                                child.className = `item-box dice shadow-md`;
+                            }
+                        });
+                    }
+                }
+
+                document.getElementById('totalRolls').innerText = totalRollsCount;
+                renderStatsTable();
+                
+                if(document.getElementById('eventSelect').value !== "") {
+                    updateEventAnalysis();
+                }
+
+            }, numTimes === 1 ? 400 : 0);
+        }
+
+        function renderStatsTable() {
+            const tbody = document.getElementById('statsTableBody');
+            tbody.innerHTML = '';
+
+            const theoProbValue = (1 / sampleSpace.length) * 100;
+
+            sampleSpace.forEach(outcome => {
+                const count = historyCounts[outcome];
+                const empProbValue = totalRollsCount === 0 ? 0 : (count / totalRollsCount) * 100;
+                
+                const tr = document.createElement('tr');
+                tr.className = "bg-white border-b hover:bg-slate-50 transition-colors";
+                
+                tr.innerHTML = `
+                    <th scope="row" class="px-6 py-2 font-mono text-indigo-700 whitespace-nowrap">
+                        ${outcome}
+                    </th>
+                    <td class="px-6 py-2 text-center font-bold">
+                        ${count}
+                    </td>
+                    <td class="px-6 py-2 text-center text-emerald-600 font-medium">
+                        ${empProbValue.toFixed(2)}%
+                    </td>
+                    <td class="px-6 py-2 text-center text-slate-500">
+                        ${theoProbValue.toFixed(2)}%
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateEventAnalysis() {
+            const selected = document.getElementById('eventSelect').value;
+            const panel = document.getElementById('eventAnalysis');
+            
+            if(!selected) {
+                panel.classList.add('hidden');
+                return;
+            }
+            
+            panel.classList.remove('hidden');
+            panel.classList.add('grid');
+
+            const n_A = 1; 
+            const n_S = sampleSpace.length;
+            document.getElementById('theoFraction').innerText = `P = ${n_A}/${n_S}`;
+            document.getElementById('theoProb').innerText = `${((n_A/n_S)*100).toFixed(2)}%`;
+
+            const count = historyCounts[selected];
+            document.getElementById('empFraction').innerText = `f = ${count}/${totalRollsCount}`;
+            document.getElementById('empProb').innerText = `${totalRollsCount === 0 ? 0 : ((count/totalRollsCount)*100).toFixed(2)}%`;
+        }
+
+        function resetStats() {
+            totalRollsCount = 0;
+            document.getElementById('totalRolls').innerText = "0";
+            for(let key in historyCounts) {
+                historyCounts[key] = 0;
+            }
+            renderStatsTable();
+            updateEventAnalysis();
+        }
+
+        // Đóng/Mở Menu Cài Đặt
+        function toggleSettings() {
+            const menu = document.getElementById('settingsMenu');
+            const chevron = document.getElementById('settingsChevron');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+    </script>
+</body>
+</html>

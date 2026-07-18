@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Khảo sát Ảnh thẻ 3x4 ✨</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Nunito (thân thiện) & Dancing Script (chữ ký) -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Thư viện SheetJS để xuất file .xlsx -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                        script: ['Dancing Script', 'cursive'],
+                    },
+                    colors: {
+                        pastel: {
+                            blue: '#dbeafe',
+                            pink: '#fce7f3',
+                            yellow: '#fef08a',
+                            green: '#dcfce3',
+                            purple: '#f3e8ff'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Animations & UI details */
+        body {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            min-height: 100vh;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Ẩn radio button mặc định */
+        input[type="radio"] { display: none; }
+        
+        /* Style cho trạng thái chọn Radio */
+        input[type="radio"]:checked + label {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
+        }
+
+        #toast {
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        #toast.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .heart-btn {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .heart-btn:active { transform: scale(0.7); }
+        .liked svg { fill: #ef4444; color: #ef4444; }
+    </style>
+</head>
+<body class="text-slate-700 pb-20 flex flex-col items-center overflow-x-hidden">
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Sidebar Menu -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-white/95 backdrop-blur-xl shadow-[20px_0_30px_rgba(0,0,0,0.1)] z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col rounded-r-3xl border-r border-white">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">Menu</h2>
+            <button id="closeMenuBtn" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-4 flex-grow">
+            <button id="loginBtn" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-600 font-bold transition-all border-2 border-transparent hover:border-blue-200 group">
+                <div class="bg-blue-100 p-2 rounded-xl group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                </div>
+                Đăng nhập Quản trị
+            </button>
+
+            <!-- Khu vực chứa các tính năng nâng cao của Admin (Mặc định ẩn) -->
+            <div id="adminActions" class="hidden mt-4">
+                <button id="exportExcelBtn" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-green-50 hover:bg-green-100 text-green-700 font-bold transition-all border-2 border-transparent hover:border-green-200 group">
+                    <div class="bg-green-100 p-2 rounded-xl group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </div>
+                    Xuất file Excel
+                </button>
+            </div>
+        </div>
+        <div class="p-4 text-center text-xs text-slate-400">
+            Version 1.0.0
+        </div>
+    </aside>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 border border-white/50 relative overflow-hidden">
+            <!-- Decorative circle -->
+            <div class="absolute -top-10 -right-10 w-24 h-24 bg-blue-200 rounded-full mix-blend-multiply filter blur-2xl opacity-70"></div>
+            
+            <h3 class="text-2xl font-bold text-slate-800 mb-2 relative z-10">Đăng nhập Admin 🔒</h3>
+            <p class="text-slate-500 text-sm mb-6 relative z-10">Vui lòng nhập mật khẩu để tiếp tục.</p>
+            
+            <input type="password" id="adminPassword" class="relative z-10 w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 outline-none mb-6 text-xl tracking-[0.5em] text-center font-bold" placeholder="••••••••">
+            
+            <div class="flex gap-3 relative z-10">
+                <button id="cancelLoginBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmLoginBtn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold transition-all shadow-lg shadow-blue-500/30">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 relative">
+            <h3 class="text-2xl font-bold text-slate-800 mb-4">Chỉnh sửa thông tin ✏️</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Tên:</label>
+                    <input type="text" id="editName" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-blue-400 outline-none font-semibold text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Trạng thái:</label>
+                    <select id="editStatus" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-blue-400 outline-none font-semibold text-lg">
+                        <option value="Đã có">💚 Đã có</option>
+                        <option value="Đang chờ lấy">⏳ Đang chờ lấy</option>
+                        <option value="Chưa chụp">📝 Chưa chụp</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Ghi chú:</label>
+                    <input type="text" id="editNote" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-blue-400 outline-none">
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="cancelEditBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmEditBtn" class="flex-1 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all shadow-lg shadow-blue-500/30">Lưu lại</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 text-center relative">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🗑️</div>
+            <h3 class="text-2xl font-bold text-slate-800 mb-2">Xác nhận xóa?</h3>
+            <p class="text-slate-500 mb-6">Dữ liệu sau khi xóa sẽ không thể khôi phục. Bạn có chắc chắn không?</p>
+            
+            <div class="flex gap-3">
+                <button id="cancelDeleteBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmDeleteBtn" class="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all shadow-lg shadow-red-500/30">Xóa luôn</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Missing Students Modal -->
+    <div id="missingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 relative flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-slate-800">Chưa khai báo 📭</h3>
+                <button id="closeMissingBtn" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="text-sm text-slate-500 mb-4 font-semibold" id="missingCountText">Đang tính toán...</div>
+            <div class="overflow-y-auto flex-grow bg-slate-50 rounded-xl p-4 border border-slate-100 shadow-inner custom-scrollbar">
+                <ul id="missingList" class="space-y-3 text-slate-700 font-medium text-sm">
+                    <!-- Danh sách học sinh chưa nộp sẽ được render tại đây -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="w-full text-center pt-20 md:pt-16 pb-8 px-4 relative">
+        <!-- Hamburger Button -->
+        <button id="menuBtn" class="absolute top-4 md:top-8 left-4 md:left-8 p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:scale-105 transition-all z-30 text-slate-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h8m-8 6h16"></path></svg>
+        </button>
+
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-3 tracking-tight leading-normal px-2">
+            📸 <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-pink-500 py-1">Khảo Sát Ảnh Thẻ 3x4</span> 📸
+        </h1>
+        <p class="text-base sm:text-lg md:text-xl text-slate-500 font-medium">Cùng cập nhật trạng thái nộp ảnh thẻ của lớp mình nhé! 🚀</p>
+    </header>
+
+    <!-- Main Form Section -->
+    <main class="w-full max-w-3xl px-4 flex-grow">
+        <div class="bg-white/80 backdrop-blur-lg p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] mb-12 border border-white/50 relative overflow-hidden">
+            <!-- Decorative circle -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-200 rounded-full mix-blend-multiply filter blur-2xl opacity-70"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-pink-200 rounded-full mix-blend-multiply filter blur-2xl opacity-70"></div>
+
+            <form id="surveyForm" class="relative z-10 space-y-6">
+                <!-- Tên học sinh -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">👤 Tên của bạn là gì?</label>
+                    <div class="relative">
+                        <select id="studentName" required
+                            class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-lg font-semibold appearance-none cursor-pointer text-slate-700">
+                            <option value="" disabled selected hidden>-- Chọn tên của bạn --</option>
+                            <option value="Nguyễn Thị Minh Ánh">Nguyễn Thị Minh Ánh</option>
+                            <option value="Trần Kim Ánh">Trần Kim Ánh</option>
+                            <option value="Trương Gia Bảo">Trương Gia Bảo</option>
+                            <option value="Nguyễn Đức Công">Nguyễn Đức Công</option>
+                            <option value="Phạm Tuấn Dũng">Phạm Tuấn Dũng</option>
+                            <option value="Phạm Thanh Hiển">Phạm Thanh Hiển</option>
+                            <option value="Võ Quang Huy">Võ Quang Huy</option>
+                            <option value="Nguyễn Trọng Khang">Nguyễn Trọng Khang</option>
+                            <option value="Lê Đăng Khôi">Lê Đăng Khôi</option>
+                            <option value="Phạm Tuấn Kiệt">Phạm Tuấn Kiệt</option>
+                            <option value="Trần Anh Kiệt">Trần Anh Kiệt</option>
+                            <option value="Thượng Lê Bích Lam">Thượng Lê Bích Lam</option>
+                            <option value="Nguyễn Ngọc Linh">Nguyễn Ngọc Linh</option>
+                            <option value="Nguyễn Trường Linh">Nguyễn Trường Linh</option>
+                            <option value="Đoàn Văn Long">Đoàn Văn Long</option>
+                            <option value="Nguyễn Minh Lộc">Nguyễn Minh Lộc</option>
+                            <option value="Nguyễn Bảo Ngọc">Nguyễn Bảo Ngọc</option>
+                            <option value="Huỳnh Yến Nhi">Huỳnh Yến Nhi</option>
+                            <option value="Nguyễn Ngọc Bảo Nhi">Nguyễn Ngọc Bảo Nhi</option>
+                            <option value="Nguyễn Minh Phước">Nguyễn Minh Phước</option>
+                            <option value="Phạm Thị Huyền Sinh">Phạm Thị Huyền Sinh</option>
+                            <option value="Nguyễn Tấn Tài">Nguyễn Tấn Tài</option>
+                            <option value="Lý Thu Thảo">Lý Thu Thảo</option>
+                            <option value="Đoàn Phan Bảo Thi">Đoàn Phan Bảo Thi</option>
+                            <option value="Huỳnh Vũ Anh Thư">Huỳnh Vũ Anh Thư</option>
+                            <option value="Nguyễn Thị Mỹ Trâm">Nguyễn Thị Mỹ Trâm</option>
+                            <option value="Trần Ngọc Bảo Trân">Trần Ngọc Bảo Trân</option>
+                            <option value="Từ Thái Trân">Từ Thái Trân</option>
+                            <option value="Lương Huỳnh Minh Trí">Lương Huỳnh Minh Trí</option>
+                            <option value="Nguyễn Thị Phương Trinh">Nguyễn Thị Phương Trinh</option>
+                            <option value="Nguyễn Xuân Trọng">Nguyễn Xuân Trọng</option>
+                            <option value="Võ Thị Thanh Trúc">Võ Thị Thanh Trúc</option>
+                            <option value="Phương Hoàng Anh Tú">Phương Hoàng Anh Tú</option>
+                            <option value="Đoàn Huỳnh Thanh Tuấn">Đoàn Huỳnh Thanh Tuấn</option>
+                            <option value="Ngô Thị Ngọc Tuyền">Ngô Thị Ngọc Tuyền</option>
+                            <option value="Trần Đại Vinh">Trần Đại Vinh</option>
+                            <option value="Nguyễn Bảo Vy">Nguyễn Bảo Vy</option>
+                        </select>
+                        <!-- Icon mũi tên sổ xuống -->
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trạng thái (Radio buttons dạng thẻ) -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-3 ml-1">🏷️ Tình trạng ảnh thẻ 3x4:</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <input type="radio" name="status" id="statusDone" value="Đã có" required>
+                            <label for="statusDone" class="cursor-pointer block text-center p-4 rounded-2xl border-2 border-transparent bg-green-50 hover:bg-green-100 transition-all duration-300 font-bold text-green-700">
+                                <span class="text-2xl block mb-1">💚</span> Đã có
+                            </label>
+                        </div>
+                        <div>
+                            <input type="radio" name="status" id="statusPending" value="Đang chờ lấy" required>
+                            <label for="statusPending" class="cursor-pointer block text-center p-4 rounded-2xl border-2 border-transparent bg-yellow-50 hover:bg-yellow-100 transition-all duration-300 font-bold text-yellow-700">
+                                <span class="text-2xl block mb-1">⏳</span> Đang chờ lấy
+                            </label>
+                        </div>
+                        <div>
+                            <input type="radio" name="status" id="statusNotDone" value="Chưa chụp" required>
+                            <label for="statusNotDone" class="cursor-pointer block text-center p-4 rounded-2xl border-2 border-transparent bg-pink-50 hover:bg-pink-100 transition-all duration-300 font-bold text-pink-700">
+                                <span class="text-2xl block mb-1">📝</span> Chưa chụp
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ghi chú -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">💭 Ghi chú thêm (Tùy chọn):</label>
+                    <input type="text" id="studentNote"
+                        class="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-purple-400 focus:bg-white focus:ring-4 focus:ring-purple-100 outline-none transition-all"
+                        placeholder="VD: Cuối tuần em sẽ đi chụp ạ...">
+                </div>
+
+                <!-- Nút Submit -->
+                <button type="submit" id="submitBtn"
+                    class="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-500 hover:from-blue-600 to-purple-500 hover:to-purple-600 text-white font-bold text-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
+                    <span>Gửi</span>
+                    <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Thống Kê Section -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div class="bg-blue-50/80 backdrop-blur border-2 border-blue-100 rounded-[1.5rem] p-4 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="text-3xl mb-1">👥</div>
+                <div class="text-sm font-bold text-blue-600 mb-1">Đã gửi</div>
+                <div class="text-3xl font-extrabold text-blue-700" id="statTotal">0</div>
+            </div>
+            <div class="bg-green-50/80 backdrop-blur border-2 border-green-100 rounded-[1.5rem] p-4 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="text-3xl mb-1">💚</div>
+                <div class="text-sm font-bold text-green-600 mb-1">Đã có</div>
+                <div class="text-3xl font-extrabold text-green-700" id="statDone">0</div>
+            </div>
+            <div class="bg-yellow-50/80 backdrop-blur border-2 border-yellow-100 rounded-[1.5rem] p-4 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="text-3xl mb-1">⏳</div>
+                <div class="text-sm font-bold text-yellow-600 mb-1">Chờ lấy</div>
+                <div class="text-3xl font-extrabold text-yellow-700" id="statPending">0</div>
+            </div>
+            <div class="bg-pink-50/80 backdrop-blur border-2 border-pink-100 rounded-[1.5rem] p-4 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="text-3xl mb-1">📝</div>
+                <div class="text-sm font-bold text-pink-600 mb-1">Chưa chụp</div>
+                <div class="text-3xl font-extrabold text-pink-700" id="statNotDone">0</div>
+            </div>
+        </div>
+
+        <!-- Nút xem danh sách chưa nộp -->
+        <div class="text-center mb-10">
+            <button id="viewMissingBtn" class="inline-flex items-center gap-2 bg-white/60 hover:bg-white backdrop-blur border border-slate-200 text-slate-600 hover:text-blue-600 px-5 py-2.5 rounded-full font-bold shadow-sm transition-all text-sm group">
+                <svg class="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                Xem danh sách chưa khai báo (<span id="missingBadge">0</span>)
+            </button>
+        </div>
+
+        <!-- Kết quả Realtime Section -->
+        <div class="mb-6 flex items-center justify-between px-2">
+            <h2 class="text-2xl font-extrabold text-slate-700">📌 Bảng Thông Tin Của Lớp</h2>
+            <span class="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full animate-pulse">Live🔴</span>
+        </div>
+
+        <!-- Bộ Lọc (Filters) -->
+        <div class="flex flex-wrap gap-2 mb-6 px-2 justify-center md:justify-start" id="filterContainer">
+            <button class="filter-btn active bg-blue-500 border-2 border-blue-500 text-white shadow-lg shadow-blue-500/30 px-4 py-2 rounded-full font-bold text-sm transition-all" data-filter="all">
+                Tất cả
+            </button>
+            <button class="filter-btn bg-white border-2 border-slate-100 text-slate-500 hover:border-green-300 hover:text-green-600 px-4 py-2 rounded-full font-bold text-sm transition-all" data-filter="Đã có">
+                💚 Đã có
+            </button>
+            <button class="filter-btn bg-white border-2 border-slate-100 text-slate-500 hover:border-yellow-300 hover:text-yellow-600 px-4 py-2 rounded-full font-bold text-sm transition-all" data-filter="Đang chờ lấy">
+                ⏳ Chờ lấy
+            </button>
+            <button class="filter-btn bg-white border-2 border-slate-100 text-slate-500 hover:border-pink-300 hover:text-pink-600 px-4 py-2 rounded-full font-bold text-sm transition-all" data-filter="Chưa chụp">
+                📝 Chưa chụp
+            </button>
+        </div>
+        
+        <!-- Grid chứa Card -->
+        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-10">
+            <!-- Loading state -->
+            <div class="col-span-full text-center py-10 text-slate-400 font-medium">
+                <svg class="animate-spin h-8 w-8 mx-auto text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Đang tải dữ liệu...
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Copyright (Bắt buộc) -->
+    <footer class="fixed bottom-0 w-full py-3 bg-white/70 backdrop-blur-md border-t border-slate-200 z-50 text-center">
+        <p class="font-script text-xl text-slate-600 tracking-wide">
+            © 2026 Designed with <span class="text-red-500 text-base">❤️</span> thầy Nguyễn Cường
+        </p>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-1/2 left-1/2 bg-slate-800/95 backdrop-blur-sm text-white px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-3 z-[100] pointer-events-none border border-slate-600/50">
+        <span class="text-2xl" id="toastIcon">🎉</span>
+        <span class="font-bold text-lg tracking-wide" id="toastMsg">Gửi thông tin thành công!</span>
+    </div>
+
+    <!-- Firebase SDK v9 -->
+    <script type="module">
+        // 2. KHỞI TẠO FIREBASE
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, onSnapshot, 
+            serverTimestamp, doc, updateDoc, increment, deleteDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Cấu hình bắt buộc từ yêu cầu (Giữ nguyên cấu hình cũ)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Đã thay đổi tên collection thành "hinhthe"
+        const collectionName = "hinhthe";
+        const dbRef = collection(db, collectionName);
+
+        // Các biến state Admin
+        let isAdmin = false;
+        let globalSurveys = [];
+        let currentEditId = null;
+        let currentDeleteId = null;
+
+        // Các biến DOM
+        const form = document.getElementById('surveyForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const toast = document.getElementById('toast');
+
+        // Mảng màu pastel ngẫu nhiên cho Card
+        const pastelColors = ['bg-pastel-blue', 'bg-pastel-pink', 'bg-pastel-yellow', 'bg-pastel-green', 'bg-pastel-purple'];
+
+        // Biến lưu trạng thái bộ lọc hiện tại
+        let currentFilter = 'all';
+
+        // 3. CHỨC NĂNG THÊM MỚI (Lưu lên Firestore)
+        if(form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('studentName').value.trim();
+
+                // KIỂM TRA TRÙNG LẶP: Đã gửi rồi thì không cho gửi nữa
+                const isAlreadySubmitted = globalSurveys.some(item => item.name === name);
+                if (isAlreadySubmitted) {
+                    showToast("Bạn đã nộp khảo sát rồi! Không thể gửi lần 2.", "⚠️");
+                    return; // Dừng lại, không thực hiện lưu dữ liệu
+                }
+                
+                // UX: Đổi trạng thái nút
+                const originalBtnHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<svg class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                submitBtn.disabled = true;
+
+                const status = document.querySelector('input[name="status"]:checked').value;
+                const note = document.getElementById('studentNote').value.trim();
+
+                try {
+                    // Đẩy data lên Firebase
+                    await addDoc(dbRef, {
+                        name: name,
+                        status: status,
+                        note: note,
+                        likes: 0,
+                        createdAt: serverTimestamp() // Thêm timestamp
+                    });
+
+                    // Thành công: Reset form & Hiện thông báo
+                    form.reset();
+                    showToast("Gửi thông tin thành công!", "🎉");
+                } catch (error) {
+                    console.error("Lỗi thêm dữ liệu: ", error);
+                    alert("Có lỗi xảy ra, vui lòng thử lại sau!");
+                } finally {
+                    // Phục hồi nút
+                    submitBtn.innerHTML = originalBtnHtml;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        // 4. CHỨC NĂNG HIỂN THỊ (Real-time lắng nghe Firestore)
+        onSnapshot(dbRef, (snapshot) => {
+            let surveys = [];
+            snapshot.forEach((doc) => {
+                surveys.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Sắp xếp dữ liệu mới nhất lên đầu (xử lý trên RAM tránh lỗi Index của Firestore)
+            surveys.sort((a, b) => {
+                const timeA = a.createdAt?.toMillis() || Date.now();
+                const timeB = b.createdAt?.toMillis() || Date.now();
+                return timeB - timeA; 
+            });
+
+            globalSurveys = surveys; // Cập nhật mảng toàn cục
+            updateStats(surveys);    // Cập nhật số liệu thống kê
+            renderCards(surveys);
+        }, (error) => {
+            console.error("Lỗi Realtime: ", error);
+            if(cardsContainer) {
+                cardsContainer.innerHTML = `<div class="col-span-full text-red-500 text-center">Không thể tải dữ liệu. Vui lòng kiểm tra quyền Firebase.</div>`;
+            }
+        });
+
+        // Hàm cập nhật Thống kê
+        function updateStats(data) {
+            // Lấy danh sách tổng học sinh từ thẻ <select>
+            const allStudents = Array.from(document.querySelectorAll('#studentName option'))
+                                     .map(opt => opt.value)
+                                     .filter(v => v !== '');
+            const totalStudents = allStudents.length;
+
+            let total = data.length;
+            let done = 0;
+            let pending = 0;
+            let notDone = 0;
+
+            // Tìm những bạn chưa nộp
+            const submittedNames = data.map(item => item.name);
+            const missingStudents = allStudents.filter(name => !submittedNames.includes(name));
+
+            data.forEach(item => {
+                if (item.status === 'Đã có') done++;
+                else if (item.status === 'Đang chờ lấy') pending++;
+                else if (item.status === 'Chưa chụp') notDone++;
+            });
+
+            const statTotalEl = document.getElementById('statTotal');
+            const statDoneEl = document.getElementById('statDone');
+            const statPendingEl = document.getElementById('statPending');
+            const statNotDoneEl = document.getElementById('statNotDone');
+            const missingBadge = document.getElementById('missingBadge');
+
+            // Cập nhật lên UI
+            if(statTotalEl) statTotalEl.innerText = `${total}/${totalStudents}`;
+            if(statDoneEl) statDoneEl.innerText = done;
+            if(statPendingEl) statPendingEl.innerText = pending;
+            if(statNotDoneEl) statNotDoneEl.innerText = notDone;
+            if(missingBadge) missingBadge.innerText = missingStudents.length;
+
+            // Lưu danh sách chưa nộp vào biến global để Modal sử dụng
+            window.currentMissingStudents = missingStudents;
+        }
+
+        // Hàm render giao diện Card
+        function renderCards(data) {
+            if(!cardsContainer) return;
+
+            // 1. Lọc dữ liệu theo currentFilter trước khi render
+            let filteredData = data;
+            if (currentFilter !== 'all') {
+                filteredData = data.filter(item => item.status === currentFilter);
+            }
+
+            if (filteredData.length === 0) {
+                cardsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white/50 rounded-3xl border-2 border-dashed border-slate-300">
+                        <span class="text-4xl block mb-3">📭</span>
+                        <p class="text-slate-500 font-bold">Chưa có ai ở trạng thái này!</p>
+                    </div>`;
+                return;
+            }
+
+            cardsContainer.innerHTML = '';
+            
+            // Load LocalStorage để biết thẻ nào user đã thả tim
+            const likedList = JSON.parse(localStorage.getItem('likedCards') || '[]');
+
+            filteredData.forEach((item, index) => {
+                // Chọn màu nền cho card
+                const colorClass = pastelColors[index % pastelColors.length];
+                
+                // Trạng thái hiển thị Emoji
+                let statusEmoji = '📝'; let statusColor = 'text-pink-600';
+                if(item.status === 'Đã có') { statusEmoji = '💚'; statusColor = 'text-green-600'; }
+                if(item.status === 'Đang chờ lấy') { statusEmoji = '⏳'; statusColor = 'text-yellow-600'; }
+
+                const isLiked = likedList.includes(item.id);
+
+                const cardHTML = `
+                    <div class="${colorClass} p-5 rounded-[1.5rem] card-hover transition-all duration-300 border border-white/60 relative overflow-hidden flex flex-col justify-between h-full">
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-extrabold text-xl text-slate-800 line-clamp-2">${item.name}</h3>
+                                <span class="bg-white/70 px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap ${statusColor}">
+                                    ${statusEmoji} ${item.status}
+                                </span>
+                            </div>
+                            ${item.note ? `<p class="text-slate-600 text-sm bg-white/40 p-3 rounded-xl italic mb-3">"${item.note}"</p>` : ''}
+                        </div>
+                        
+                        <div class="mt-4 flex items-center justify-between pt-3 border-t border-slate-200/50">
+                            <span class="text-xs text-slate-400 font-semibold flex items-center gap-1">
+                                🕒 ${formatTime(item.createdAt)}
+                            </span>
+                            
+                            <!-- 5. Chức năng Thả Tim -->
+                            <button onclick="handleLike('${item.id}')" id="like-btn-${item.id}" 
+                                class="heart-btn flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm hover:shadow-md ${isLiked ? 'liked' : 'text-slate-400'}">
+                                <svg class="w-5 h-5 transition-colors duration-300" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
+                                </svg>
+                                <span class="font-bold ${isLiked ? 'text-red-500' : 'text-slate-600'}">${item.likes || 0}</span>
+                            </button>
+                        </div>
+
+                        <!-- Nút Admin -->
+                        ${isAdmin ? `
+                        <div class="mt-3 flex gap-2 justify-end border-t border-white/50 pt-3 relative z-10">
+                            <button onclick="openEditModal('${item.id}')" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                Sửa
+                            </button>
+                            <button onclick="openDeleteModal('${item.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Xóa
+                            </button>
+                        </div>` : ''}
+                    </div>
+                `;
+                cardsContainer.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        // --- BỔ SUNG LOGIC BỘ LỌC (FILTERS) ---
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.currentTarget;
+                const filterValue = target.getAttribute('data-filter');
+                
+                // Cập nhật trạng thái active cho nút bấm
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-blue-500', 'border-blue-500', 'text-white', 'shadow-lg', 'shadow-blue-500/30');
+                    b.classList.add('bg-white', 'border-slate-100', 'text-slate-500');
+                });
+                
+                target.classList.remove('bg-white', 'border-slate-100', 'text-slate-500');
+                target.classList.add('bg-blue-500', 'border-blue-500', 'text-white', 'shadow-lg', 'shadow-blue-500/30');
+                
+                // Cập nhật biến currentFilter và render lại giao diện
+                currentFilter = filterValue;
+                renderCards(globalSurveys);
+            });
+        });
+
+        // Logic xử lý thả tim (Gắn vào window để gọi từ inline HTML)
+        window.handleLike = async (docId) => {
+            let likedList = JSON.parse(localStorage.getItem('likedCards') || '[]');
+            
+            // Kiểm tra nếu đã tim trên thiết bị này rồi thì chặn (Chống spam)
+            if (likedList.includes(docId)) {
+                return; 
+            }
+
+            // Lưu vào localStorage thiết bị
+            likedList.push(docId);
+            localStorage.setItem('likedCards', JSON.stringify(likedList));
+
+            // Tăng tim trực tiếp trên DOM để UX mượt (không cần đợi Firebase báo về)
+            const btn = document.getElementById(`like-btn-${docId}`);
+            if(btn) {
+                btn.classList.add('liked');
+                const countSpan = btn.querySelector('span');
+                if(countSpan) {
+                    countSpan.innerText = parseInt(countSpan.innerText) + 1;
+                    countSpan.classList.replace('text-slate-600', 'text-red-500');
+                }
+            }
+
+            // Cập nhật lên Firebase Firestore (Sử dụng increment để cộng dồn an toàn)
+            try {
+                const cardRef = doc(db, collectionName, docId);
+                await updateDoc(cardRef, {
+                    likes: increment(1)
+                });
+            } catch (error) {
+                console.error("Lỗi khi thả tim: ", error);
+            }
+        };
+
+        // Tiện ích hiển thị Toast Message
+        function showToast(message = "Thao tác thành công!", icon = "✅") {
+            const toastIconEl = document.getElementById('toastIcon');
+            const toastMsgEl = document.getElementById('toastMsg');
+            
+            if(toastIconEl) toastIconEl.innerText = icon;
+            if(toastMsgEl) toastMsgEl.innerText = message;
+            
+            if(toast) {
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // --- BỔ SUNG LÔ-GIC CHO MENU VÀ ĐĂNG NHẬP ---
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const loginBtn = document.getElementById('loginBtn');
+        const adminActions = document.getElementById('adminActions');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        
+        const loginModal = document.getElementById('loginModal');
+        const cancelLoginBtn = document.getElementById('cancelLoginBtn');
+        const confirmLoginBtn = document.getElementById('confirmLoginBtn');
+        const adminPassword = document.getElementById('adminPassword');
+
+        // Hàm mở/đóng Sidebar
+        function openSidebar() {
+            if(!sidebarOverlay || !sidebar) return;
+            sidebarOverlay.classList.remove('hidden');
+            setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            sidebar.classList.remove('-translate-x-full');
+        }
+
+        function closeSidebar() {
+            if(!sidebarOverlay || !sidebar) return;
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('opacity-0');
+            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        }
+
+        if(menuBtn) menuBtn.addEventListener('click', openSidebar);
+        if(closeMenuBtn) closeMenuBtn.addEventListener('click', closeSidebar);
+        if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // Hàm mở/đóng Modal Đăng nhập
+        function openLoginModal() {
+            closeSidebar(); // Đóng menu khi bấm Đăng nhập
+            if(!loginModal || !adminPassword) return;
+            const modalContent = loginModal.querySelector('div');
+            
+            adminPassword.value = '';
+            loginModal.classList.remove('hidden');
+            setTimeout(() => {
+                loginModal.classList.remove('opacity-0');
+                if(modalContent) modalContent.classList.remove('scale-95');
+            }, 10);
+            setTimeout(() => adminPassword.focus(), 300);
+        }
+
+        function closeLoginModal() {
+            if(!loginModal) return;
+            const modalContent = loginModal.querySelector('div');
+            
+            loginModal.classList.add('opacity-0');
+            if(modalContent) modalContent.classList.add('scale-95');
+            setTimeout(() => loginModal.classList.add('hidden'), 300);
+        }
+
+        if(loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                if(isAdmin) {
+                    isAdmin = false;
+                    closeSidebar();
+                    showToast("Đã đăng xuất khỏi Admin!", "👋");
+                    loginBtn.innerHTML = `<div class="bg-blue-100 p-2 rounded-xl group-hover:scale-110 transition-transform"><svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg></div> Đăng nhập Quản trị`;
+                    if(adminActions) adminActions.classList.add('hidden');
+                    renderCards(globalSurveys); // Render lại ẩn nút Sửa/Xóa
+                } else {
+                    openLoginModal();
+                }
+            });
+        }
+        if(cancelLoginBtn) cancelLoginBtn.addEventListener('click', closeLoginModal);
+        
+        // Bắt sự kiện phím Enter trong ô mật khẩu
+        if(adminPassword) {
+            adminPassword.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && confirmLoginBtn) confirmLoginBtn.click();
+            });
+        }
+
+        // Xử lý khi nhấn nút Xác nhận Đăng nhập
+        if(confirmLoginBtn) {
+            confirmLoginBtn.addEventListener('click', () => {
+                if(adminPassword && adminPassword.value === '0788095095') {
+                    closeLoginModal();
+                    showToast("Đăng nhập Admin thành công!", "👑");
+                    
+                    isAdmin = true;
+                    if(loginBtn) {
+                        loginBtn.innerHTML = `<div class="bg-red-100 p-2 rounded-xl group-hover:scale-110 transition-transform"><svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></div> Đăng xuất Admin`;
+                    }
+                    if(adminActions) adminActions.classList.remove('hidden');
+                    renderCards(globalSurveys); // Render lại để hiện nút Sửa/Xóa
+                } else {
+                    alert('Mật khẩu không chính xác!');
+                    if(adminPassword) {
+                        adminPassword.value = '';
+                        adminPassword.focus();
+                    }
+                }
+            });
+        }
+
+        // --- BỔ SUNG LOGIC SỬA VÀ XÓA CHO ADMIN ---
+        const editModal = document.getElementById('editModal');
+        const deleteModal = document.getElementById('deleteModal');
+        
+        window.openEditModal = (id) => {
+            const survey = globalSurveys.find(s => s.id === id);
+            if(!survey || !editModal) return;
+            currentEditId = id;
+            
+            document.getElementById('editName').value = survey.name;
+            document.getElementById('editStatus').value = survey.status;
+            document.getElementById('editNote').value = survey.note || '';
+            
+            editModal.classList.remove('hidden');
+            setTimeout(() => {
+                editModal.classList.remove('opacity-0');
+                const modalContent = editModal.querySelector('div');
+                if(modalContent) modalContent.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeEditModal = () => {
+            if(!editModal) return;
+            editModal.classList.add('opacity-0');
+            const modalContent = editModal.querySelector('div');
+            if(modalContent) modalContent.classList.add('scale-95');
+            setTimeout(() => editModal.classList.add('hidden'), 300);
+            currentEditId = null;
+        };
+
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const confirmEditBtn = document.getElementById('confirmEditBtn');
+        if(cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModal);
+        
+        if(confirmEditBtn) {
+            confirmEditBtn.addEventListener('click', async () => {
+                if(!currentEditId) return;
+                const newName = document.getElementById('editName').value.trim();
+                const newStatus = document.getElementById('editStatus').value;
+                const newNote = document.getElementById('editNote').value.trim();
+                
+                if(!newName) {
+                    showToast("Tên không được để trống!", "❌");
+                    return;
+                }
+
+                try {
+                    const docRef = doc(db, collectionName, currentEditId);
+                    await updateDoc(docRef, {
+                        name: newName,
+                        status: newStatus,
+                        note: newNote
+                    });
+                    showToast("Cập nhật thành công!", "✏️");
+                    closeEditModal();
+                } catch (error) {
+                    console.error("Lỗi cập nhật: ", error);
+                }
+            });
+        }
+
+        window.openDeleteModal = (id) => {
+            currentDeleteId = id;
+            if(!deleteModal) return;
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteModal.classList.remove('opacity-0');
+                const modalContent = deleteModal.querySelector('div');
+                if(modalContent) modalContent.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeDeleteModal = () => {
+            if(!deleteModal) return;
+            deleteModal.classList.add('opacity-0');
+            const modalContent = deleteModal.querySelector('div');
+            if(modalContent) modalContent.classList.add('scale-95');
+            setTimeout(() => deleteModal.classList.add('hidden'), 300);
+            currentDeleteId = null;
+        };
+
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+        
+        if(confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', async () => {
+                if(!currentDeleteId) return;
+                try {
+                    await deleteDoc(doc(db, collectionName, currentDeleteId));
+                    showToast("Đã xóa dữ liệu!", "🗑️");
+                    closeDeleteModal();
+                } catch(error) {
+                    console.error("Lỗi xóa: ", error);
+                }
+            });
+        }
+
+        // --- BỔ SUNG LOGIC HIỂN THỊ MODAL CHƯA NỘP ---
+        const missingModal = document.getElementById('missingModal');
+        const viewMissingBtn = document.getElementById('viewMissingBtn');
+        const closeMissingBtn = document.getElementById('closeMissingBtn');
+        const missingList = document.getElementById('missingList');
+        const missingCountText = document.getElementById('missingCountText');
+
+        if(viewMissingBtn) {
+            viewMissingBtn.addEventListener('click', () => {
+                if(!missingModal) return;
+                
+                // Render danh sách chưa nộp
+                if(missingList) {
+                    missingList.innerHTML = '';
+                    const missing = window.currentMissingStudents || [];
+                    
+                    if(missing.length === 0) {
+                        missingList.innerHTML = `<li class="text-green-600 font-bold text-center py-6 text-lg">🎉 Tuyệt vời!<br>Cả lớp đã hoàn thành khảo sát!</li>`;
+                        if(missingCountText) missingCountText.innerText = "Không còn ai thiếu!";
+                    } else {
+                        if(missingCountText) missingCountText.innerText = `Còn ${missing.length} bạn chưa nộp khảo sát:`;
+                        missing.forEach((name, i) => {
+                            missingList.innerHTML += `
+                                <li class="flex items-center gap-3 py-1 border-b border-slate-100 last:border-0">
+                                    <span class="bg-red-100 text-red-500 font-bold text-xs w-6 h-6 flex items-center justify-center rounded-full shrink-0">${i+1}</span> 
+                                    <span class="font-bold">${name}</span>
+                                </li>`;
+                        });
+                    }
+                }
+
+                // Hiện Modal
+                missingModal.classList.remove('hidden');
+                setTimeout(() => {
+                    missingModal.classList.remove('opacity-0');
+                    const modalContent = missingModal.querySelector('div');
+                    if(modalContent) modalContent.classList.remove('scale-95');
+                }, 10);
+            });
+        }
+
+        if(closeMissingBtn) {
+            closeMissingBtn.addEventListener('click', () => {
+                if(!missingModal) return;
+                missingModal.classList.add('opacity-0');
+                const modalContent = missingModal.querySelector('div');
+                if(modalContent) modalContent.classList.add('scale-95');
+                setTimeout(() => missingModal.classList.add('hidden'), 300);
+            });
+        }
+
+        // --- BỔ SUNG LOGIC XUẤT FILE EXCEL (.XLSX) ---
+        if(exportExcelBtn) {
+            exportExcelBtn.addEventListener('click', () => {
+                if(globalSurveys.length === 0) {
+                    showToast("Chưa có dữ liệu để xuất!", "⚠️");
+                    return;
+                }
+
+                // 1. Chuẩn bị mảng object dữ liệu cho SheetJS
+                const excelData = globalSurveys.map(item => {
+                    let timeStr = "Chưa có";
+                    if(item.createdAt) {
+                        const d = item.createdAt.toDate();
+                        const hours = String(d.getHours()).padStart(2, '0');
+                        const mins = String(d.getMinutes()).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        timeStr = `${hours}:${mins} - ${day}/${month}/${year}`;
+                    }
+
+                    return {
+                        "Tên học sinh": item.name || '',
+                        "Tình trạng ảnh thẻ": item.status || '',
+                        "Ghi chú": item.note || '',
+                        "Số lượt thích": item.likes || 0,
+                        "Thời gian gửi": timeStr
+                    };
+                });
+
+                // 2. Khởi tạo worksheet từ JSON và workbook mới
+                const worksheet = XLSX.utils.json_to_sheet(excelData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSach_AnhThe");
+
+                // 3. Tự động căn chỉnh độ rộng các cột trong Excel cho dễ nhìn
+                const wscols = [
+                    {wch: 30}, // Cột A: Tên học sinh
+                    {wch: 25}, // Cột B: Tình trạng
+                    {wch: 40}, // Cột C: Ghi chú
+                    {wch: 15}, // Cột D: Số lượt thích
+                    {wch: 25}  // Cột E: Thời gian gửi
+                ];
+                worksheet['!cols'] = wscols;
+
+                // 4. Xuất ra file .xlsx
+                XLSX.writeFile(workbook, `DanhSach_AnhThe_${new Date().getTime()}.xlsx`);
+
+                showToast("Đã tải xuống file Excel!", "📊");
+                closeSidebar();
+            });
+        }
+
+        // Tiện ích format thời gian (Hiển thị rõ Giờ - Ngày/Tháng/Năm)
+        function formatTime(timestamp) {
+            if (!timestamp) return "Vừa xong";
+            const date = timestamp.toDate();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const mins = String(date.getMinutes()).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `${hours}:${mins} - ${day}/${month}/${year}`;
+        }
+    </script>
+</body>
+</html>

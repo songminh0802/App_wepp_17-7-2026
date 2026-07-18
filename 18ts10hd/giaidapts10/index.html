@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hỏi Đáp Tuyển Sinh 10 🎓</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Thư viện SheetJS để xuất file Excel (.xlsx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Cấu hình Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                        script: ['Dancing Script', 'cursive'],
+                    },
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#06B6D4'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #eff6ff; 
+            background-image: radial-gradient(#bfdbfe 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .like-animate {
+            animation: heartBeat 0.3s ease-in-out;
+        }
+
+        #toast {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Tùy chỉnh thanh cuộn cho các thẻ */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-gray-800 antialiased selection:bg-blue-300 selection:text-white">
+
+    <!-- Hamburger Button -->
+    <button id="menuBtn" class="fixed top-5 left-5 z-[45] p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg text-blue-600 hover:bg-blue-50 active:scale-95 transition-all">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-[50] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
+
+    <!-- Sidebar Menu -->
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white z-[55] transform -translate-x-full transition-transform duration-300 shadow-2xl flex flex-col">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-50 to-white">
+            <h2 class="text-xl font-extrabold text-blue-600 flex items-center gap-2">
+                <span>⚙️</span> Tùy chọn
+            </h2>
+            <button id="closeMenuBtn" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors active:scale-95">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-4 flex flex-col gap-2 flex-grow">
+            <button id="menuLoginBtn" class="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-600 rounded-xl font-bold transition-all active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                <span>Đăng nhập Quản trị</span>
+            </button>
+            <button id="menuDownloadBtn" class="w-full flex items-center gap-3 px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800 rounded-xl font-bold transition-all active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4-4m4 4V4"></path></svg>
+                <span>Tải danh sách (Excel)</span>
+            </button>
+        </div>
+        <div class="p-6 border-t border-gray-100 text-center text-sm text-gray-400 font-semibold">
+            Hệ thống Hỏi Đáp TS10
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-white border-2 border-green-400 text-green-600 px-6 py-3 rounded-full shadow-lg font-bold flex items-center gap-2">
+        <span>🎉</span> Đã gửi thành công!
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl scale-95 transition-transform duration-300" id="adminModalContent">
+            <div class="text-center mb-6">
+                <div class="inline-block bg-blue-100 text-blue-500 p-3 rounded-full mb-3">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-gray-800">Quản trị viên</h2>
+            </div>
+            <input type="password" id="adminPassInput" class="w-full px-5 py-3 text-lg rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none mb-6 transition-all" placeholder="Nhập mật khẩu..." autocomplete="off">
+            <div class="flex gap-3">
+                <button id="adminCloseBtn" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 active:scale-95 transition-all">Đóng</button>
+                <button id="adminLoginBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold rounded-xl hover:from-blue-600 hover:to-cyan-600 active:scale-95 transition-all shadow-md">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Delete Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/60 z-[70] hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl scale-95 transition-transform duration-300" id="confirmModalContent">
+            <div class="text-center mb-6">
+                <div class="inline-block bg-red-100 text-red-500 p-3 rounded-full mb-3">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-gray-800">Xác nhận xóa?</h2>
+                <p class="text-gray-600 mt-2">Bạn có chắc chắn muốn xóa câu hỏi này vĩnh viễn không?</p>
+            </div>
+            <div class="flex gap-3">
+                <button id="cancelDeleteBtn" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 active:scale-95 transition-all">Hủy</button>
+                <button id="confirmDeleteBtn" class="flex-1 px-4 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 active:scale-95 transition-all shadow-md">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header & Form Section -->
+    <main class="flex-grow container mx-auto px-4 py-12 max-w-5xl">
+        
+        <div class="max-w-2xl mx-auto text-center mb-12">
+            <h1 id="mainTitle" class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 mb-4 pb-2">
+                Hỏi đáp Tuyển sinh lớp 10 🎓
+            </h1>
+            <p id="subTitle" class="text-lg text-gray-600 mb-8 font-semibold">
+                Các em học sinh có thắc mắc gì về kỳ thi TS10, cách thức đăng ký nguyện vọng, hãy đặt câu hỏi tại đây để được thầy cô giải đáp nhé! 📝
+            </p>
+
+            <!-- Form -->
+            <form id="questionForm" class="relative group text-left">
+                <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative bg-white rounded-2xl shadow-xl p-4 flex flex-col gap-4">
+                    
+                    <!-- Họ và Tên (Tùy chọn) -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1 ml-2">Người hỏi (Có thể để trống)</label>
+                        <input 
+                            type="text" 
+                            id="senderInput" 
+                            placeholder="VD: Trọng Khang - 9A7" 
+                            class="w-full px-5 py-3 text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-shadow bg-gray-50 border border-gray-200 text-gray-700"
+                            autocomplete="off"
+                        >
+                    </div>
+
+                    <!-- Nội dung câu hỏi -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1 ml-2">Nội dung thắc mắc <span class="text-red-500">*</span></label>
+                        <textarea 
+                            id="questionInput" 
+                            placeholder="Nhập chi tiết câu hỏi của em vào đây..." 
+                            rows="4"
+                            class="w-full px-5 py-3 text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-shadow bg-gray-50 border border-gray-200 placeholder-gray-400 resize-none"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <!-- Nội dung giải đáp -->
+                    <div id="answerContainer" class="hidden">
+                        <label class="block text-sm font-bold text-green-700 mb-1 ml-2">Giải đáp (Dành cho giáo viên - Có thể để trống)</label>
+                        <textarea 
+                            id="answerInput" 
+                            placeholder="Nhập thông tin giải đáp cho câu hỏi này..." 
+                            rows="3"
+                            class="w-full px-5 py-3 text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition-shadow bg-green-50 border border-green-200 placeholder-gray-400 resize-none"
+                        ></textarea>
+                    </div>
+
+                    <!-- Nút Submit -->
+                    <div class="flex flex-col sm:flex-row gap-3 mt-2">
+                        <button 
+                            type="submit" 
+                            id="submitBtn"
+                            class="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold py-4 px-8 rounded-xl shadow-md transform transition-all active:scale-95 whitespace-nowrap flex items-center justify-center gap-2"
+                        >
+                            <span>Gửi câu hỏi</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        </button>
+                        <button 
+                            type="button" 
+                            id="cancelEditBtn"
+                            class="hidden flex-1 sm:flex-none bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 px-6 rounded-xl shadow-md transform transition-all active:scale-95 whitespace-nowrap"
+                        >
+                            Hủy sửa
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center justify-center gap-4 mb-8">
+            <div class="h-px bg-gray-300 w-1/4"></div>
+            <span class="text-gray-400 font-bold tracking-widest uppercase text-sm">Danh sách câu hỏi</span>
+            <div class="h-px bg-gray-300 w-1/4"></div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="text-center text-gray-500 font-bold text-xl py-10 animate-pulse">
+            Đang tải dữ liệu... ⏳
+        </div>
+
+        <!-- Cards Grid Container -->
+        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 hidden">
+            <!-- Thẻ sẽ được JS render vào đây -->
+        </div>
+
+    </main>
+
+    <!-- Footer Credit -->
+    <footer class="mt-auto py-6 text-center">
+        <p class="font-script text-3xl text-gray-600 hover:text-blue-500 transition-colors duration-300 flex items-center justify-center gap-2">
+            © 2026 Designed with 😍 Mr Cường
+            <span id="adminTrigger" class="cursor-pointer opacity-20 hover:opacity-100 transition-opacity text-xl font-sans" title="Khu vực Quản trị">🔒</span>
+        </p>
+    </footer>
+
+    <!-- Firebase SDK (Modular v9) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            serverTimestamp, 
+            doc, 
+            updateDoc, 
+            increment,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Khởi tạo cấu hình Firebase bắt buộc
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Đổi tên Collection thành cauhoits10
+        const collectionName = "cauhoits10"; 
+
+        const pastelColors = [
+            'bg-blue-100', 'bg-cyan-100', 'bg-sky-100', 
+            'bg-indigo-100', 'bg-teal-100', 'bg-emerald-100',
+            'bg-green-100', 'bg-slate-100', 'bg-gray-100'
+        ];
+
+        // Đổi sang các emoji liên quan đến hỏi đáp
+        const emojis = ['❓', '💡', '🙋‍♂️', '🙋‍♀️', '🎓', '🏫', '📝'];
+
+        const form = document.getElementById('questionForm');
+        const senderInput = document.getElementById('senderInput');
+        const questionInput = document.getElementById('questionInput');
+        const answerInput = document.getElementById('answerInput');
+        const answerContainer = document.getElementById('answerContainer');
+        const submitBtn = document.getElementById('submitBtn');
+        const container = document.getElementById('cardsContainer');
+        const loading = document.getElementById('loading');
+        const toast = document.getElementById('toast');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const menuLoginBtn = document.getElementById('menuLoginBtn');
+        const menuDownloadBtn = document.getElementById('menuDownloadBtn');
+
+        let isAdmin = false;
+        let editingDocId = null;
+        let currentDocs = [];
+        
+        const adminModal = document.getElementById('adminModal');
+        const adminPassInput = document.getElementById('adminPassInput');
+        const adminLoginBtn = document.getElementById('adminLoginBtn');
+        const adminCloseBtn = document.getElementById('adminCloseBtn');
+        const adminTrigger = document.getElementById('adminTrigger');
+        const mainTitle = document.getElementById('mainTitle');
+        const subTitle = document.getElementById('subTitle');
+
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmModalContent = document.getElementById('confirmModalContent');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        let docToDeleteId = null;
+
+        const closeConfirmModal = () => {
+            confirmModal.classList.add('opacity-0');
+            confirmModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                confirmModal.classList.add('hidden');
+                docToDeleteId = null;
+            }, 300);
+        };
+        cancelDeleteBtn.addEventListener('click', closeConfirmModal);
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!docToDeleteId) return;
+            const originalText = confirmDeleteBtn.innerHTML;
+            confirmDeleteBtn.innerHTML = '<span class="animate-spin inline-block">⏳</span> Đang xóa...';
+            confirmDeleteBtn.disabled = true;
+
+            try {
+                await deleteDoc(doc(db, collectionName, docToDeleteId));
+                showToast('<span>🗑️</span> Đã xóa câu hỏi thành công!');
+                closeConfirmModal();
+            } catch (error) {
+                console.error("Lỗi khi xóa:", error);
+                showToast(`<span>❌</span> Lỗi: Không thể xóa!`);
+            } finally {
+                confirmDeleteBtn.innerHTML = originalText;
+                confirmDeleteBtn.disabled = false;
+            }
+        });
+
+        adminTrigger.addEventListener('click', () => {
+            if (isAdmin) {
+                isAdmin = false;
+                showToast('<span>🔒</span> Đã thoát chế độ Quản trị!');
+                toggleAdminUI();
+                renderCards(currentDocs);
+            } else {
+                adminModal.classList.remove('hidden');
+                setTimeout(() => {
+                    adminModal.classList.remove('opacity-0');
+                    adminModalContent.classList.remove('scale-95');
+                }, 10);
+                adminPassInput.value = '';
+                adminPassInput.focus();
+            }
+        });
+
+        const closeAdminModal = () => {
+            adminModal.classList.add('opacity-0');
+            adminModalContent.classList.add('scale-95');
+            setTimeout(() => adminModal.classList.add('hidden'), 300);
+        };
+        adminCloseBtn.addEventListener('click', closeAdminModal);
+        
+        const handleAdminLogin = () => {
+            if (adminPassInput.value === '0788095095') {
+                isAdmin = true;
+                closeAdminModal();
+                showToast('<span>🔓</span> Đăng nhập Quản trị thành công!');
+                toggleAdminUI();
+                renderCards(currentDocs);
+            } else {
+                showToast('<span>❌</span> Mật khẩu không chính xác!');
+            }
+        };
+
+        adminLoginBtn.addEventListener('click', handleAdminLogin);
+        adminPassInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAdminLogin();
+        });
+
+        const openSidebar = () => {
+            sidebarOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                sidebarOverlay.classList.remove('opacity-0');
+                sidebar.classList.remove('-translate-x-full');
+            }, 10);
+        };
+        const closeSidebar = () => {
+            sidebarOverlay.classList.add('opacity-0');
+            sidebar.classList.add('-translate-x-full');
+            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        };
+
+        menuBtn.addEventListener('click', openSidebar);
+        closeMenuBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        menuLoginBtn.addEventListener('click', () => {
+            closeSidebar();
+            adminTrigger.click(); 
+        });
+
+        menuDownloadBtn.addEventListener('click', () => {
+            closeSidebar();
+            if (currentDocs.length === 0) {
+                showToast('<span>⚠️</span> Không có dữ liệu để tải!');
+                return;
+            }
+            try {
+                const dataForExcel = currentDocs.map((doc, index) => ({
+                    "STT": index + 1,
+                    "Người hỏi": doc.sender || "Ẩn danh",
+                    "Nội dung câu hỏi": doc.question || "Chưa có nội dung",
+                    "Giải đáp": doc.answer || "Chưa có giải đáp",
+                    "Thời gian": doc.createdAt ? doc.createdAt.toDate().toLocaleString('vi-VN') : "Chưa rõ"
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+                const wscols = [
+                    {wch: 5},   
+                    {wch: 25},  
+                    {wch: 50},  
+                    {wch: 50},  
+                    {wch: 20}   
+                ];
+                worksheet['!cols'] = wscols;
+
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachCauHoi");
+
+                XLSX.writeFile(workbook, "Danh_Sach_Cau_Hoi_TS10.xlsx");
+                showToast('<span>📥</span> Đã tải danh sách Excel về máy!');
+            } catch (error) {
+                showToast('<span>❌</span> Lỗi tải file. Vui lòng thử lại!');
+            }
+        });
+
+        function toggleAdminUI() {
+            if (isAdmin) {
+                mainTitle.innerHTML = 'Quản lý Câu hỏi 🛠️';
+                subTitle.innerHTML = 'Khu vực dành cho giáo viên duyệt, sửa và xóa các câu hỏi của học sinh.';
+                adminTrigger.innerHTML = '🔓';
+                adminTrigger.classList.remove('opacity-20');
+                adminTrigger.classList.add('opacity-100', 'text-blue-500');
+                answerContainer.classList.remove('hidden');
+                
+                menuLoginBtn.innerHTML = `
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span class="text-red-500">Thoát Quản trị</span>
+                `;
+            } else {
+                mainTitle.innerHTML = 'Hỏi đáp Tuyển sinh lớp 10 🎓';
+                subTitle.innerHTML = 'Các em học sinh có thắc mắc gì về kỳ thi TS10, cách thức đăng ký nguyện vọng, hãy đặt câu hỏi tại đây để được thầy cô giải đáp nhé! 📝';
+                answerContainer.classList.add('hidden');
+                
+                if (editingDocId) {
+                    editingDocId = null;
+                    senderInput.value = '';
+                    questionInput.value = '';
+                    answerInput.value = '';
+                    submitBtn.innerHTML = `<span>Gửi câu hỏi</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+                    cancelEditBtn.classList.add('hidden');
+                }
+
+                adminTrigger.innerHTML = '🔒';
+                adminTrigger.classList.add('opacity-20');
+                adminTrigger.classList.remove('opacity-100', 'text-blue-500');
+                
+                menuLoginBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    <span>Đăng nhập Quản trị</span>
+                `;
+            }
+        }
+
+        function showToast(message = '<span>🎉</span> Đã xử lý thành công!') {
+            toast.innerHTML = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function timeAgo(date) {
+            if (!date) return "Vừa xong";
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " năm trước";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " tháng trước";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " ngày trước";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " giờ trước";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " phút trước";
+            return "Vừa xong";
+        }
+
+        cancelEditBtn.addEventListener('click', () => {
+            editingDocId = null;
+            senderInput.value = '';
+            questionInput.value = '';
+            answerInput.value = '';
+            submitBtn.innerHTML = `<span>Gửi câu hỏi</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+            cancelEditBtn.classList.add('hidden');
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senderName = senderInput.value.trim() || "Ẩn danh";
+            const questionContent = questionInput.value.trim();
+            const answerContent = answerInput.value.trim();
+            
+            if (!questionContent) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="animate-spin text-xl">⏳</span> Đang lưu...`;
+
+            try {
+                if (editingDocId) {
+                    const docRef = doc(db, collectionName, editingDocId);
+                    await updateDoc(docRef, {
+                        sender: senderName,
+                        question: questionContent,
+                        answer: answerContent
+                    });
+                    showToast('<span>🎉</span> Đã cập nhật câu hỏi thành công!');
+                    
+                    editingDocId = null;
+                    cancelEditBtn.classList.add('hidden');
+                } else {
+                    await addDoc(collection(db, collectionName), {
+                        sender: senderName,
+                        question: questionContent,
+                        answer: answerContent,
+                        createdAt: serverTimestamp(),
+                        likes: 0
+                    });
+                    showToast('<span>🎉</span> Đã gửi câu hỏi thành công!');
+                }
+                
+                senderInput.value = ''; 
+                questionInput.value = ''; 
+                answerInput.value = '';
+            } catch (error) {
+                console.error("Lỗi khi lưu:", error);
+                showToast('<span>❌</span> Có lỗi xảy ra, vui lòng thử lại sau!');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Gửi câu hỏi</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+            }
+        });
+
+        const unsub = onSnapshot(collection(db, collectionName), (snapshot) => {
+            loading.style.display = 'none';
+            container.classList.remove('hidden');
+
+            currentDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Sắp xếp câu hỏi mới nhất lên đầu
+            currentDocs.sort((a, b) => {
+                const timeA = a.createdAt ? a.createdAt.toMillis() : 0;
+                const timeB = b.createdAt ? b.createdAt.toMillis() : 0;
+                return timeB - timeA;
+            });
+
+            renderCards(currentDocs);
+            
+        }, (error) => {
+            loading.innerHTML = "❌ Không thể tải dữ liệu.";
+            loading.classList.add('text-red-500');
+        });
+
+        function renderCards(docs) {
+            container.innerHTML = '';
+            const totalDocs = docs.length;
+
+            docs.forEach((data, index) => {
+                const currentNumber = totalDocs - index;
+                const displaySender = data.sender || "Ẩn danh";
+                const displayQuestion = data.question || "Không có nội dung";
+                
+                // Xử lý xuống dòng cho phần trả lời (hỗ trợ \n từ dữ liệu cứng)
+                let formattedAnswer = '';
+                if (data.answer) {
+                    formattedAnswer = data.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+                }
+
+                const displayAnswer = data.answer ? `
+                    <div class="mt-3 bg-green-50 p-3 rounded-xl border border-green-200">
+                        <p class="text-green-800 text-sm font-bold mb-1">👨‍🏫 Giải đáp:</p>
+                        <p class="text-green-700 text-md font-medium leading-snug break-words">
+                            ${formattedAnswer}
+                        </p>
+                    </div>
+                ` : '';
+
+                const colorIndex = (displaySender.length + index) % pastelColors.length;
+                const cardColor = pastelColors[colorIndex];
+                
+                const emojiIndex = (displaySender.length + index) % emojis.length;
+                const cardEmoji = emojis[emojiIndex];
+                
+                const timeStr = timeAgo(data.createdAt?.toDate());
+                const likesCount = data.likes || 0;
+
+                const card = document.createElement('div');
+                // Thêm h-[420px] để cố định chiều cao, thẻ dùng flex-col
+                card.className = `${cardColor} card-hover rounded-3xl p-5 relative flex flex-col shadow-sm border border-white/40 h-[420px]`;
+                
+                const actionHTML = isAdmin ? `
+                    <div class="absolute top-3 right-3 flex gap-2 z-20">
+                        <button type="button" class="edit-btn w-8 h-8 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-white transition-colors shadow-sm" title="Sửa nội dung">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button type="button" class="delete-btn w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors shadow-sm" title="Xóa câu hỏi">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                ` : ``;
+
+                card.innerHTML = `
+                    ${actionHTML}
+                    
+                    <!-- Phần Header (Cố định trên cùng) -->
+                    <div class="flex justify-between items-start mb-3 shrink-0">
+                        <div class="text-3xl select-none">${cardEmoji}</div>
+                        <div class="bg-white/60 text-gray-700 font-extrabold text-sm px-3 py-1 rounded-full shadow-sm border border-white/50 backdrop-blur-sm ${isAdmin ? 'mr-20' : ''}">
+                            #${currentNumber}
+                        </div>
+                    </div>
+
+                    <!-- Phần Nội dung (Cuộn dọc nếu quá dài) -->
+                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 mb-2">
+                        <h3 class="text-lg font-extrabold text-gray-800 mb-2 pr-6 break-words z-10 relative">
+                            ${displaySender.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                        </h3>
+                        <div class="bg-white/50 p-3 rounded-xl border border-white/60">
+                            <p class="text-gray-700 text-md font-medium leading-snug break-words">
+                                ${displayQuestion.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}
+                            </p>
+                        </div>
+                        ${displayAnswer}
+                    </div>
+                    
+                    <!-- Phần Footer (Cố định ở dưới cùng) -->
+                    <div class="flex justify-between items-end pt-3 border-t border-black/5 shrink-0 mt-auto">
+                        <span class="text-xs text-gray-500 font-semibold flex items-center gap-1">
+                            🕒 ${timeStr}
+                        </span>
+                        
+                        <button class="like-btn flex items-center gap-1.5 bg-white/70 hover:bg-white px-3 py-1.5 rounded-full shadow-sm transition-all text-blue-500 hover:text-red-500 group ${isAdmin ? 'pointer-events-none opacity-50' : ''}" title="Cùng thắc mắc">
+                            <svg class="w-5 h-5 transition-transform group-active:scale-75" fill="${likesCount > 0 ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                            <span class="font-bold text-sm text-gray-700">${likesCount > 0 ? likesCount : 'Quan tâm'}</span>
+                        </button>
+                    </div>
+                `;
+
+                if (isAdmin) {
+                    const deleteBtn = card.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.preventDefault(); 
+                        e.stopPropagation(); 
+                        
+                        docToDeleteId = data.id;
+                        confirmModal.classList.remove('hidden');
+                        setTimeout(() => {
+                            confirmModal.classList.remove('opacity-0');
+                            confirmModalContent.classList.remove('scale-95');
+                        }, 10);
+                    });
+
+                    const editBtn = card.querySelector('.edit-btn');
+                    editBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        editingDocId = data.id;
+                        senderInput.value = data.sender || ''; 
+                        questionInput.value = data.question || ''; 
+                        answerInput.value = data.answer || '';
+
+                        submitBtn.innerHTML = `<span>Lưu thay đổi</span><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                        cancelEditBtn.classList.remove('hidden');
+
+                        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        answerInput.focus();
+                    });
+                } else {
+                    const likeBtn = card.querySelector('.like-btn');
+                    likeBtn.addEventListener('click', async () => {
+                        const svg = likeBtn.querySelector('svg');
+                        svg.classList.add('like-animate');
+                        setTimeout(() => svg.classList.remove('like-animate'), 300);
+
+                        const docRef = doc(db, collectionName, data.id);
+                        await updateDoc(docRef, { likes: increment(1) });
+                    });
+                }
+
+                container.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>

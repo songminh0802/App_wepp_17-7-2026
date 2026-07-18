@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Note AI</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 77, 64, 0.4);
+            --text-color: #ffffff;
+            --primary: #009688;
+            --primary-light: #4db6ac;
+            --danger: #ff4b2b;
+            --warning: #f7b733;
+            --success: #00796b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, #00251a, #004d40, #00695c, #00796b);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px 80px 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            padding: 15px;
+            font-size: 1.1rem;
+            resize: vertical;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        button {
+            background: linear-gradient(to right, var(--primary-light) 0%, var(--primary) 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            align-self: flex-end;
+            box-shadow: 0 4px 15px rgba(0, 150, 136, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 150, 136, 0.5);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        /* RSS Feed Styles */
+        .feed-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .feed-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.2s, background 0.3s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .feed-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--primary);
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .feed-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .feed-item:hover::before {
+            opacity: 1;
+        }
+
+        .feed-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            color: #ddd;
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+            padding-bottom: 12px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .feed-datetime {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: #80cbc4;
+        }
+
+        .feed-content {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: white;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .feed-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .level-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: capitalize;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .level-gap { background: rgba(255, 75, 43, 0.2); color: #ff8a75; border: 1px solid var(--danger); }
+        .level-quan-trong { background: rgba(247, 183, 51, 0.2); color: #ffd675; border: 1px solid var(--warning); }
+        .level-binh-thuong { background: rgba(17, 153, 142, 0.2); color: #6fffe9; border: 1px solid var(--success); }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.delete-btn:hover {
+            background: rgba(255, 75, 43, 0.3);
+            border-color: var(--danger);
+        }
+
+        /* Stats Badge */
+        .task-stats {
+            background: rgba(0, 150, 136, 0.15);
+            border-left: 4px solid var(--primary);
+            color: #ddd;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+
+        .task-stats strong {
+            font-size: 1.25rem;
+            color: #fff;
+            margin: 0 4px;
+        }
+
+        /* Nút tải Excel */
+        .export-btn {
+            background: rgba(0, 150, 136, 0.2);
+            border: 1px solid var(--primary-light);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto; /* Đẩy sang phải trong container flex */
+        }
+
+        .export-btn:hover {
+            background: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 150, 136, 0.3);
+        }
+
+        /* Filter & Search Panel Styles */
+        .filter-panel {
+            padding: 20px 30px;
+        }
+
+        .search-container {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .search-container input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1.05rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-container input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-container input:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 10px rgba(0, 150, 136, 0.2);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            box-shadow: none;
+            padding: 8px 16px;
+            font-weight: normal;
+            font-size: 0.95rem;
+            color: #ddd;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: none;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 150, 136, 0.5);
+        }
+
+        .custom-date-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed rgba(255,255,255,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-date-range input[type="date"] {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            outline: none;
+            color-scheme: dark;
+            font-family: inherit;
+        }
+
+        .custom-date-range input[type="date"]:focus {
+            border-color: var(--primary);
+        }
+
+        mark.highlight {
+            background-color: rgba(247, 183, 51, 0.5);
+            color: #fff;
+            padding: 2px 4px;
+            border-radius: 4px;
+            box-shadow: 0 0 8px rgba(247, 183, 51, 0.4);
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 1rem;
+            border-top: 1px solid var(--glass-border);
+            z-index: 10;
+        }
+
+        .loading {
+            text-align: center;
+            font-style: italic;
+            opacity: 0.7;
+            grid-column: 1 / -1;
+        }
+    </style>
+    
+    <!-- Thêm thư viện SheetJS để xuất Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Input Area -->
+        <div class="glass-panel">
+            <h1>✨ Quản Lý Công Việc Thông Minh</h1>
+            <div class="input-group">
+                <textarea id="taskInput" placeholder="Ví dụ: Sáng mai thứ 4 ngày 18/03 có tiết dạy toán lúc 7h30, mức độ gấp..."></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <label for="dateInput" style="font-weight: bold; color: #ddd;">📅 Ngày:</label>
+                        <input type="date" id="dateInput" style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); color: white; padding: 10px 15px; border-radius: 12px; outline: none; color-scheme: dark; font-size: 1rem;">
+                        <label for="timeInput" style="font-weight: bold; color: #ddd; margin-left: 10px;">⏰ Giờ:</label>
+                        <input type="time" id="timeInput" style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border); color: white; padding: 10px 15px; border-radius: 12px; outline: none; color-scheme: dark; font-size: 1rem;">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="cancelBtn" style="display: none; background: rgba(255,255,255,0.1); box-shadow: none; border: 1px solid var(--glass-border);">❌ Hủy</button>
+                        <button id="addBtn">🚀 Thêm công việc</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Area -->
+        <div class="glass-panel filter-panel">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm nhanh nội dung, thứ, ngày, mức độ...">
+            </div>
+            <div class="filter-controls">
+                <span style="font-weight: bold; margin-right: 10px;">📅 Lọc theo:</span>
+                <button class="filter-btn active" data-filter="all">Tất cả</button>
+                <button class="filter-btn" data-filter="today">Hôm nay</button>
+                <button class="filter-btn" data-filter="week">Tuần này</button>
+                <button class="filter-btn" data-filter="month">Tháng này</button>
+                <button class="filter-btn" data-filter="custom">Tùy chọn khoảng ngày</button>
+            </div>
+            <div class="custom-date-range" id="customDateRange" style="display: none;">
+                <span>Từ ngày:</span>
+                <input type="date" id="filterStartDate">
+                <span>Đến ngày:</span>
+                <input type="date" id="filterEndDate">
+            </div>
+        </div>
+
+        <!-- Display Area -->
+        <div class="glass-panel" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+            <div id="notesContainer">
+                <div class="loading">Đang tải dữ liệu...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>Thầy Nguyễn Cường dạy Toán</footer>
+
+    <!-- Firebase SDK & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // 1. Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 2. Logic bóc tách câu văn (Simulate AI)
+        function parseNaturalLanguage(text) {
+            let data = { day: "", date: "", description: "", time: "", level: "Bình thường" };
+            
+            // Regex patterns
+            const dayRegex = /(thứ\s*\d|chủ\s*nhật)/i;
+            const dateRegex = /(\d{1,2}[\/\-]\d{1,2}([\/\-]\d{2,4})?)/;
+            const timeRegex = /(\d{1,2}h\d{0,2}|\d{1,2}:\d{2})/i;
+            const levelRegex = /(mức độ|ưu tiên)\s*([^,\.]+)/i;
+
+            // Extract Day
+            const dayMatch = text.match(dayRegex);
+            if (dayMatch) data.day = dayMatch[0].charAt(0).toUpperCase() + dayMatch[0].slice(1).toLowerCase();
+
+            // Extract Date & Format dd/mm/yyyy
+            const dateMatch = text.match(dateRegex);
+            if (dateMatch) {
+                let parts = dateMatch[0].split(/[\/\-]/);
+                let d = parts[0].padStart(2, '0');
+                let m = parts[1].padStart(2, '0');
+                let y = parts.length === 3 ? parseInt(parts[2], 10) : new Date().getFullYear();
+                if (y < 100) y += 2000;
+                
+                // Lưu định dạng chuẩn dd/mm/yyyy vào DB
+                data.date = `${d}/${m}/${y}`;
+
+                // AI tự động nhận diện Thứ dựa trên Ngày nếu người dùng không nhập Thứ
+                if (!data.day) {
+                    try {
+                        let dateObj = new Date(y, parseInt(m, 10) - 1, parseInt(d, 10));
+                        if (!isNaN(dateObj.getTime())) {
+                            const dayNames = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+                            data.day = dayNames[dateObj.getDay()];
+                        }
+                    } catch(e) {
+                        console.log("Không thể tự động tính thứ", e);
+                    }
+                }
+            }
+
+            // Extract Time
+            const timeMatch = text.match(timeRegex);
+            if (timeMatch) {
+                let t = timeMatch[0].toLowerCase().replace('h', ':');
+                if(t.endsWith(':')) t += '00';
+                
+                // Chuẩn hóa về định dạng HH:mm cho thẻ input type="time"
+                if (!t.includes(':')) t += ':00';
+                let [hh, mm] = t.split(':');
+                hh = hh.padStart(2, '0');
+                mm = (mm || '00').padStart(2, '0');
+                data.time = `${hh}:${mm}`;
+            }
+
+            // Extract Level
+            const levelMatch = text.match(levelRegex);
+            if (levelMatch) {
+                data.level = levelMatch[2].trim();
+            } else if (text.toLowerCase().includes('gấp')) {
+                data.level = 'Gấp';
+            } else if (text.toLowerCase().includes('quan trọng')) {
+                data.level = 'Quan trọng';
+            }
+
+            // Giữ lại nguyên vẹn nội dung gốc người dùng nhập (chỉ viết hoa chữ cái đầu tiên)
+            data.description = text.charAt(0).toUpperCase() + text.slice(1);
+
+            return data;
+        }
+
+        // DOM Elements
+        const taskInput = document.getElementById('taskInput');
+        const dateInput = document.getElementById('dateInput');
+        const timeInput = document.getElementById('timeInput');
+        const addBtn = document.getElementById('addBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const notesContainer = document.getElementById('notesContainer');
+        
+        // Filter Elements & State
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const customDateRange = document.getElementById('customDateRange');
+        const filterStartDate = document.getElementById('filterStartDate');
+        const filterEndDate = document.getElementById('filterEndDate');
+        const searchInput = document.getElementById('searchInput');
+        
+        let globalTasks = []; // Lưu trữ toàn bộ dữ liệu đã sort để lọc
+        let currentFilter = 'all';
+        let currentRenderedTasks = []; // Lưu lại danh sách đang hiển thị để xuất Excel
+
+        let currentEditId = null;
+
+        // Hàm hỗ trợ đưa dữ liệu lên form để sửa
+        window.editTask = (id, rawText, explicitDate, explicitTime) => {
+            currentEditId = id;
+            taskInput.value = rawText;
+            timeInput.value = explicitTime || '';
+            
+            // Xử lý hiển thị ngày lên input type="date" (yêu cầu định dạng YYYY-MM-DD)
+            if (explicitDate && explicitDate !== '-') {
+                let parts = explicitDate.split('/');
+                if (parts.length === 3) {
+                    dateInput.value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            } else {
+                dateInput.value = '';
+            }
+
+            addBtn.innerHTML = "💾 Lưu thay đổi";
+            cancelBtn.style.display = "block";
+            taskInput.focus();
+        };
+
+        // Hủy chỉnh sửa
+        cancelBtn.addEventListener('click', () => {
+            currentEditId = null;
+            taskInput.value = '';
+            dateInput.value = '';
+            timeInput.value = '';
+            addBtn.innerHTML = "🚀 Thêm công việc";
+            cancelBtn.style.display = "none";
+        });
+
+        // Hàm hỗ trợ xóa công việc
+        window.deleteTask = async (id) => {
+            if (confirm("⚠️ Bạn có chắc chắn muốn xóa công việc này không?")) {
+                try {
+                    await deleteDoc(doc(db, "NoteAI", id));
+                } catch (error) {
+                    console.error("Lỗi khi xóa: ", error);
+                    alert("Đã xảy ra lỗi khi xóa công việc!");
+                }
+            }
+        };
+
+        // 3. Xử lý Thêm/Sửa dữ liệu vào Firestore
+        addBtn.addEventListener('click', async () => {
+            const text = taskInput.value.trim();
+            if (!text) return alert("Vui lòng nhập nội dung công việc!");
+
+            addBtn.innerHTML = "⏳ Đang xử lý...";
+            addBtn.disabled = true;
+            cancelBtn.disabled = true;
+
+            try {
+                const parsedData = parseNaturalLanguage(text);
+                
+                // Ghi đè ngày/giờ nếu người dùng chọn cụ thể từ ô input
+                if (dateInput.value) {
+                    let [y, m, d] = dateInput.value.split('-');
+                    parsedData.date = `${d}/${m}/${y}`;
+                    
+                    // Tự động tính lại Thứ
+                    let dateObj = new Date(y, parseInt(m, 10) - 1, parseInt(d, 10));
+                    const dayNames = ["Chủ nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+                    parsedData.day = dayNames[dateObj.getDay()];
+                }
+                if (timeInput.value) {
+                    parsedData.time = timeInput.value;
+                }
+                
+                if (currentEditId) {
+                    // Update dữ liệu
+                    const docRef = doc(db, "NoteAI", currentEditId);
+                    await updateDoc(docRef, {
+                        ...parsedData,
+                        rawText: text
+                    });
+                    currentEditId = null;
+                    cancelBtn.style.display = "none";
+                } else {
+                    // Thêm mới
+                    await addDoc(collection(db, "NoteAI"), {
+                        ...parsedData,
+                        rawText: text,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                
+                taskInput.value = '';
+                dateInput.value = '';
+                timeInput.value = '';
+            } catch (error) {
+                console.error("Lỗi khi lưu: ", error);
+                alert("Đã xảy ra lỗi khi lưu vào Firebase!");
+            } finally {
+                addBtn.innerHTML = "🚀 Thêm công việc";
+                addBtn.disabled = false;
+                cancelBtn.disabled = false;
+            }
+        });
+
+        // Hàm helper để render class CSS cho mức độ
+        function getLevelClass(levelStr) {
+            const lvl = levelStr.toLowerCase();
+            if (lvl.includes('gấp')) return 'level-gap';
+            if (lvl.includes('quan trọng')) return 'level-quan-trong';
+            return 'level-binh-thuong';
+        }
+
+        // Hàm helper để hiển thị ngày đầy đủ dd/mm/yyyy cho cả dữ liệu cũ
+        function getFullDate(dateStr) {
+            if (!dateStr || dateStr === '-') return '-';
+            let parts = dateStr.split(/[\/\-]/);
+            if (parts.length < 2) return dateStr;
+            let d = parts[0].padStart(2, '0');
+            let m = parts[1].padStart(2, '0');
+            let y = parts.length === 3 ? parseInt(parts[2], 10) : new Date().getFullYear();
+            if (y < 100) y += 2000;
+            return `${d}/${m}/${y}`;
+        }
+
+        // Hàm helper để highlight text khi tìm kiếm
+        function highlightText(text, query) {
+            if (!query || !text) return text || '';
+            // Thoát các ký tự đặc biệt của regex để tránh lỗi
+            const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${safeQuery})`, 'gi');
+            return String(text).replace(regex, '<mark class="highlight">$1</mark>');
+        }
+
+        // --- LOGIC LỌC VÀ HIỂN THỊ DỮ LIỆU ---
+
+        function renderTasksToHTML(tasksToRender) {
+            currentRenderedTasks = tasksToRender; // Lưu lại để dùng cho export Excel
+            const count = tasksToRender.length;
+
+            if (count === 0) {
+                notesContainer.innerHTML = `
+                    <div class="task-stats">Hiển thị <strong>0</strong> công việc</div>
+                    <div class="loading">Không tìm thấy công việc nào phù hợp với bộ lọc.</div>
+                `;
+                return;
+            }
+
+            // Đếm thống kê theo mức độ
+            let gapCount = 0;
+            let quanTrongCount = 0;
+            let binhThuongCount = 0;
+
+            tasksToRender.forEach(t => {
+                let l = (t.level || "").toLowerCase();
+                if (l.includes('gấp')) gapCount++;
+                else if (l.includes('quan trọng')) quanTrongCount++;
+                else binhThuongCount++;
+            });
+
+            let statsDetails = [];
+            if (gapCount > 0) statsDetails.push(`<span style="color: #ff8a75">${gapCount} Gấp</span>`);
+            if (quanTrongCount > 0) statsDetails.push(`<span style="color: #ffd675">${quanTrongCount} Quan trọng</span>`);
+            if (binhThuongCount > 0) statsDetails.push(`<span style="color: #6fffe9">${binhThuongCount} Bình thường</span>`);
+
+            const statsHtml = `
+                <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    <div class="task-stats" style="margin-bottom: 0; flex-grow: 1;">
+                        Hiển thị <strong>${count}</strong> công việc 
+                        <span style="font-size: 0.9em; opacity: 0.8; margin-left: 5px;">(${statsDetails.join(' • ')})</span>
+                    </div>
+                    <button class="export-btn" id="exportExcelBtn">
+                        📊 Tải xuống Excel
+                    </button>
+                </div>
+            `;
+
+            const currentSearchQuery = searchInput.value.trim();
+
+            let html = statsHtml + `<div class="feed-list">`;
+
+            tasksToRender.forEach((data) => {
+                const docId = data.id;
+                const levelClass = getLevelClass(data.level);
+                const safeRawText = (data.rawText || data.description || "").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, " ");
+                
+                // Áp dụng highlight cho các trường dữ liệu
+                const displayDay = highlightText(data.day && data.day !== '-' ? data.day : '', currentSearchQuery);
+                const displayDate = highlightText(getFullDate(data.date) !== '-' ? getFullDate(data.date) : '', currentSearchQuery);
+                const displayDesc = highlightText(data.description, currentSearchQuery);
+                const displayTime = highlightText(data.time && data.time !== '-' ? data.time : '', currentSearchQuery);
+                const displayLevel = highlightText(data.level, currentSearchQuery);
+
+                // Gom chuỗi thời gian lại cho đẹp
+                let timeStringArray = [];
+                if (data.day && data.day !== '-') timeStringArray.push(displayDay);
+                if (getFullDate(data.date) !== '-') timeStringArray.push(displayDate);
+                if (data.time && data.time !== '-') timeStringArray.push(displayTime);
+                let timeString = timeStringArray.join(' • ') || 'Chưa xác định thời gian';
+
+                html += `
+                    <article class="feed-item">
+                        <div class="feed-meta">
+                            <div class="feed-datetime">🕒 ${timeString}</div>
+                            <span class="level-badge ${levelClass}">${displayLevel}</span>
+                        </div>
+                        <div class="feed-content">
+                            ${displayDesc}
+                        </div>
+                        <div class="feed-actions">
+                            <button class="action-btn" onclick="editTask('${docId}', '${safeRawText}', '${data.date || ''}', '${data.time || ''}')">✏️ Sửa</button>
+                            <button class="action-btn delete-btn" onclick="deleteTask('${docId}')">🗑️ Xóa</button>
+                        </div>
+                    </article>
+                `;
+            });
+
+            html += `</div>`;
+            notesContainer.innerHTML = html;
+
+            // Gán sự kiện cho nút xuất Excel sau khi render
+            const exportBtn = document.getElementById('exportExcelBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportToExcel);
+            }
+        }
+
+        // Hàm xuất Excel
+        function exportToExcel() {
+            if (currentRenderedTasks.length === 0) {
+                alert("Không có dữ liệu để tải xuống!");
+                return;
+            }
+
+            // Chuẩn bị dữ liệu cho Excel
+            const excelData = currentRenderedTasks.map((task, index) => ({
+                "STT": index + 1,
+                "Thứ": task.day && task.day !== '-' ? task.day : '',
+                "Ngày": getFullDate(task.date) !== '-' ? getFullDate(task.date) : '',
+                "Giờ": task.time && task.time !== '-' ? task.time : '',
+                "Nội dung công việc": task.description || task.rawText || '',
+                "Mức độ": task.level || ''
+            }));
+
+            // Tạo WorkSheet
+            const ws = XLSX.utils.json_to_sheet(excelData);
+
+            // Tùy chỉnh độ rộng cột cho đẹp
+            const wscols = [
+                {wch: 5},  // STT
+                {wch: 10}, // Thứ
+                {wch: 12}, // Ngày
+                {wch: 10}, // Giờ
+                {wch: 50}, // Nội dung
+                {wch: 15}  // Mức độ
+            ];
+            ws['!cols'] = wscols;
+
+            // Tạo WorkBook và thêm WorkSheet
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Danh_Sach_Cong_Viec");
+
+            // Tạo tên file có chứa ngày giờ hiện tại
+            const now = new Date();
+            const dateStr = `${now.getDate()}_${now.getMonth()+1}_${now.getFullYear()}`;
+            let filterName = currentFilter === 'all' ? 'TatCa' : 
+                             currentFilter === 'today' ? 'HomNay' : 
+                             currentFilter === 'week' ? 'TuanNay' : 
+                             currentFilter === 'month' ? 'ThangNay' : 'TuyChon';
+            
+            // Nếu có tìm kiếm thì thêm vào tên file
+            const searchQ = searchInput.value.trim();
+            if(searchQ) filterName += `_TimKiem`;
+
+            const fileName = `SmartNote_${filterName}_${dateStr}.xlsx`;
+
+            // Xuất file
+            XLSX.writeFile(wb, fileName);
+        }
+
+        function applyFilterAndRender() {
+            let filteredTasks = globalTasks;
+            const now = new Date();
+            const todayTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+            if (currentFilter !== 'all') {
+                filteredTasks = globalTasks.filter(task => {
+                    if (!task.date || task.date === '-') return false; // Các task không có ngày sẽ bị ẩn khi dùng bộ lọc thời gian
+                    
+                    let parts = task.date.split(/[\/\-]/);
+                    let d = parseInt(parts[0], 10);
+                    let m = parseInt(parts[1], 10) - 1;
+                    let y = parts.length === 3 ? parseInt(parts[2], 10) : new Date().getFullYear();
+                    if (y < 100) y += 2000;
+                    
+                    let taskTime = new Date(y, m, d).getTime();
+
+                    if (currentFilter === 'today') {
+                        return taskTime === todayTime;
+                    } 
+                    else if (currentFilter === 'week') {
+                        const dayOfWeek = now.getDay() || 7; // CN là 7
+                        const startOfWeek = todayTime - (dayOfWeek - 1) * 86400000;
+                        const endOfWeek = startOfWeek + 7 * 86400000 - 1;
+                        return taskTime >= startOfWeek && taskTime <= endOfWeek;
+                    } 
+                    else if (currentFilter === 'month') {
+                        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+                        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime();
+                        return taskTime >= startOfMonth && taskTime <= endOfMonth;
+                    } 
+                    else if (currentFilter === 'custom') {
+                        const startDateStr = filterStartDate.value;
+                        const endDateStr = filterEndDate.value;
+                        if (!startDateStr && !endDateStr) return true; // Chưa chọn ngày thì hiện tất cả của option này
+                        
+                        let pass = true;
+                        if (startDateStr) {
+                            const startObj = new Date(startDateStr);
+                            const startTime = new Date(startObj.getFullYear(), startObj.getMonth(), startObj.getDate()).getTime();
+                            if (taskTime < startTime) pass = false;
+                        }
+                        if (endDateStr) {
+                            const endObj = new Date(endDateStr);
+                            const endTime = new Date(endObj.getFullYear(), endObj.getMonth(), endObj.getDate()).getTime();
+                            if (taskTime > endTime) pass = false;
+                        }
+                        return pass;
+                    }
+                    return true;
+                });
+            }
+            
+            // Lọc thêm bằng Text Search (Tìm kiếm thông minh)
+            const searchQuery = searchInput.value.toLowerCase().trim();
+            if (searchQuery) {
+                filteredTasks = filteredTasks.filter(task => {
+                    const desc = (task.description || "").toLowerCase();
+                    const day = (task.day || "").toLowerCase();
+                    const date = (task.date || "").toLowerCase();
+                    const level = (task.level || "").toLowerCase();
+                    const time = (task.time || "").toLowerCase();
+                    
+                    return desc.includes(searchQuery) || 
+                           day.includes(searchQuery) || 
+                           date.includes(searchQuery) || 
+                           level.includes(searchQuery) ||
+                           time.includes(searchQuery);
+                });
+            }
+
+            renderTasksToHTML(filteredTasks);
+        }
+
+        // Lắng nghe sự kiện chuyển đổi bộ lọc
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // Đổi UI nút active
+                filterBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                currentFilter = e.target.dataset.filter;
+                
+                // Ẩn hiện phần chọn ngày tùy chỉnh
+                if (currentFilter === 'custom') {
+                    customDateRange.style.display = 'flex';
+                } else {
+                    customDateRange.style.display = 'none';
+                }
+                
+                applyFilterAndRender();
+            });
+        });
+
+        // Tự động lọc khi đổi ngày trong chế độ "Tùy chọn"
+        filterStartDate.addEventListener('change', applyFilterAndRender);
+        filterEndDate.addEventListener('change', applyFilterAndRender);
+
+        // Tự động lọc khi gõ tìm kiếm
+        searchInput.addEventListener('input', applyFilterAndRender);
+
+
+        // 4. Lắng nghe dữ liệu (Real-time) từ Firestore
+        const q = query(collection(db, "NoteAI")); 
+        
+        onSnapshot(q, (snapshot) => {
+            notesContainer.innerHTML = ''; // Clear loading
+            
+            if (snapshot.empty) {
+                globalTasks = [];
+                notesContainer.innerHTML = '<div class="loading">Chưa có công việc nào được lưu.</div>';
+                return;
+            }
+
+            // Cập nhật mảng globalTasks
+            globalTasks = [];
+            snapshot.forEach((doc) => {
+                globalTasks.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Sắp xếp mảng theo ngày (Gần nhất/Mới nhất xếp lên đầu - Giảm dần)
+            globalTasks.sort((a, b) => {
+                const getTime = (dateStr) => {
+                    if (!dateStr || dateStr === '-') return 0; // Trả về 0 để đẩy xuống cuối
+                    let parts = dateStr.split(/[\/\-]/);
+                    let d = parseInt(parts[0], 10) || 0;
+                    let m = (parseInt(parts[1], 10) || 1) - 1;
+                    let y = parts.length === 3 ? parseInt(parts[2], 10) : new Date().getFullYear();
+                    if (y < 100) y += 2000;
+                    return new Date(y, m, d).getTime();
+                };
+                
+                let timeA = getTime(a.date);
+                let timeB = getTime(b.date);
+                
+                // Đảm bảo các công việc không có ngày tháng luôn nằm ở dưới cùng
+                if (timeA === 0) return 1;
+                if (timeB === 0) return -1;
+                
+                // timeB - timeA: Xếp giảm dần (Ngày càng lớn/càng mới thì càng nằm trên)
+                return timeB - timeA;
+            });
+
+            // Sau khi có dữ liệu mới và sort, gọi hàm render áp dụng filter hiện tại
+            applyFilterAndRender();
+
+        }, (error) => {
+            console.error("Lỗi đọc dữ liệu: ", error);
+            notesContainer.innerHTML = `<div class="loading" style="color: #ff4b2b;">Không thể kết nối Firebase. Hãy kiểm tra Security Rules.</div>`;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Sinh Thái Gia Đình</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Quicksand', 'sans-serif'] },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Thư viện SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { 
+            background-color: #f8fafc; 
+            overflow-x: hidden;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased relative min-h-screen pb-20">
+
+    <!-- ========================================== -->
+    <!-- CẤU HÌNH BACKEND (DÁN LINK WEB APP VÀO ĐÂY)-->
+    <!-- ========================================== -->
+    <script>
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyqiK6S2kvuOtSFJAkYLCeG9SRDMSh_iithZduiq50ZijxOJ9bBdm_PngxjEmRm56Y7/exec'; 
+    </script>
+
+    <!-- Background Blobs -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-teal-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob"></div>
+        <div class="absolute top-[20%] right-[-10%] w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000"></div>
+        <div class="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-emerald-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="pt-10 pb-8 text-center px-4 relative z-10">
+        
+        <!-- Nút liên kết trực tiếp đến Google Sheet với Icon đẹp (Ở góc cho Desktop) -->
+        <button onclick="window.open('https://docs.google.com/spreadsheets/d/1lRuUYDm_1S7NuVqyPsEywO7IWj21yLcRnXu01dVlVJo/edit', '_blank')" class="hidden md:flex absolute top-4 right-4 sm:top-8 sm:right-8 z-[100] items-center gap-2 px-4 py-2.5 bg-white/80 backdrop-blur-md border border-emerald-200 text-emerald-700 rounded-full shadow-sm hover:bg-emerald-50 hover:-translate-y-1 transition-all font-bold text-sm cursor-pointer">
+            <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M4 2.5C2.895 2.5 2 3.395 2 4.5v15c0 1.105.895 2 2 2h16c1.105 0 2-.895 2-2v-15c0-1.105-.895-2-2-2H4zm1 2h14v3H5v-3zm0 5h4v3H5v-3zm6 0h8v3h-8v-3zm-6 5h4v3H5v-3zm6 0h8v3h-8v-3z"/>
+            </svg>
+            <span>Google Sheet</span>
+        </button>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold text-blue-600 flex justify-center items-center gap-3 drop-shadow-sm mb-3">
+            <span>🏡</span> Hệ Sinh Thái Gia Đình
+        </h1>
+        
+        <div class="inline-flex bg-white/60 backdrop-blur-md rounded-full p-1.5 shadow-sm border border-gray-200 mt-2">
+            <button onclick="switchView('vault')" id="tabVault" class="px-6 sm:px-8 py-2.5 rounded-full font-bold text-sm transition-all bg-blue-600 text-white shadow-md">Kho Lưu Trữ</button>
+            <button onclick="switchView('profile')" id="tabProfile" class="px-6 sm:px-8 py-2.5 rounded-full font-bold text-sm transition-all bg-transparent text-gray-600 hover:text-gray-900 hover:bg-white/50">Hồ Sơ Cá Nhân</button>
+        </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: KHO LƯU TRỮ GIA ĐÌNH -->
+    <!-- ========================================== -->
+    <div id="viewVault" class="transition-opacity duration-300">
+        
+        <div class="max-w-6xl mx-auto px-4 mb-8 flex flex-col gap-4">
+            <div class="flex items-center gap-2 bg-white/80 backdrop-blur-sm p-3 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto hide-scrollbar">
+                <span class="font-bold text-gray-600 pl-2 shrink-0">Sổ lưu trữ:</span>
+                <select id="sheetSelector" onchange="changeSheet()" class="flex-grow min-w-[120px] px-4 py-2 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 font-bold text-blue-600 appearance-none cursor-pointer"></select>
+                
+                <!-- Nút Liên kết Trang Tính ở Toolbar -->
+                <button onclick="window.open('https://docs.google.com/spreadsheets/d/1lRuUYDm_1S7NuVqyPsEywO7IWj21yLcRnXu01dVlVJo/edit', '_blank')" class="p-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-xl transition-colors font-bold flex items-center gap-1 shrink-0" title="Mở Google Sheet">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 2.5C2.895 2.5 2 3.395 2 4.5v15c0 1.105.895 2 2 2h16c1.105 0 2-.895 2-2v-15c0-1.105-.895-2-2-2H4zm1 2h14v3H5v-3zm0 5h4v3H5v-3zm6 0h8v3h-8v-3zm-6 5h4v3H5v-3zm6 0h8v3h-8v-3z"/>
+                    </svg>
+                    <span class="hidden sm:inline">Trang Tính</span>
+                </button>
+
+                <button onclick="refreshData()" class="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-colors font-bold flex items-center gap-1 shrink-0" title="Tải lại dữ liệu mới nhất">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> 
+                    <span class="hidden sm:inline">Tải Lại</span>
+                </button>
+
+                <button onclick="openNewSheetModal()" class="p-2.5 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-xl transition-colors font-bold flex items-center gap-1 shrink-0" title="Tạo Sổ Mới">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> <span class="hidden sm:inline">Tạo</span>
+                </button>
+                <button onclick="deleteCurrentSheet()" class="p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-colors font-bold flex items-center gap-1 shrink-0" title="Xóa Sổ Hiện Tại">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> <span class="hidden sm:inline">Xóa</span>
+                </button>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <button onclick="openModal()" class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transform hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                        Thêm Mới
+                    </button>
+                    <input type="file" id="excelInput" accept=".xlsx, .xls" class="hidden" onchange="handleExcelImport(event)">
+                    <button onclick="document.getElementById('excelInput').click()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transform hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Nhập Excel
+                    </button>
+                    <button onclick="downloadTemplate()" class="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transform hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Tải Mẫu
+                    </button>
+                </div>
+                <div class="relative w-full md:max-w-md">
+                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm..." class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-medium shadow-sm" oninput="renderCards()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng Thông Tin -->
+        <div class="max-w-6xl mx-auto px-4 mb-6">
+            <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+                <h2 class="text-2xl font-extrabold text-slate-700 flex items-center gap-3">
+                    <span class="p-2 bg-blue-100 text-blue-600 rounded-xl text-lg">📋</span> Bảng Thông Tin
+                </h2>
+                <span class="text-sm font-bold text-slate-500 bg-slate-200 px-3 py-1 rounded-full" id="totalRecords">0 mục</span>
+            </div>
+        </div>
+
+        <div id="cardsContainer" class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: HỒ SƠ CÁ NHÂN ĐỒNG BỘ -->
+    <!-- ========================================== -->
+    <div id="viewProfile" class="hidden transition-opacity duration-300 max-w-4xl mx-auto px-4">
+        
+        <!-- Nút Chỉnh Sửa & Trang Tính cho Hồ Sơ -->
+        <div class="flex flex-wrap justify-end gap-3 mb-4">
+            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1lRuUYDm_1S7NuVqyPsEywO7IWj21yLcRnXu01dVlVJo/edit', '_blank')" class="bg-white hover:bg-emerald-50 text-emerald-600 font-bold py-2.5 px-6 rounded-xl shadow-sm border border-emerald-200 transform hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 2.5C2.895 2.5 2 3.395 2 4.5v15c0 1.105.895 2 2 2h16c1.105 0 2-.895 2-2v-15c0-1.105-.895-2-2-2H4zm1 2h14v3H5v-3zm0 5h4v3H5v-3zm6 0h8v3h-8v-3zm-6 5h4v3H5v-3zm6 0h8v3h-8v-3z"/>
+                </svg>
+                Mở Trang Tính
+            </button>
+            <button onclick="openProfileEditModal()" class="bg-white hover:bg-teal-50 text-teal-600 font-bold py-2.5 px-6 rounded-xl shadow-sm border border-teal-200 transform hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                Chỉnh sửa Hồ Sơ
+            </button>
+        </div>
+
+        <!-- Khối Giới Thiệu -->
+        <div class="glass-card rounded-[2.5rem] shadow-xl p-8 md:p-12 mb-8 animate-fade-in-up relative overflow-hidden">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10">
+                <div class="relative group cursor-pointer shrink-0">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-teal-400 to-blue-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
+                    <img id="profAvatar" src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff&size=200&bold=true" alt="Avatar" class="relative w-40 h-40 md:w-48 md:h-48 rounded-full object-cover border-4 border-white shadow-lg transform group-hover:scale-105 transition duration-500">
+                </div>
+
+                <div class="flex-grow text-center md:text-left">
+                    <div class="inline-block px-4 py-1.5 rounded-full bg-teal-50 text-teal-600 font-bold text-sm tracking-wide mb-3 border border-teal-100">
+                        👋 Xin chào, tôi là
+                    </div>
+                    <h1 id="profName" class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600 mb-3 pb-2 leading-normal">
+                        Tên Của Bạn
+                    </h1>
+                    <p id="profRole" class="text-xl text-slate-500 font-medium mb-6">Nghề nghiệp / Chức danh</p>
+                    
+                    <p id="profBio" class="text-slate-600 leading-relaxed mb-8 max-w-2xl font-medium whitespace-pre-wrap">
+                        Giới thiệu ngắn về bản thân bạn sẽ hiển thị ở đây...
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khối Thông Tin Chi Tiết -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 glass-card rounded-[2rem] shadow-lg p-8 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                    <span class="p-2.5 bg-blue-100 text-blue-600 rounded-xl text-lg">📋</span> Lý Lịch Cá Nhân
+                </h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center shrink-0 text-xl">🎂</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-0.5">Ngày sinh</p>
+                            <p id="profDob" class="font-bold text-slate-700 text-lg">---</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center shrink-0 text-xl">🆔</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-0.5">Mã định danh (CCCD)</p>
+                            <p id="profIdNo" class="font-bold text-slate-700 text-lg">---</p>
+                            <p class="text-xs font-semibold text-slate-500 mt-1">Cấp ngày: <span id="profIdDate">---</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center shrink-0 text-xl">📍</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-0.5">Quê quán</p>
+                            <p id="profHometown" class="font-bold text-slate-700 text-lg">---</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0 text-xl">🏥</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-0.5">Nơi sinh</p>
+                            <p id="profBirthPlace" class="font-bold text-slate-700 text-lg">---</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0 text-xl">🏡</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-0.5">Nơi cư trú</p>
+                            <p id="profResidence" class="font-bold text-slate-700 text-lg">---</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center shrink-0 text-xl">🏠</div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-0.5">Chỗ ở hiện tại</p>
+                            <p id="profCurrentAddress" class="font-bold text-slate-700 text-lg">---</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột bên phải -->
+            <div class="flex flex-col gap-8 animate-fade-in-up" style="animation-delay: 0.2s;">
+                <div class="glass-card rounded-[2rem] shadow-lg p-8">
+                    <h2 class="text-xl font-bold text-slate-800 mb-5 flex items-center gap-3">
+                        <span class="p-2 bg-emerald-100 text-emerald-600 rounded-lg text-sm">⚡</span> Thông tin khác
+                    </h2>
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-1">Số BHYT</p>
+                            <p id="profBhyt" class="font-bold text-slate-700">---</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-1">Ngày vào Đảng</p>
+                            <p id="profPartyDate" class="font-bold text-slate-700">---</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-1">Số thẻ Đảng</p>
+                            <p id="profPartyId" class="font-bold text-slate-700">---</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-400 mb-1">Nơi ĐK Khai sinh</p>
+                            <p id="profBirthReg" class="font-bold text-slate-700">---</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- CÁC THÀNH PHẦN ẨN (MODAL, SPINNER, TOAST) -->
+    <!-- ========================================== -->
+    <div id="loader" class="fixed inset-0 bg-white/70 backdrop-blur-sm z-[100] hidden flex justify-center items-center">
+        <svg class="animate-spin h-14 w-14 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+    </div>
+
+    <!-- Modal cho Kho Lưu Trữ -->
+    <div id="formModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto hide-scrollbar rounded-3xl shadow-2xl p-6 sm:p-8 transform scale-95 transition-transform duration-300 relative flex flex-col">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 shrink-0">✨ Thêm Mới</h2>
+            <form id="dataForm" onsubmit="submitForm(event)" class="space-y-4 flex-grow flex flex-col">
+                <input type="hidden" id="editId">
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Tên <span class="text-red-500">*</span></label>
+                    <input type="text" id="inpTitle" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:bg-white outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Thành viên</label>
+                    <select id="inpMember" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none cursor-pointer">
+                        <option value="Chung">👨‍👩‍👧‍👦 Chung (Gia đình)</option>
+                        <option value="Chồng">👨 Chồng</option>
+                        <option value="Vợ">👩 Vợ</option>
+                        <option value="Con cái">👶 Con cái</option>
+                        <option value="Ông bà">👴 Ông bà</option>
+                    </select>
+                </div>
+                <div id="profileFields" class="flex flex-col gap-4 bg-teal-50/50 p-5 rounded-2xl border border-teal-100 shadow-sm mt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Ngày tháng năm sinh</label><input type="date" id="inpDob" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                        <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Mã định danh / CCCD</label><input type="text" id="inpIdNo" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                        <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Ngày cấp CCCD</label><input type="date" id="inpIdDate" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                        <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Số BHYT</label><input type="text" id="inpBhyt" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                        <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Ngày vào Đảng</label><input type="date" id="inpPartyDate" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                        <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Số thẻ Đảng</label><input type="text" id="inpPartyId" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none" placeholder="Ví dụ: 12345678"></div>
+                    </div>
+                    <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Quê quán</label><input type="text" id="inpHometown" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Nơi sinh</label><input type="text" id="inpBirthPlace" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Nơi ĐKKS</label><input type="text" id="inpBirthReg" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Nơi cư trú</label><input type="text" id="inpResidence" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-teal-800 mb-1 pl-1">Chỗ ở hiện tại</label><input type="text" id="inpCurrentAddress" class="w-full px-4 py-3 rounded-xl bg-white border border-teal-200 outline-none"></div>
+                </div>
+                <div id="generalDateField">
+                    <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Ngày tháng (Liên quan chung)</label>
+                    <input type="date" id="inpDate" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none">
+                </div>
+                <div class="flex-grow flex flex-col min-h-[120px]">
+                    <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Nội dung chi tiết / Ghi chú</label>
+                    <textarea id="inpContent" class="w-full flex-grow px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:bg-white outline-none transition-all resize-none"></textarea>
+                </div>
+                <div class="flex gap-3 pt-4 shrink-0 mt-2">
+                    <button type="submit" id="btnSubmit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center">Lưu Dữ Liệu</button>
+                    <button type="button" onclick="closeModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3.5 rounded-xl transition-all active:scale-95">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal cho Sửa Hồ Sơ Cá Nhân -->
+    <div id="profileModal" class="fixed inset-0 bg-teal-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto hide-scrollbar rounded-3xl shadow-2xl p-6 sm:p-8 transform scale-95 transition-transform duration-300 relative flex flex-col border-t-4 border-teal-500">
+            <h2 class="text-2xl font-bold text-teal-800 mb-6 flex items-center gap-2 shrink-0">📝 Chỉnh sửa Hồ Sơ</h2>
+            <form id="profileForm" onsubmit="submitProfileForm(event)" class="space-y-4 flex-grow flex flex-col">
+                <input type="hidden" id="p_editId">
+                
+                <div class="flex gap-4">
+                    <div class="w-full">
+                        <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Họ và Tên</label>
+                        <input type="text" id="p_inpTitle" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-teal-400 outline-none">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Link Ảnh đại diện (URL)</label>
+                    <input type="text" id="p_inpAvatar" placeholder="Dán link ảnh (Facebook, Drive...) vào đây" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-teal-400 outline-none text-sm text-gray-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Nghề nghiệp / Vai trò</label>
+                    <input type="text" id="p_inpMember" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-teal-400 outline-none">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Ngày sinh</label><input type="date" id="p_inpDob" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">CCCD / Mã ĐD</label><input type="text" id="p_inpIdNo" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Ngày cấp</label><input type="date" id="p_inpIdDate" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Số BHYT</label><input type="text" id="p_inpBhyt" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Ngày vào Đảng</label><input type="date" id="p_inpPartyDate" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Số thẻ Đảng</label><input type="text" id="p_inpPartyId" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none" placeholder="Ví dụ: 12345678"></div>
+                </div>
+                <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Quê quán</label><input type="text" id="p_inpHometown" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Nơi sinh</label><input type="text" id="p_inpBirthPlace" class="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 outline-none"></div>
+                <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Nơi ĐKKS</label><input type="text" id="p_inpBirthReg" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Nơi cư trú</label><input type="text" id="p_inpResidence" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                <div><label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Chỗ ở hiện tại</label><input type="text" id="p_inpCurrentAddress" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none"></div>
+                <div class="flex-grow flex flex-col min-h-[120px]">
+                    <label class="block text-sm font-bold text-gray-600 mb-1 pl-1">Giới thiệu ngắn (Bio)</label>
+                    <textarea id="p_inpContent" class="w-full flex-grow px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-teal-400 outline-none resize-none"></textarea>
+                </div>
+                <div class="flex gap-3 pt-4 shrink-0 mt-2">
+                    <button type="submit" id="p_btnSubmit" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center">Lưu Hồ Sơ</button>
+                    <button type="button" onclick="closeProfileEditModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3.5 rounded-xl transition-all active:scale-95">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tạo Sổ Mới -->
+    <div id="newSheetModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 transform scale-95 transition-transform duration-300">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">📘 Tạo Sổ Lưu Trữ Mới</h2>
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-gray-600 mb-2 pl-1">Tên sổ mới:</label>
+                <input type="text" id="inpNewSheetName" placeholder="Ví dụ: Nam2024, TaiSan..." class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-green-400 focus:bg-white outline-none transition-all">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="confirmCreateNewSheet()" id="btnConfirmNewSheet" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center">Tạo Mới</button>
+                <button onclick="closeNewSheetModal()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl transition-all active:scale-95">Hủy</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-y-[-100px] opacity-0 z-[110] font-bold flex items-center gap-2">
+        <span id="toastMsg">Thành công!</span>
+    </div>
+
+    <!-- Kịch bản điều khiển -->
+    <script>
+        // --- CHUYỂN ĐỔI GIAO DIỆN ---
+        function switchView(viewName) {
+            const vault = document.getElementById('viewVault');
+            const profile = document.getElementById('viewProfile');
+            const tabVault = document.getElementById('tabVault');
+            const tabProfile = document.getElementById('tabProfile');
+
+            if (viewName === 'vault') {
+                vault.classList.remove('hidden');
+                profile.classList.add('hidden');
+                
+                tabVault.className = "px-6 sm:px-8 py-2.5 rounded-full font-bold text-sm transition-all bg-blue-600 text-white shadow-md";
+                tabProfile.className = "px-6 sm:px-8 py-2.5 rounded-full font-bold text-sm transition-all bg-transparent text-gray-600 hover:text-gray-900 hover:bg-white/50";
+            } else {
+                vault.classList.add('hidden');
+                profile.classList.remove('hidden');
+                
+                tabProfile.className = "px-6 sm:px-8 py-2.5 rounded-full font-bold text-sm transition-all bg-teal-600 text-white shadow-md";
+                tabVault.className = "px-6 sm:px-8 py-2.5 rounded-full font-bold text-sm transition-all bg-transparent text-gray-600 hover:text-gray-900 hover:bg-white/50";
+                
+                if (!hasFetchedProfile) {
+                    fetchProfileData(); 
+                }
+            }
+        }
+
+        function toSafeText(str) {
+            if (!str) return '';
+            return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
+        }
+
+        function getSafeProp(obj, possibleKeys) {
+            const safeKeys = possibleKeys.map(toSafeText);
+            for (let k in obj) { if (safeKeys.includes(toSafeText(k))) return obj[k]; }
+            return '';
+        }
+
+        let allData = [];
+        let currentSheet = 'Data';
+        let sheetList = [];
+        let personalProfileData = null; 
+        let hasFetchedProfile = false; 
+        
+        const spinnerSVG = `<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+        function formatDateStr(dateStr) {
+            if(!dateStr) return '';
+            const parts = dateStr.split('-');
+            if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            return dateStr;
+        }
+        
+        function parseExcelDate(val) {
+            if (!val) return '';
+            if (typeof val === 'number') {
+                const date = new Date((val - (25567 + 2)) * 86400 * 1000); 
+                if (!isNaN(date.getTime())) { return date.toISOString().split('T')[0]; }
+            }
+            let dateStr = String(val).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr; 
+            
+            const parts = dateStr.split(/[\/\-]/);
+            if (parts.length === 3) {
+                let d, m, y;
+                if (parts[2].length === 4 || parts[2].length === 2) {
+                    d = parts[0]; m = parts[1]; y = parts[2];
+                    if (y.length === 2) y = parseInt(y) > 50 ? '19' + y : '20' + y;
+                    if (parseInt(d) > 31 || (parseInt(m) > 12 && parseInt(d) <= 12)) {
+                        let temp = d; d = m; m = temp; 
+                    }
+                } else if (parts[0].length === 4) {
+                    y = parts[0]; m = parts[1]; d = parts[2];
+                } else { return dateStr; }
+                return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            }
+            return dateStr;
+        }
+
+        function downloadTemplate() {
+            const ws_data = [
+                ['Tên', 'Thành viên', 'Ngày tháng chung', 'Nội dung / Ghi chú', 'Ngày sinh', 'Mã định danh', 'Ngày cấp', 'Số BHYT', 'Ngày vào Đảng', 'Số thẻ Đảng', 'Quê quán', 'Nơi sinh', 'Nơi ĐKKS', 'Nơi cư trú', 'Chỗ ở hiện tại'],
+                ['Sổ đỏ căn nhà', 'Chung', '', 'Cất trong két sắt', '', '', '', '', '', '', '', '', '', '', ''],
+                ['Nguyễn Văn A', 'Chồng', '', 'Ghi chú thêm (nếu có)', '12/05/1995', '001234567890', '10/05/2021', 'DN12345678', '02/09/2015', '12345678', 'Hà Nội', 'Hà Nội', 'UBND phường', 'Hà Nội', 'Hà Nội']
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "MauNhapData");
+            XLSX.writeFile(wb, "Mau_Nhap_Lieu_Gia_Dinh.xlsx");
+        }
+
+        function handleExcelImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(ev) {
+                try {
+                    document.getElementById('loader').classList.remove('hidden');
+                    const data = new Uint8Array(ev.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {raw: false, dateNF: 'yyyy-mm-dd', defval: ""});
+
+                    const excelMap = {
+                        'title': ['tên', 'ten', 'tiêu đề', 'title'],
+                        'member': ['thành viên', 'thanh vien', 'member'],
+                        'date': ['ngày tháng chung', 'ngay thang', 'date'],
+                        'content': ['nội dung / ghi chú', 'noi dung', 'ghi chu', 'content'],
+                        'dob': ['ngày sinh', 'ngay sinh', 'dob'],
+                        'idNo': ['mã định danh', 'ma dinh danh', 'idno'],
+                        'idDate': ['ngày cấp', 'ngay cap', 'iddate'],
+                        'bhyt': ['số bhyt', 'so bhyt', 'bhyt'],
+                        'partyDate': ['ngày vào đảng', 'ngay vao dang'],
+                        'partyId': ['số thẻ đảng', 'thẻ đảng', 'the dang'],
+                        'hometown': ['quê quán', 'que quan', 'hometown'],
+                        'birthPlace': ['nơi sinh', 'noi sinh', 'birthplace'],
+                        'birthReg': ['nơi đkks', 'noi dkks', 'nơi đăng ký khai sinh', 'birthreg'],
+                        'residence': ['nơi cư trú', 'noi cu tru', 'residence'],
+                        'currentAddress': ['chỗ ở hiện tại', 'cho o hien tai', 'currentaddress']
+                    };
+
+                    const formattedData = [];
+                    jsonData.forEach(row => {
+                        let item = {};
+                        for (let standardKey in excelMap) {
+                            const val = getSafeProp(row, excelMap[standardKey]);
+                            if (val !== undefined && val !== '') {
+                                if (['date', 'dob', 'idDate', 'partyDate'].includes(standardKey)) {
+                                    item[standardKey] = parseExcelDate(val);
+                                } else {
+                                    item[standardKey] = String(val).trim();
+                                }
+                            }
+                        }
+                        if (!item.title) return;
+                        formattedData.push(item);
+                    });
+
+                    if (formattedData.length === 0) {
+                        showToast("Lỗi: Không tìm thấy dữ liệu (Kiểm tra lại cột 'Tên')!", "bg-red-500");
+                        return;
+                    }
+
+                    let res = await sendRequest('import', formattedData, null, null, true);
+                    if (res && res.status === 'error' && res.message.includes('hành động')) {
+                        showToast("Đang đồng bộ từng dòng do Script cũ...", "bg-yellow-500");
+                        let successCount = 0;
+                        for (let i = 0; i < formattedData.length; i++) {
+                            const r = await sendRequest('create', formattedData[i], null, null, true);
+                            if(r && r.status === 'success') successCount++;
+                        }
+                        showToast(`Đã đồng bộ ${successCount}/${formattedData.length} dữ liệu lên Google Sheet!`);
+                        fetchData();
+                    } else if (res && res.status === 'success') {
+                        showToast(`Đã nhập thành công ${formattedData.length} dữ liệu!`);
+                        fetchData();
+                    } else if (res && res.status === 'error') {
+                        showToast("Lỗi: " + res.message, "bg-red-500");
+                    }
+                } catch(error) {
+                    console.error(error);
+                    showToast("Lỗi định dạng file Excel!", "bg-red-500");
+                } finally {
+                    document.getElementById('excelInput').value = '';
+                    document.getElementById('loader').classList.add('hidden');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function fetchSheets() {
+            if(!GAS_URL || GAS_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+                document.getElementById('cardsContainer').innerHTML = '<div class="col-span-full text-center text-red-500 font-bold p-10 bg-red-50 rounded-2xl shadow-sm border border-red-100">⚠️ Vui lòng cập nhật biến GAS_URL (từ Google Apps Script) vào dòng 62 trong mã nguồn!</div>';
+                return;
+            }
+            const res = await sendRequest('getSheets');
+            if (res && res.status === 'success') {
+                sheetList = res.data;
+                const displaySheets = sheetList.filter(s => s !== 'HoSo_CaNhan');
+                if(displaySheets.length > 0 && !displaySheets.includes(currentSheet)) currentSheet = displaySheets[0];
+                renderSheetSelector(displaySheets);
+                fetchData();
+            }
+        }
+
+        function renderSheetSelector(displaySheets) {
+            const sel = document.getElementById('sheetSelector');
+            sel.innerHTML = displaySheets.map(s => `<option value="${s}" ${s===currentSheet?'selected':''}>📔 ${s}</option>`).join('');
+        }
+
+        function changeSheet() {
+            currentSheet = document.getElementById('sheetSelector').value;
+            fetchData();
+        }
+
+        const sheetModal = document.getElementById('newSheetModal');
+        function openNewSheetModal() {
+            document.getElementById('inpNewSheetName').value = '';
+            sheetModal.classList.remove('hidden');
+            setTimeout(() => { 
+                sheetModal.classList.remove('opacity-0'); 
+                sheetModal.children[0].classList.remove('scale-95'); 
+                document.getElementById('inpNewSheetName').focus();
+            }, 10);
+        }
+
+        function closeNewSheetModal() {
+            sheetModal.classList.add('opacity-0');
+            sheetModal.children[0].classList.add('scale-95');
+            setTimeout(() => sheetModal.classList.add('hidden'), 300);
+        }
+
+        async function confirmCreateNewSheet() {
+            const newName = document.getElementById('inpNewSheetName').value.trim();
+            if (!newName || newName === 'HoSo_CaNhan') {
+                showToast("Vui lòng nhập tên sổ hợp lệ!", "bg-red-500");
+                document.getElementById('inpNewSheetName').focus();
+                return;
+            }
+            const btn = document.getElementById('btnConfirmNewSheet');
+            btn.innerHTML = `${spinnerSVG} Đang tạo...`; 
+            btn.disabled = true;
+            document.getElementById('loader').classList.remove('hidden');
+
+            const res = await sendRequest('createSheet', {}, null, newName);
+            btn.innerText = 'Tạo Mới'; btn.disabled = false;
+
+            if (res && res.status === 'success') {
+                fetchSheets(); 
+                closeNewSheetModal();
+            } else {
+                document.getElementById('loader').classList.add('hidden');
+            }
+        }
+
+        document.getElementById('inpNewSheetName').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); confirmCreateNewSheet(); }
+        });
+
+        async function deleteCurrentSheet() {
+            const displaySheets = sheetList.filter(s => s !== 'HoSo_CaNhan');
+            if(displaySheets.length <= 1) { showToast("Không thể xóa Sổ cuối cùng!", "bg-red-500"); return; }
+            if(confirm(`⚠️ NGUY HIỂM: Bạn có chắc muốn xóa VĨNH VIỄN Sổ "${currentSheet}" và toàn bộ dữ liệu bên trong trên Google Sheet? Hành động này không thể phục hồi.`)) {
+                document.getElementById('loader').classList.remove('hidden');
+                const res = await sendRequest('deleteSheet');
+                if (res && res.status === 'success') {
+                    fetchSheets();
+                } else {
+                    document.getElementById('loader').classList.add('hidden');
+                }
+            }
+        }
+
+        // =====================================
+        // LOGIC KHO LƯU TRỮ
+        // =====================================
+        async function fetchData() {
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('cardsContainer').innerHTML = '';
+            
+            const res = await sendRequest('getData');
+            if (res && res.status === 'success') {
+                let rawData = res.data || [];
+                allData = rawData.map(item => {
+                    return {
+                        id: getSafeProp(item, ['id', 'ID']),
+                        title: getSafeProp(item, ['title', 'tên', 'tiêu đề']),
+                        member: getSafeProp(item, ['member', 'thành viên', 'thanh vien']),
+                        date: getSafeProp(item, ['date', 'ngày tháng chung', 'ngày tháng (liên quan)']),
+                        content: getSafeProp(item, ['content', 'nội dung', 'ghi chú', 'nội dung / ghi chú']),
+                        dob: getSafeProp(item, ['dob', 'ngày sinh']),
+                        idNo: getSafeProp(item, ['idNo', 'mã định danh']),
+                        idDate: getSafeProp(item, ['idDate', 'ngày cấp']),
+                        bhyt: getSafeProp(item, ['bhyt', 'số bhyt']),
+                        partyDate: getSafeProp(item, ['partyDate', 'ngày vào đảng', 'ngay vao dang', 'ngày vào đảng chính thức']),
+                        partyId: getSafeProp(item, ['partyId', 'thẻ đảng', 'số thẻ đảng', 'the dang', 'so the dang']),
+                        hometown: getSafeProp(item, ['hometown', 'quê quán']),
+                        birthPlace: getSafeProp(item, ['birthPlace', 'nơi sinh']),
+                        birthReg: getSafeProp(item, ['birthReg', 'nơi đkks', 'nơi đăng ký khai sinh']),
+                        residence: getSafeProp(item, ['residence', 'nơi cư trú']),
+                        currentAddress: getSafeProp(item, ['currentAddress', 'chỗ ở hiện tại']),
+                        pinned: item.pinned || item['Ghim'] === true || item['Ghim'] === 'TRUE',
+                        createdAt: item.createdAt || item['Ngày tạo hệ thống', 'Ngày tạo']
+                    };
+                });
+                renderCards();
+            } else {
+                showToast("Lỗi khi tải dữ liệu!", "bg-red-500");
+            }
+            document.getElementById('loader').classList.add('hidden');
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardsContainer');
+            const searchTxt = toSafeText(document.getElementById('searchInput').value);
+            
+            const filtered = allData.filter(item => {
+                const matchSearch = toSafeText(item.title).includes(searchTxt) || toSafeText(item.content).includes(searchTxt) || toSafeText(item.member).includes(searchTxt);
+                return matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-10 font-medium">Không tìm thấy dữ liệu nào.</div>';
+                document.getElementById('totalRecords').innerText = '0 mục';
+                return;
+            }
+            
+            document.getElementById('totalRecords').innerText = filtered.length + ' mục';
+
+            let html = '';
+            filtered.forEach(item => {
+                let displayContent = item.content;
+                let profileHtml = '';
+                let dateStr = item.date ? new Date(item.date).toLocaleDateString('vi-VN') : '';
+                let hasProfileData = item.dob || item.idNo || item.idDate || item.bhyt || item.partyDate || item.partyId || item.hometown || item.birthPlace || item.birthReg || item.residence || item.currentAddress;
+
+                if (hasProfileData) {
+                    profileHtml = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm bg-teal-50/40 p-4 rounded-xl border border-teal-100 mb-4 shadow-sm text-teal-900">
+                            ${item.dob ? `<div><span class="text-teal-700 font-bold block mb-0.5">Ngày sinh</span><span class="font-medium">${formatDateStr(item.dob)}</span></div>` : ''}
+                            ${item.idNo ? `<div><span class="text-teal-700 font-bold block mb-0.5">Mã định danh</span><span class="font-medium">${item.idNo}</span></div>` : ''}
+                            ${item.idDate ? `<div><span class="text-teal-700 font-bold block mb-0.5">Ngày cấp</span><span class="font-medium">${formatDateStr(item.idDate)}</span></div>` : ''}
+                            ${item.bhyt ? `<div><span class="text-teal-700 font-bold block mb-0.5">Số BHYT</span><span class="font-medium">${item.bhyt}</span></div>` : ''}
+                            ${item.partyDate ? `<div><span class="text-teal-700 font-bold block mb-0.5">Ngày vào Đảng</span><span class="font-medium">${formatDateStr(item.partyDate)}</span></div>` : ''}
+                            ${item.partyId ? `<div><span class="text-teal-700 font-bold block mb-0.5">Số thẻ Đảng</span><span class="font-medium">${item.partyId}</span></div>` : ''}
+                            ${item.hometown ? `<div class="sm:col-span-2 mt-1 pt-2 border-t border-teal-200/60"><span class="text-teal-700 font-bold block mb-0.5">Quê quán</span><span class="font-medium">${item.hometown}</span></div>` : ''}
+                            ${item.birthPlace ? `<div class="sm:col-span-2"><span class="text-teal-700 font-bold block mb-0.5">Nơi sinh</span><span class="font-medium">${item.birthPlace}</span></div>` : ''}
+                            ${item.birthReg ? `<div class="sm:col-span-2"><span class="text-teal-700 font-bold block mb-0.5">Nơi đăng ký khai sinh</span><span class="font-medium">${item.birthReg}</span></div>` : ''}
+                            ${item.residence ? `<div class="sm:col-span-2 mt-1 pt-2 border-t border-teal-200/60"><span class="text-teal-700 font-bold block mb-0.5">Nơi cư trú</span><span class="font-medium">${item.residence}</span></div>` : ''}
+                            ${item.currentAddress ? `<div class="sm:col-span-2"><span class="text-teal-700 font-bold block mb-0.5">Chỗ ở hiện tại</span><span class="font-medium">${item.currentAddress}</span></div>` : ''}
+                        </div>
+                    `;
+                }
+                
+                html += `
+                <div class="bg-white rounded-3xl p-6 shadow-sm border ${item.pinned ? 'border-blue-400 shadow-md ring-1 ring-blue-400' : 'border-gray-100'} card-hover flex flex-col relative transition-all duration-300">
+                    <button onclick="togglePin('${item.id}')" class="absolute top-5 right-5 p-2 rounded-full transition-all ${item.pinned ? 'text-blue-600 bg-blue-50 scale-110' : 'text-gray-300 hover:text-blue-500 hover:bg-gray-50'}" title="Ghim">
+                        <svg class="w-6 h-6 ${item.pinned ? 'fill-current' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 11.414V8a5 5 0 00-10 0v3.414l-1.586 1.586A2 2 0 006 16h12a2 2 0 001.414-3.414L17 11.414zM12 16v4"></path></svg>
+                    </button>
+                    <div class="flex gap-2 mb-4">
+                        <span class="px-3 py-1 bg-gray-100 text-gray-600 border border-gray-200 rounded-full text-xs font-bold flex items-center gap-1">👤 ${item.member || 'Chung'}</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-blue-700 mb-4 pr-8 leading-tight">${item.title}</h3>
+                    <div class="flex flex-col gap-2 mb-4 text-[15px]">
+                        ${item.member ? `
+                        <div class="flex items-start gap-2">
+                            <span class="text-gray-500 font-bold w-32 shrink-0">👤 Thành viên:</span> 
+                            <span class="text-gray-800 font-semibold">${item.member}</span>
+                        </div>` : ''}
+                        ${dateStr ? `
+                        <div class="flex items-start gap-2">
+                            <span class="text-gray-500 font-bold w-32 shrink-0">🗓️ Ngày tháng:</span> 
+                            <span class="text-gray-800 font-semibold">${dateStr}</span>
+                        </div>` : ''}
+                    </div>
+                    ${profileHtml}
+                    ${displayContent ? `
+                    <div class="flex flex-col flex-grow mb-6 mt-2">
+                        <span class="text-gray-500 font-bold text-sm mb-2 uppercase tracking-wide">📝 Nội dung / Ghi chú:</span>
+                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 h-full">
+                            <p class="text-gray-700 font-medium whitespace-pre-wrap leading-relaxed">${displayContent}</p>
+                        </div>
+                    </div>` : '<div class="flex-grow mb-6"></div>'}
+                    <div class="flex justify-end gap-2 pt-4 border-t border-gray-100 mt-auto">
+                        <button onclick='editItem(${JSON.stringify(item).replace(/'/g, "&#39;")})' class="p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-colors" title="Sửa">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button onclick="deleteItem('${item.id}')" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-colors" title="Xóa">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function sendRequest(action, data = {}, id = null, customSheetName = null, silentMode = false) {
+            const isRead = action === 'getData' || action === 'getSheets';
+            
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, data, id, sheetName: customSheetName || currentSheet })
+                });
+                const res = await response.json();
+                
+                if (!isRead && !silentMode) {
+                    if (res.status === 'success') {
+                        showToast(res.message);
+                    } else {
+                        showToast("Lỗi: " + res.message, "bg-red-500");
+                    }
+                }
+                return res;
+            } catch (error) {
+                if (!isRead && !silentMode) showToast("Lỗi kết nối mạng!", "bg-red-500");
+                return null;
+            }
+        }
+
+        async function submitForm(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.innerHTML = `${spinnerSVG} Đang xử lý...`; 
+            btn.disabled = true;
+            document.getElementById('loader').classList.remove('hidden');
+
+            const id = document.getElementById('editId').value;
+            let finalContent = document.getElementById('inpContent').value.trim();
+
+            const payload = {
+                title: document.getElementById('inpTitle').value.trim(),
+                category: '', 
+                member: document.getElementById('inpMember').value,
+                date: document.getElementById('inpDate').value,
+                content: finalContent,
+                dob: document.getElementById('inpDob').value,
+                idNo: document.getElementById('inpIdNo').value,
+                idDate: document.getElementById('inpIdDate').value,
+                bhyt: document.getElementById('inpBhyt').value,
+                partyDate: document.getElementById('inpPartyDate').value,
+                partyId: document.getElementById('inpPartyId').value.trim(),
+                hometown: document.getElementById('inpHometown').value,
+                birthPlace: document.getElementById('inpBirthPlace').value,
+                birthReg: document.getElementById('inpBirthReg').value,
+                residence: document.getElementById('inpResidence').value,
+                currentAddress: document.getElementById('inpCurrentAddress').value
+            };
+
+            const action = id ? 'update' : 'create';
+            const res = await sendRequest(action, payload, id);
+            
+            btn.innerText = 'Lưu Dữ Liệu'; 
+            btn.disabled = false;
+            
+            if (res && res.status === 'success') {
+                closeModal();
+                fetchData();
+            } else {
+                document.getElementById('loader').classList.add('hidden'); 
+            }
+        }
+
+        function deleteItem(id) {
+            if(confirm("Xóa thông tin này vĩnh viễn?")) {
+                document.getElementById('loader').classList.remove('hidden');
+                sendRequest('delete', {}, id).then(res => {
+                    if (res && res.status === 'success') fetchData();
+                    else document.getElementById('loader').classList.add('hidden');
+                });
+            }
+        }
+
+        function togglePin(id) {
+            sendRequest('togglePin', {}, id);
+            const item = allData.find(i => i.id === id);
+            if(item) { item.pinned = !item.pinned; renderCards(); }
+        }
+
+        const modal = document.getElementById('formModal');
+        function openModal() {
+            document.getElementById('dataForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('modalTitle').innerText = '✨ Thêm Mới';
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); modal.children[0].classList.remove('scale-95'); }, 10);
+        }
+
+        function editItem(item) {
+            openModal();
+            document.getElementById('modalTitle').innerText = '✏️ Cập Nhật Thông Tin';
+            document.getElementById('editId').value = item.id;
+            document.getElementById('inpTitle').value = item.title || '';
+            document.getElementById('inpMember').value = item.member || 'Chung';
+            
+            document.getElementById('inpDob').value = item.dob || '';
+            document.getElementById('inpIdNo').value = item.idNo || '';
+            document.getElementById('inpIdDate').value = item.idDate || '';
+            document.getElementById('inpBhyt').value = item.bhyt || '';
+            document.getElementById('inpPartyDate').value = item.partyDate || '';
+            document.getElementById('inpPartyId').value = item.partyId || '';
+            document.getElementById('inpHometown').value = item.hometown || '';
+            document.getElementById('inpBirthPlace').value = item.birthPlace || '';
+            document.getElementById('inpBirthReg').value = item.birthReg || '';
+            document.getElementById('inpResidence').value = item.residence || '';
+            document.getElementById('inpCurrentAddress').value = item.currentAddress || '';
+            
+            if(item.date) {
+                const d = new Date(item.date);
+                if(!isNaN(d.getTime())) document.getElementById('inpDate').value = d.toISOString().split('T')[0];
+            } else {
+                document.getElementById('inpDate').value = '';
+            }
+            
+            document.getElementById('inpContent').value = item.content || '';
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modal.children[0].classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // =====================================
+        // LOGIC HỒ SƠ CÁ NHÂN (TỰ ĐỘNG ĐỒNG BỘ)
+        // =====================================
+        async function fetchProfileData(forceReload = false) {
+            if (hasFetchedProfile && !forceReload) return;
+
+            document.getElementById('loader').classList.remove('hidden');
+            
+            const res = await sendRequest('getData', {}, null, 'HoSo_CaNhan', true);
+            
+            if (res && res.status === 'success') {
+                let rawData = res.data || [];
+                if (rawData.length > 0) {
+                    let item = rawData[0];
+                    personalProfileData = {
+                        id: getSafeProp(item, ['ID', 'id']),
+                        title: getSafeProp(item, ['Họ và Tên', 'title', 'tên', 'tiêu đề']),
+                        member: getSafeProp(item, ['Nghề nghiệp / Vai trò', 'member', 'thành viên', 'thanh vien']),
+                        content: getSafeProp(item, ['Giới thiệu ngắn (Bio)', 'content', 'nội dung', 'ghi chú', 'nội dung / ghi chú']),
+                        avatar: getSafeProp(item, ['Link Ảnh đại diện', 'category', 'danh mục', 'danh muc', 'ảnh đại diện', 'anh dai dien', 'avatar']),
+                        dob: getSafeProp(item, ['Ngày sinh', 'dob']),
+                        idNo: getSafeProp(item, ['CCCD / Mã ĐD', 'idNo', 'mã định danh']),
+                        idDate: getSafeProp(item, ['Ngày cấp', 'idDate', 'ngày cấp']),
+                        bhyt: getSafeProp(item, ['Số BHYT', 'bhyt', 'số bhyt']),
+                        partyDate: getSafeProp(item, ['Ngày vào Đảng', 'partyDate', 'ngày vào đảng', 'ngay vao dang']),
+                        partyId: getSafeProp(item, ['Số thẻ Đảng', 'partyId', 'thẻ đảng', 'số thẻ đảng', 'the dang', 'so the dang']),
+                        hometown: getSafeProp(item, ['Quê quán', 'hometown', 'quê quán']),
+                        birthPlace: getSafeProp(item, ['Nơi sinh', 'birthPlace', 'nơi sinh']),
+                        birthReg: getSafeProp(item, ['Nơi ĐKKS', 'birthReg', 'nơi đkks', 'nơi đăng ký khai sinh']),
+                        residence: getSafeProp(item, ['Nơi cư trú', 'residence', 'nơi cư trú']),
+                        currentAddress: getSafeProp(item, ['Chỗ ở hiện tại', 'currentAddress', 'chỗ ở hiện tại']),
+                    };
+                } else {
+                    personalProfileData = null;
+                }
+                
+                hasFetchedProfile = true; 
+                renderProfileUI();
+            } else {
+                showToast("Lỗi khi tải Hồ sơ cá nhân!", "bg-red-500");
+            }
+            document.getElementById('loader').classList.add('hidden');
+        }
+
+        function renderProfileUI() {
+            const p = personalProfileData || {};
+            
+            const name = p.title || 'Cập nhật tên của bạn';
+            document.getElementById('profName').innerText = name;
+            
+            let defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=200&bold=true`;
+            let avatarImg = document.getElementById('profAvatar');
+            
+            avatarImg.src = p.avatar ? p.avatar : defaultAvatar;
+            avatarImg.onerror = function() {
+                this.onerror = null; 
+                this.src = defaultAvatar;
+            };
+
+            document.getElementById('profRole').innerText = p.member || 'Chức danh / Vai trò';
+            document.getElementById('profBio').innerText = p.content || 'Hãy viết một đoạn ngắn giới thiệu về bản thân...';
+            
+            document.getElementById('profDob').innerText = formatDateStr(p.dob) || '---';
+            document.getElementById('profIdNo').innerText = p.idNo || '---';
+            document.getElementById('profIdDate').innerText = formatDateStr(p.idDate) || '---';
+            document.getElementById('profBhyt').innerText = p.bhyt || '---';
+            document.getElementById('profPartyDate').innerText = formatDateStr(p.partyDate) || '---';
+            document.getElementById('profPartyId').innerText = p.partyId || '---';
+            document.getElementById('profHometown').innerText = p.hometown || '---';
+            document.getElementById('profBirthPlace').innerText = p.birthPlace || '---';
+            document.getElementById('profBirthReg').innerText = p.birthReg || '---';
+            document.getElementById('profResidence').innerText = p.residence || '---';
+            document.getElementById('profCurrentAddress').innerText = p.currentAddress || '---';
+        }
+
+        const pModal = document.getElementById('profileModal');
+        
+        function openProfileEditModal() {
+            const p = personalProfileData || {};
+            document.getElementById('p_editId').value = p.id || '';
+            document.getElementById('p_inpTitle').value = p.title || '';
+            document.getElementById('p_inpAvatar').value = p.avatar || ''; 
+            document.getElementById('p_inpMember').value = p.member || '';
+            document.getElementById('p_inpDob').value = p.dob || '';
+            document.getElementById('p_inpIdNo').value = p.idNo || '';
+            document.getElementById('p_inpIdDate').value = p.idDate || '';
+            document.getElementById('p_inpBhyt').value = p.bhyt || '';
+            document.getElementById('p_inpPartyDate').value = p.partyDate || '';
+            document.getElementById('p_inpPartyId').value = p.partyId || '';
+            document.getElementById('p_inpHometown').value = p.hometown || '';
+            document.getElementById('p_inpBirthPlace').value = p.birthPlace || '';
+            document.getElementById('p_inpBirthReg').value = p.birthReg || '';
+            document.getElementById('p_inpResidence').value = p.residence || '';
+            document.getElementById('p_inpCurrentAddress').value = p.currentAddress || '';
+            document.getElementById('p_inpContent').value = p.content || '';
+
+            pModal.classList.remove('hidden');
+            setTimeout(() => { pModal.classList.remove('opacity-0'); pModal.children[0].classList.remove('scale-95'); }, 10);
+        }
+
+        function closeProfileEditModal() {
+            pModal.classList.add('opacity-0');
+            pModal.children[0].classList.add('scale-95');
+            setTimeout(() => pModal.classList.add('hidden'), 300);
+        }
+
+        async function submitProfileForm(e) {
+            e.preventDefault();
+            const btn = document.getElementById('p_btnSubmit');
+            btn.innerHTML = `${spinnerSVG} Đang lưu...`; 
+            btn.disabled = true;
+            document.getElementById('loader').classList.remove('hidden'); 
+
+            const id = document.getElementById('p_editId').value;
+            // Payload đẩy lên bằng các Key Tiếng Việt
+            const payload = {
+                'Họ và Tên': document.getElementById('p_inpTitle').value.trim(),
+                'Link Ảnh đại diện': document.getElementById('p_inpAvatar').value.trim(), 
+                'Nghề nghiệp / Vai trò': document.getElementById('p_inpMember').value.trim(),
+                'Giới thiệu ngắn (Bio)': document.getElementById('p_inpContent').value.trim(),
+                'Ngày sinh': document.getElementById('p_inpDob').value,
+                'CCCD / Mã ĐD': document.getElementById('p_inpIdNo').value.trim(),
+                'Ngày cấp': document.getElementById('p_inpIdDate').value,
+                'Số BHYT': document.getElementById('p_inpBhyt').value.trim(),
+                'Ngày vào Đảng': document.getElementById('p_inpPartyDate').value,
+                'Số thẻ Đảng': document.getElementById('p_inpPartyId').value.trim(),
+                'Quê quán': document.getElementById('p_inpHometown').value.trim(),
+                'Nơi sinh': document.getElementById('p_inpBirthPlace').value.trim(),
+                'Nơi ĐKKS': document.getElementById('p_inpBirthReg').value.trim(),
+                'Nơi cư trú': document.getElementById('p_inpResidence').value.trim(),
+                'Chỗ ở hiện tại': document.getElementById('p_inpCurrentAddress').value.trim()
+            };
+
+            const action = id ? 'update' : 'create';
+            const res = await sendRequest(action, payload, id, 'HoSo_CaNhan', false);
+            
+            btn.innerText = 'Lưu Hồ Sơ'; 
+            btn.disabled = false;
+            
+            if (res && res.status === 'success') {
+                closeProfileEditModal();
+                fetchProfileData(true); 
+            } else {
+                document.getElementById('loader').classList.add('hidden'); 
+            }
+        }
+
+        function showToast(msg, bg = "bg-green-500") {
+            const t = document.getElementById('toast');
+            t.className = `fixed top-5 right-5 text-white px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-[110] font-bold flex items-center gap-2 ${bg}`;
+            document.getElementById('toastMsg').innerText = msg;
+            t.classList.remove('translate-y-[-100px]', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-[-100px]', 'opacity-0'), 3000);
+        }
+
+        function refreshData() {
+            const vault = document.getElementById('viewVault');
+            if (!vault.classList.contains('hidden')) {
+                fetchData();
+            } else {
+                fetchProfileData(true);
+            }
+        }
+
+        fetchSheets();
+    </script>
+</body>
+</html>

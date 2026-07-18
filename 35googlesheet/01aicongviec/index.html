@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Task Manager</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { primary: '#6366f1' }, fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        .spinner {
+            border: 4px solid rgba(99, 102, 241, 0.2); 
+            border-left-color: #6366f1; 
+            border-radius: 50%; 
+            width: 40px; height: 40px; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Glassmorphism cho AI Box */
+        .ai-glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .dark .ai-glass {
+            background: rgba(31, 41, 55, 0.7);
+            border: 1px solid rgba(75, 85, 99, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col transition-colors duration-200 dark:bg-gray-900 dark:text-gray-200">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[99] flex flex-col items-center justify-center hidden backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl flex flex-col items-center">
+            <div class="spinner mb-4"></div>
+            <p class="text-gray-700 dark:text-gray-300 font-medium mt-2" id="loadingText">Đang xử lý dữ liệu...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-indigo-600 dark:bg-indigo-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-indigo-600 p-2 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-bolt text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-wide">AI Task Manager</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="https://docs.google.com/spreadsheets/d/1CWbj7AkUyvfmgHaIll3Vkl5fJBT_PyzA2RK8WVfR5gg/edit" target="_blank" rel="noopener noreferrer" class="p-2 rounded-full hover:bg-green-500 dark:hover:bg-green-600 transition shadow-sm bg-green-600 dark:bg-green-700 text-white w-10 h-10 flex items-center justify-center" title="Mở file Google Sheets dữ liệu">
+                    <i class="fa-solid fa-file-excel"></i>
+                </a>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-indigo-500 dark:hover:bg-indigo-800 transition shadow-sm bg-indigo-700 dark:bg-indigo-950 w-10 h-10 flex items-center justify-center">
+                    <i id="darkModeIcon" class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+        
+        <!-- Khối AI Nhắc Việc -->
+        <section class="ai-glass rounded-2xl shadow-lg p-6 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 text-indigo-500 opacity-10">
+                <i class="fa-solid fa-brain text-9xl"></i>
+            </div>
+            <div class="relative z-10 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i> Trợ lý AI Gemini
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Phân tích tiến độ và đề xuất công việc ưu tiên</p>
+                </div>
+                <button onclick="askGemini()" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium py-2.5 px-6 rounded-full shadow-md transition transform hover:scale-105 flex items-center gap-2">
+                    <i class="fa-solid fa-robot"></i> Phân tích ngay
+                </button>
+            </div>
+            <div id="aiResponseArea" class="hidden text-gray-700 dark:text-gray-300 text-sm leading-relaxed bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                <!-- Nội dung AI trả về -->
+            </div>
+        </section>
+
+        <!-- Grid Layout cho Quản lý Công việc -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Form Thêm/Sửa -->
+            <div class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 h-fit">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white border-b dark:border-gray-700 pb-3 mb-4" id="formTitle">
+                    <i class="fa-solid fa-plus-circle mr-2 text-indigo-500"></i>Thêm Công Việc
+                </h2>
+                <form id="taskForm" class="space-y-4">
+                    <input type="hidden" id="taskId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tiêu đề <span class="text-red-500">*</span></label>
+                        <input type="text" id="taskTitle" required placeholder="Vd: Chuẩn bị giáo án..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả chi tiết</label>
+                        <textarea id="taskDesc" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 transition"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hạn chót</label>
+                        <input type="date" id="taskDeadline" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+                    <div id="statusDiv" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái</label>
+                        <select id="taskStatus" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <option value="Chưa làm">Chưa làm</option>
+                            <option value="Đang làm">Đang làm</option>
+                            <option value="Đã xong">Đã xong</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" onclick="resetForm()" class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                            Hủy
+                        </button>
+                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                            <i class="fa-solid fa-save mr-2"></i>Lưu
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Danh sách công việc -->
+            <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                <div class="flex justify-between items-center border-b dark:border-gray-700 pb-3 mb-4">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white"><i class="fa-solid fa-list-check mr-2 text-indigo-500"></i>Danh sách Công Việc</h2>
+                </div>
+                
+                <div class="overflow-y-auto max-h-[500px] rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table class="w-full text-sm text-left text-gray-600 dark:text-gray-300">
+                        <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-900 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-4 py-3 w-[40%]">Công việc</th>
+                                <th class="px-4 py-3 w-[20%]">Hạn chót</th>
+                                <th class="px-4 py-3 w-[25%] text-center">Trạng thái</th>
+                                <th class="px-4 py-3 w-[15%] text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- JS Render -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 border-t dark:border-gray-700 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">AI Task Manager - Tối ưu hóa năng suất</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- CẤU HÌNH ĐƯỜNG DẪN WEB APP CỦA GOOGLE APPS SCRIPT ---
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxYviZpeHhrRBeLSY2M-SnNeMnyxaSNDB9RYE_nV8pAotsbYve6Q90ioGBkNWEfWBoPkA/exec';
+        let allTasks = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initDarkMode();
+            loadTasks();
+            document.getElementById('taskForm').addEventListener('submit', saveTask);
+        });
+
+        // --- Giao diện ---
+        function initDarkMode() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('darkModeIcon').classList.replace('fa-moon', 'fa-sun');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+            document.getElementById('darkModeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+        }
+
+        function showLoading(show, text = 'Đang xử lý dữ liệu...') {
+            const overlay = document.getElementById('loadingOverlay');
+            document.getElementById('loadingText').textContent = text;
+            if (show) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.replace('opacity-0', 'opacity-100'), 10);
+            } else {
+                overlay.classList.replace('opacity-100', 'opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-plus-circle mr-2 text-indigo-500"></i>Thêm Công Việc';
+            document.getElementById('statusDiv').classList.add('hidden');
+        }
+
+        function formatDateDisplay(dateStr) {
+            if(!dateStr) return '-';
+            const d = new Date(dateStr);
+            if(isNaN(d)) return dateStr;
+            return `${('0'+d.getDate()).slice(-2)}/${('0'+(d.getMonth()+1)).slice(-2)}/${d.getFullYear()}`;
+        }
+
+        // --- Gọi API ---
+        async function fetchGAS(payload) {
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { "Content-Type": "text/plain;charset=utf-8" } // Bypass CORS Preflight
+            };
+            const response = await fetch(GAS_URL, options);
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+            return result.data;
+        }
+
+        // --- Xử lý dữ liệu ---
+        async function loadTasks() {
+            showLoading(true, 'Đang tải dữ liệu...');
+            try {
+                allTasks = await fetchGAS({ action: 'getTasks' });
+                renderTasks();
+            } catch (err) {
+                Swal.fire('Lỗi', 'Không thể tải dữ liệu. Vui lòng kiểm tra lại Web App URL hoặc quyền truy cập.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderTasks() {
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '';
+            
+            if (!allTasks || allTasks.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500 italic">Chưa có công việc nào</td></tr>`;
+                return;
+            }
+
+            allTasks.forEach(t => {
+                let statusBadge = '';
+                if(t['Trạng thái'] === 'Đã xong') {
+                    statusBadge = `<span class="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2.5 py-1 rounded-full text-[11px] font-bold border border-green-200 dark:border-green-800">Đã xong</span>`;
+                } else if(t['Trạng thái'] === 'Đang làm') {
+                    statusBadge = `<span class="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2.5 py-1 rounded-full text-[11px] font-bold border border-blue-200 dark:border-blue-800">Đang làm</span>`;
+                } else {
+                    statusBadge = `<span class="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-full text-[11px] font-bold border border-gray-200 dark:border-gray-600">Chưa làm</span>`;
+                }
+
+                const opacity = t['Trạng thái'] === 'Đã xong' ? 'opacity-60' : '';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition ${opacity}">
+                        <td class="px-4 py-4">
+                            <div class="font-bold text-indigo-700 dark:text-indigo-400 mb-1">${t['Tiêu đề']}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[250px]" title="${t['Mô tả']}">${t['Mô tả'] || 'Không có mô tả'}</div>
+                        </td>
+                        <td class="px-4 py-4 font-mono text-xs text-gray-600 dark:text-gray-300">
+                            <i class="fa-regular fa-calendar mr-1"></i>${formatDateDisplay(t['Hạn chót'])}
+                        </td>
+                        <td class="px-4 py-4 text-center">${statusBadge}</td>
+                        <td class="px-4 py-4 text-right">
+                            <button onclick="editTask('${t.ID}')" class="text-blue-500 hover:text-blue-700 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 transition mr-1" title="Sửa"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <button onclick="deleteTask('${t.ID}')" class="text-red-500 hover:text-red-700 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 transition" title="Xóa"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('taskId').value;
+            const payload = {
+                action: 'saveTask',
+                data: {
+                    id: id,
+                    tieuDe: document.getElementById('taskTitle').value.trim(),
+                    moTa: document.getElementById('taskDesc').value.trim(),
+                    hanChot: document.getElementById('taskDeadline').value,
+                    trangThai: document.getElementById('taskStatus').value || 'Chưa làm'
+                }
+            };
+
+            showLoading(true, 'Đang lưu...');
+            try {
+                await fetchGAS(payload);
+                Swal.fire({icon: 'success', title: 'Thành công', timer: 1500, showConfirmButton: false});
+                resetForm();
+                await loadTasks();
+            } catch(err) {
+                Swal.fire('Lỗi', err.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function editTask(id) {
+            const task = allTasks.find(t => String(t.ID) === String(id));
+            if (!task) return;
+
+            document.getElementById('taskId').value = task.ID;
+            document.getElementById('taskTitle').value = task['Tiêu đề'];
+            document.getElementById('taskDesc').value = task['Mô tả'];
+            
+            // Xử lý Date cho thẻ input type="date"
+            if (task['Hạn chót']) {
+                try {
+                    const d = new Date(task['Hạn chót']);
+                    document.getElementById('taskDeadline').value = d.toISOString().split('T')[0];
+                } catch(e) {}
+            }
+
+            document.getElementById('taskStatus').value = task['Trạng thái'] || 'Chưa làm';
+            
+            document.getElementById('formTitle').innerHTML = '<i class="fa-solid fa-pen-to-square mr-2 text-blue-500"></i>Cập nhật Công Việc';
+            document.getElementById('statusDiv').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteTask(id) {
+            const res = await Swal.fire({title: 'Xóa công việc?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Xóa', cancelButtonText: 'Hủy'});
+            if(res.isConfirmed) {
+                showLoading(true, 'Đang xóa...');
+                try {
+                    await fetchGAS({ action: 'deleteTask', data: { id: id } });
+                    await loadTasks();
+                    Swal.fire({icon: 'success', title: 'Đã xóa', timer: 1000, showConfirmButton: false});
+                } catch(e) {
+                    Swal.fire('Lỗi', e.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        // --- Gọi AI Gemini ---
+        async function askGemini() {
+            showLoading(true, 'AI đang phân tích tiến độ...');
+            try {
+                const responseText = await fetchGAS({ action: 'askGemini' });
+                
+                const aiArea = document.getElementById('aiResponseArea');
+                aiArea.innerHTML = responseText;
+                aiArea.classList.remove('hidden');
+                
+            } catch(e) {
+                Swal.fire('Lỗi AI', 'Không thể kết nối hoặc phân tích: ' + e.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+    </script>
+</body>
+</html>

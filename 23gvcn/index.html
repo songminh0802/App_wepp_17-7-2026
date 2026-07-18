@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công tác GVCN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            color: white;
+            margin: 0;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(255, 255, 255, 0.2);
+        }
+        .card-icon-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover .card-icon-container {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+        }
+        .btn-back {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12 relative">
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- Nút Back -->
+        <div class="mb-8 flex justify-start">
+            <a href="../index.html" class="btn-back flex items-center px-4 py-2 rounded-lg text-sm font-medium text-gray-200 hover:text-white no-underline">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Quay lại Menu Tổng
+            </a>
+        </div>
+
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-500 mb-4 tracking-tight">
+                Công tác GVCN
+            </h1>
+            <p class="text-gray-400 text-lg font-medium">Danh sách các thư mục con</p>
+        </header>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+
+            <a href="./thumoi/" class="glass-card rounded-2xl p-6 flex flex-col items-center justify-center text-center group cursor-pointer no-underline">
+                <div class="card-icon-container w-14 h-14 rounded-2xl flex items-center justify-center mb-4 text-white">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                </div>
+                <h3 class="text-sm md:text-base font-semibold text-gray-200 group-hover:text-white transition-colors truncate w-full" title="thumoi">thumoi</h3>
+            </a>
+        </div>
+        
+    </div>
+</body>
+</html>

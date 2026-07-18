@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Điểm - Thầy Nguyễn Cường dạy Toán</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Quicksand', 'sans-serif'] },
+                    colors: { primary: '#4A90E2', secondary: '#50E3C2', dark: '#1e293b' }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Thêm thư viện SheetJS để đọc file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- MathJax -->
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .input-grade { transition: all 0.2s; width: 100%; text-align: center; background: transparent; padding: 6px; border-radius: 4px; border: 1px solid transparent; font-weight: 600; color: #334155; }
+        .input-grade:focus:not([readonly]) { outline: none; border-color: #4A90E2; background: #fff; box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2); }
+        .input-grade::placeholder { color: #cbd5e1; font-weight: 400; }
+        .input-text { text-align: left; padding-left: 8px; font-weight: 500; }
+        .unsaved { background-color: #fef3c7 !important; color: #b45309 !important; border: 1px solid #f59e0b; }
+        .score-low { color: #ef4444 !important; background-color: #fef2f2 !important; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        th, td { border: 1px solid #e2e8f0; vertical-align: middle; }
+        
+        /* Cố định cột Họ tên khi cuộn ngang */
+        .sticky-col { position: sticky; left: 0; background-color: white; z-index: 5; box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); }
+        th.sticky-col { background-color: #f1f5f9; z-index: 15; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased h-screen flex flex-col">
+
+    <div id="main-app" class="flex-1 flex flex-col h-full overflow-hidden">
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm px-6 py-4 flex flex-col sm:flex-row justify-between items-center border-b-4 border-primary gap-4 shrink-0">
+            <div class="text-center sm:text-left">
+                <h1 class="text-xl font-bold text-primary"><i class="fa-solid fa-book-open mr-2"></i>Sổ Điểm Điện Tử</h1>
+                <p class="text-sm text-slate-500 font-semibold mt-1">Thầy Nguyễn Cường dạy Toán</p>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto justify-center">
+                <button onclick="showStatistics()" class="bg-teal-100 text-teal-700 hover:bg-teal-200 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-chart-pie"></i> Thống kê
+                </button>
+                <button onclick="callGeminiAI()" id="btn-ai" class="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 shadow-sm text-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span class="hidden sm:inline">AI Phân tích</span>
+                </button>
+                <button onclick="importExcelPrompt()" id="btn-import" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-file-import"></i> Nạp Excel
+                </button>
+                <button onclick="downloadTemplate()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-download"></i> Tải file mẫu
+                </button>
+                <button onclick="toggleLock()" id="btn-lock" class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-lock" id="lock-icon"></i> <span id="lock-text">Khóa điểm</span>
+                </button>
+                <button onclick="saveGrades()" id="btn-save" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu điểm
+                </button>
+            </div>
+        </header>
+
+        <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" class="hidden">
+
+        <!-- TOOLBAR CHỌN LỚP & BỘ LỌC -->
+        <div class="px-4 pt-4 shrink-0">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                <div class="flex gap-3 flex-wrap">
+                    
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+                            <div class="font-bold text-slate-700 flex items-center gap-2 px-2">
+                                <i class="fa-solid fa-users text-primary"></i>
+                                <select id="class-selector" onchange="changeClass()" class="bg-transparent text-slate-800 focus:outline-none cursor-pointer font-bold text-lg">
+                                    <option value="6A4">Lớp 6A4</option>
+                                    <option value="6A5">Lớp 6A5</option>
+                                    <option value="6A6">Lớp 6A6</option>
+                                    <option value="9A7" selected>Lớp 9A7</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="forceRefreshData()" title="Tải lại dữ liệu mới nhất từ máy chủ" class="bg-white p-2.5 px-3 rounded-lg shadow-sm border border-slate-200 text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+                        <div class="font-bold text-slate-700 flex items-center gap-2 px-2">
+                            <i class="fa-solid fa-filter text-secondary"></i>
+                            <select id="level-filter" onchange="renderTable()" class="bg-transparent text-slate-800 focus:outline-none cursor-pointer font-bold text-sm">
+                                <option value="ALL">Tất cả học sinh</option>
+                                <option value="TOT">Mức Tốt (>= 8,0)</option>
+                                <option value="KHA">Mức Khá (6,5 - 7,9)</option>
+                                <option value="DAT">Mức Đạt (5,0 - 6,4)</option>
+                                <option value="CHUA_DAT">Chưa đạt (< 5,0)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="formula-info" class="bg-blue-50 border-l-4 border-primary p-2 px-4 rounded text-sm text-blue-800 shadow-sm flex items-center gap-3">
+                    <i class="fa-solid fa-circle-info text-primary"></i>
+                    <div>
+                        <strong>Công thức tính:</strong> $ĐTB = \frac{TX1 + TX2 + TX3 + TX4 + (GK \times 2) + (CK \times 3)}{9}$
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABS HỌC KỲ -->
+        <div class="px-4 mt-4 shrink-0">
+            <div class="flex gap-1 border-b-2 border-slate-200">
+                <button onclick="setTerm('HK1')" id="tab-HK1" class="py-2 px-6 font-bold text-primary border-b-2 border-primary bg-white rounded-t-lg transition-colors">Học Kỳ 1</button>
+                <button onclick="setTerm('HK2')" id="tab-HK2" class="py-2 px-6 font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-100 rounded-t-lg transition-colors">Học Kỳ 2</button>
+                <button onclick="setTerm('CN')" id="tab-CN" class="py-2 px-6 font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-100 rounded-t-lg transition-colors">Cả Năm</button>
+            </div>
+        </div>
+
+        <!-- WORKSPACE TABLE -->
+        <div class="flex-1 overflow-auto p-4 relative z-0">
+            <div class="bg-white shadow-sm border border-slate-200 rounded-xl" style="width: max-content; min-width: 100%;">
+                <table class="w-full text-left border-collapse text-sm" id="main-table">
+                    <!-- Dữ liệu thead và tbody render tại đây -->
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxPspsAZX3LJgE9Nx2t6CcgUfZm9mbo-LsPJiYhzbeEjt_VdSJZMwPJrQGObD_-5q_BrQ/exec";
+        
+        let appData = { hk1Data: [], hk2Data: [], cnData: [], geminiKey: "" };
+        let allClassCache = {}; // Lưu trữ dữ liệu tạm thời của tất cả các lớp đã tải
+        let unsavedChanges = [];
+        let currentClassId = "9A7";
+        let currentTerm = "HK1"; 
+        
+        let lockState = { 'HK1': false, 'HK2': false, 'CN': false };
+
+        function parseLocalFloat(val) {
+            if (val === '' || val === null || val === undefined) return NaN;
+            return parseFloat(String(val).replace(/,/g, '.'));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchDataForTerm(false); // Gọi API mặc định lúc đầu
+        });
+
+        // TÍNH NĂNG KHÓA ĐIỂM THEO HỌC KỲ
+        function toggleLock() {
+            let currentLock = lockState[currentTerm];
+            let termName = currentTerm === 'HK1' ? 'Học Kỳ 1' : (currentTerm === 'HK2' ? 'Học Kỳ 2' : 'Cả Năm');
+            
+            if (currentLock) {
+                Swal.fire({
+                    title: `Mở khóa ${termName}?`,
+                    text: "Bạn sẽ có thể nhập và chỉnh sửa điểm số của phần này.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Mở khóa',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        lockState[currentTerm] = false;
+                        updateLockUI();
+                        renderTable();
+                        Swal.fire('Đã mở khóa', `Bạn có thể chỉnh sửa điểm ${termName} ngay bây giờ.`, 'success');
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: `Khóa điểm ${termName}?`,
+                    text: "Ngăn chặn việc vô tình gõ nhầm làm thay đổi điểm. Bạn có thể mở lại bất cứ lúc nào.",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Khóa ngay',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        lockState[currentTerm] = true;
+                        updateLockUI();
+                        renderTable();
+                    }
+                });
+            }
+        }
+
+        function updateLockUI() {
+            const btnLock = document.getElementById('btn-lock');
+            const lockIcon = document.getElementById('lock-icon');
+            const lockText = document.getElementById('lock-text');
+            const btnSave = document.getElementById('btn-save');
+            const btnImport = document.getElementById('btn-import');
+
+            if (lockState[currentTerm]) {
+                btnLock.className = "bg-slate-200 text-slate-700 hover:bg-slate-300 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm";
+                lockIcon.className = "fa-solid fa-lock-open";
+                lockText.innerText = 'Mở khóa';
+                
+                btnSave.disabled = true;
+                btnSave.classList.add('opacity-50', 'cursor-not-allowed');
+                btnImport.disabled = true;
+                btnImport.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btnLock.className = "bg-red-100 text-red-700 hover:bg-red-200 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm flex items-center gap-2 text-sm";
+                lockIcon.className = "fa-solid fa-lock";
+                lockText.innerText = 'Khóa điểm';
+
+                btnSave.disabled = false;
+                btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnImport.disabled = false;
+                btnImport.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // ĐỔI HỌC KỲ TỨC THÌ
+        function setTerm(term) {
+            if (currentTerm === term) return;
+            
+            if (unsavedChanges.length > 0 && !lockState[currentTerm]) {
+                Swal.fire({
+                    title: 'Chưa lưu thay đổi!',
+                    text: "Bạn có điểm chưa lưu. Chuyển đổi sẽ làm mất dữ liệu này. Tiếp tục?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Bỏ qua và Chuyển',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        unsavedChanges = [];
+                        executeSetTerm(term);
+                    }
+                });
+            } else {
+                executeSetTerm(term);
+            }
+        }
+
+        function executeSetTerm(term) {
+            currentTerm = term;
+            
+            ['HK1', 'HK2', 'CN'].forEach(t => {
+                const el = document.getElementById('tab-' + t);
+                if(t === term) {
+                    el.className = "py-2 px-6 font-bold text-primary border-b-2 border-primary bg-white rounded-t-lg transition-colors";
+                } else {
+                    el.className = "py-2 px-6 font-semibold text-slate-500 border-b-2 border-transparent hover:bg-slate-100 rounded-t-lg transition-colors";
+                }
+            });
+
+            const infoBox = document.getElementById('formula-info');
+            if (term === 'CN') {
+                infoBox.innerHTML = `<i class="fa-solid fa-circle-info text-primary"></i><div><strong>Công thức tính Cả Năm:</strong> $ĐTB_{CN} = \\frac{HKI + (HKII \\times 2)}{3}$</div>`;
+            } else {
+                infoBox.innerHTML = `<i class="fa-solid fa-circle-info text-primary"></i><div><strong>Công thức tính Học Kỳ:</strong> $ĐTB = \\frac{TX1 + TX2 + TX3 + TX4 + (GK \\times 2) + (CK \\times 3)}{9}$</div>`;
+            }
+            if(window.MathJax) MathJax.typesetPromise([infoBox]);
+
+            document.getElementById('level-filter').value = 'ALL';
+            updateLockUI();
+            renderTable();
+        }
+
+        function getActiveSheetName() {
+            if(currentTerm === 'HK1') return currentClassId;
+            if(currentTerm === 'HK2') return currentClassId + " - HK2";
+            if(currentTerm === 'CN') return currentClassId + " - CN";
+        }
+
+        function changeClass() {
+            if (unsavedChanges.length > 0 && !lockState[currentTerm]) {
+                Swal.fire({
+                    title: 'Chưa lưu thay đổi!',
+                    text: "Bạn có điểm chưa lưu. Đổi lớp sẽ mất dữ liệu này. Tiếp tục?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Đổi lớp',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        unsavedChanges = [];
+                        currentClassId = document.getElementById('class-selector').value;
+                        fetchDataForTerm(false);
+                    } else {
+                        document.getElementById('class-selector').value = currentClassId;
+                    }
+                });
+            } else {
+                currentClassId = document.getElementById('class-selector').value;
+                fetchDataForTerm(false);
+            }
+        }
+
+        // TẢI LẠI DỮ LIỆU TỪ NÚT REFRESH
+        function forceRefreshData() {
+            if (unsavedChanges.length > 0 && !lockState[currentTerm]) {
+                Swal.fire({
+                    title: 'Chưa lưu thay đổi!',
+                    text: "Bạn có điểm chưa lưu. Tải lại sẽ làm mất các điểm vừa nhập. Tiếp tục tải lại?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Bỏ qua và Tải lại',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        unsavedChanges = [];
+                        fetchDataForTerm(true);
+                    }
+                });
+            } else {
+                fetchDataForTerm(true);
+            }
+        }
+
+        // TẢI DỮ LIỆU TUẦN TỰ (CÓ SỬ DỤNG CACHE)
+        async function fetchDataForTerm(forceRefresh = false) {
+            // NẾU KHÔNG PHẢI TẢI BẮT BUỘC (REFRESH) VÀ ĐÃ CÓ DATA TRONG CACHE -> LOAD NGAY LẬP TỨC
+            if (!forceRefresh && allClassCache[currentClassId]) {
+                appData.hk1Data = allClassCache[currentClassId].hk1Data;
+                appData.hk2Data = allClassCache[currentClassId].hk2Data;
+                appData.cnData = allClassCache[currentClassId].cnData;
+                appData.geminiKey = allClassCache[currentClassId].geminiKey;
+                
+                document.getElementById('level-filter').value = 'ALL';
+                renderTable();
+                return;
+            }
+
+            Swal.fire({ title: `Đang tải dữ liệu lớp ${currentClassId}...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            try {
+                const reqOpts = (sheetName) => ({
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'getAppData', className: sheetName })
+                });
+
+                const raw1 = await fetch(GAS_URL, reqOpts(currentClassId)).then(r => r.text());
+                const raw2 = await fetch(GAS_URL, reqOpts(currentClassId + " - HK2")).then(r => r.text());
+                const raw3 = await fetch(GAS_URL, reqOpts(currentClassId + " - CN")).then(r => r.text());
+                
+                let res1 = JSON.parse(raw1);
+                let res2 = JSON.parse(raw2);
+                let res3 = JSON.parse(raw3);
+
+                if(res1.success === false) throw new Error(res1.message);
+
+                appData.hk1Data = res1.hocSinh || [];
+                appData.hk2Data = res2.hocSinh || [];
+                appData.cnData = res3.hocSinh || [];
+                appData.geminiKey = res1.geminiKey || res2.geminiKey || res3.geminiKey;
+
+                if (appData.hk1Data.length > 0) {
+                    if (appData.hk2Data.length === 0) {
+                        appData.hk2Data = appData.hk1Data.map(s => ({'STT': s['STT'], 'Mã học sinh': s['Mã học sinh'], 'Họ và tên': s['Họ và tên'], 'Ngày sinh': s['Ngày sinh']}));
+                    }
+                    if (appData.cnData.length === 0) {
+                        appData.cnData = appData.hk1Data.map(s => ({'STT': s['STT'], 'Mã học sinh': s['Mã học sinh'], 'Họ và tên': s['Họ và tên'], 'Ngày sinh': s['Ngày sinh']}));
+                    }
+                }
+
+                // Lưu vào bộ nhớ đệm
+                allClassCache[currentClassId] = {
+                    hk1Data: appData.hk1Data,
+                    hk2Data: appData.hk2Data,
+                    cnData: appData.cnData,
+                    geminiKey: appData.geminiKey
+                };
+
+                document.getElementById('level-filter').value = 'ALL';
+                renderTable();
+                Swal.close();
+            } catch (err) {
+                console.error("Lỗi Fetch:", err);
+                appData.hk1Data = [
+                    { 'STT': 1, 'Mã học sinh': 'HS001', 'Họ và tên': 'Nguyễn Trọng An', 'Ngày sinh': '15/05/2010', 'TX 1': 8, 'TX 2': 7, 'TX 3': 9, 'TX 4': '', 'ĐĐGgk': 8.5, 'ĐĐGck': 8, 'Nhận xét': 'Học tốt' },
+                    { 'STT': 2, 'Mã học sinh': 'HS002', 'Họ và tên': 'Trần Thị Mỹ Bình', 'Ngày sinh': '20/08/2010', 'TX 1': 5, 'TX 2': 6, 'TX 3': 4.5, 'TX 4': 6, 'ĐĐGgk': 5, 'ĐĐGck': 5.5, 'Nhận xét': 'Cần cố gắng' }
+                ];
+                appData.hk2Data = [
+                    { 'STT': 1, 'Mã học sinh': 'HS001', 'Họ và tên': 'Nguyễn Trọng An', 'Ngày sinh': '15/05/2010', 'TX 1': 9, 'TX 2': 8, 'TX 3': '', 'TX 4': '', 'ĐĐGgk': 9, 'ĐĐGck': 8.5, 'Nhận xét': 'Tiếp tục phát huy' },
+                    { 'STT': 2, 'Mã học sinh': 'HS002', 'Họ và tên': 'Trần Thị Mỹ Bình', 'Ngày sinh': '20/08/2010', 'TX 1': 6, 'TX 2': 7, 'TX 3': '', 'TX 4': '', 'ĐĐGgk': 6.5, 'ĐĐGck': 6, 'Nhận xét': 'Đã có tiến bộ' }
+                ];
+                appData.cnData = [
+                    { 'STT': 1, 'Mã học sinh': 'HS001', 'Họ và tên': 'Nguyễn Trọng An', 'Ngày sinh': '15/05/2010', 'Nhận xét': 'Đạt danh hiệu Học sinh Tiêu biểu.'},
+                    { 'STT': 2, 'Mã học sinh': 'HS002', 'Họ và tên': 'Trần Thị Mỹ Bình', 'Ngày sinh': '20/08/2010', 'Nhận xét': 'Hoàn thành chương trình.'}
+                ];
+                
+                // Đưa mock data vào cache luôn
+                allClassCache[currentClassId] = {
+                    hk1Data: appData.hk1Data,
+                    hk2Data: appData.hk2Data,
+                    cnData: appData.cnData,
+                    geminiKey: ''
+                };
+
+                document.getElementById('level-filter').value = 'ALL';
+                renderTable();
+                Swal.fire({
+                    title: '<span style="color:#e67e22">Lỗi Phân Quyền (CORS)</span>', 
+                    html: '<div style="text-align: left; font-size: 14px;">Google Apps Script chặn kết nối. Hãy làm theo hướng dẫn:<br>1. Mở Code.gs trên Apps Script.<br>2. Nhấn <b>Triển khai > Quản lý bản triển khai</b>.<br>3. Bấm bút chì (Chỉnh sửa) > Chọn <b>Phiên bản mới</b>.<br>4. Quyền truy cập chọn: <b>Bất kỳ ai (Anyone)</b> > Bấm Triển khai.<br><br><i>Đang hiển thị DỮ LIỆU MẪU để bạn xem trước giao diện.</i></div>',
+                    icon: 'error'
+                });
+            }
+        }
+
+        function calcAvg(tx1, tx2, tx3, tx4, gk, ck) {
+            let total = 0, coef = 0;
+            let v1 = parseLocalFloat(tx1), v2 = parseLocalFloat(tx2), v3 = parseLocalFloat(tx3), v4 = parseLocalFloat(tx4);
+            let vgk = parseLocalFloat(gk), vck = parseLocalFloat(ck);
+
+            if(!isNaN(v1)) { total += v1; coef += 1; }
+            if(!isNaN(v2)) { total += v2; coef += 1; }
+            if(!isNaN(v3)) { total += v3; coef += 1; }
+            if(!isNaN(v4)) { total += v4; coef += 1; }
+            if(!isNaN(vgk)) { total += vgk * 2; coef += 2; }
+            if(!isNaN(vck)) { total += vck * 3; coef += 3; }
+            return coef > 0 ? (total / coef).toFixed(1).replace('.', ',') : '';
+        }
+
+        function calcCNAuto(hk1, hk2) {
+            let v1 = parseLocalFloat(hk1), v2 = parseLocalFloat(hk2);
+            if(!isNaN(v1) && !isNaN(v2)) {
+                return ((v1 + v2 * 2) / 3).toFixed(1).replace('.', ',');
+            }
+            return '';
+        }
+
+        function renderTable() {
+            const table = document.getElementById('main-table');
+            let theadHTML = '';
+            let tbodyHTML = '<tbody id="grade-tbody" class="bg-white">';
+            
+            if (currentTerm === 'HK1') {
+                theadHTML = `
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th rowspan="2" class="p-2 text-center font-bold w-12 bg-slate-100">STT</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-24 bg-slate-100 hidden">Mã HS</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-48 bg-slate-100 sticky-col shadow-sm border-r-2 border-slate-300">Họ và tên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-28 bg-slate-100 border-r-2 border-slate-300 hidden">Ngày sinh</th>
+                            <th colspan="4" class="p-1 text-center font-bold bg-blue-50 text-blue-800">Đánh Giá Thường Xuyên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGgk</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGck</th>
+                            <th rowspan="2" class="p-2 text-center text-orange-700 font-bold bg-orange-50 w-24">ĐTB HK1</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-48 bg-slate-100">Nhận xét</th>
+                        </tr>
+                        <tr>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 1</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 2</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 3</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 4</th>
+                        </tr>
+                    </thead>`;
+            } else if (currentTerm === 'HK2') {
+                theadHTML = `
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th rowspan="2" class="p-2 text-center font-bold w-12 bg-slate-100">STT</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-24 bg-slate-100 hidden">Mã HS</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-48 bg-slate-100 sticky-col shadow-sm border-r-2 border-slate-300">Họ và tên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-28 bg-slate-100 border-r-2 border-slate-300 hidden">Ngày sinh</th>
+                            <th colspan="4" class="p-1 text-center font-bold bg-blue-50 text-blue-800">Đánh Giá Thường Xuyên</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGgk</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-16 bg-slate-100">ĐĐGck</th>
+                            <th rowspan="2" class="p-2 text-center font-bold w-20 border-r-2 border-slate-300 bg-slate-100">Nhận xét</th>
+                            <th colspan="3" class="p-1 text-center font-bold text-slate-800 bg-slate-200">KẾT QUẢ TỰ ĐỘNG</th>
+                        </tr>
+                        <tr>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 1</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 2</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 3</th>
+                            <th class="p-1 text-center font-bold w-14 bg-blue-50 text-blue-800">TX 4</th>
+                            <th class="p-1 text-center font-bold w-16 bg-slate-100">ĐTB HKI</th>
+                            <th class="p-1 text-center font-bold w-16 bg-slate-100">ĐTB HKII</th>
+                            <th class="p-1 text-center font-bold w-16 bg-purple-100 text-purple-800">CẢ NĂM</th>
+                        </tr>
+                    </thead>`;
+            } else if (currentTerm === 'CN') {
+                theadHTML = `
+                    <thead class="bg-slate-100 text-slate-700 sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th class="p-2 text-center font-bold w-12 bg-slate-100">STT</th>
+                            <th class="p-2 text-center font-bold w-24 bg-slate-100 hidden">Mã HS</th>
+                            <th class="p-2 text-center font-bold w-48 bg-slate-100 sticky-col shadow-sm border-r-2 border-slate-300">Họ và tên</th>
+                            <th class="p-2 text-center font-bold w-28 bg-slate-100 border-r-2 border-slate-300 hidden">Ngày sinh</th>
+                            <th class="p-2 text-center font-bold w-24 bg-slate-100">ĐTB HKI</th>
+                            <th class="p-2 text-center font-bold w-24 bg-slate-100">ĐTB HKII</th>
+                            <th class="p-2 text-center font-bold w-28 bg-purple-100 text-purple-800 border-r-2 border-purple-200">ĐTB CẢ NĂM</th>
+                            <th class="p-2 text-center font-bold w-64 bg-slate-100">Nhận xét Tổng hợp</th>
+                        </tr>
+                    </thead>`;
+            }
+
+            let students = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+            if(currentTerm === 'CN') students = appData.hk1Data; 
+
+            if(students.length === 0) {
+                tbodyHTML += `<tr><td colspan="15" class="p-8 text-center text-slate-500">Trang tính <b>${getActiveSheetName()}</b> đang trống.<br>Hãy nạp file Excel hoặc điền tay trực tiếp.</td></tr>`;
+            } else {
+                let filterVal = document.getElementById('level-filter') ? document.getElementById('level-filter').value : 'ALL';
+                
+                let stats = {
+                    tx1: {sum: 0, count: 0},
+                    tx2: {sum: 0, count: 0},
+                    tx3: {sum: 0, count: 0},
+                    tx4: {sum: 0, count: 0},
+                    gk: {sum: 0, count: 0},
+                    ck: {sum: 0, count: 0},
+                    dtbHK1: {sum: 0, count: 0},
+                    dtbHK2: {sum: 0, count: 0},
+                    dtbCN: {sum: 0, count: 0}
+                };
+
+                const processStat = (val, key) => {
+                    let n = parseLocalFloat(val);
+                    if (!isNaN(n)) {
+                        stats[key].sum += n;
+                        stats[key].count += 1;
+                    }
+                };
+
+                let filteredStudents = students.filter(s => {
+                    if(filterVal === 'ALL') return true;
+                    
+                    const studentId = s['Họ và tên']; 
+                    if(!studentId) return false;
+
+                    let dtbHK1 = '', dtbHK2 = '', dtbCN = '';
+                    let hk1St = appData.hk1Data.find(x => x['Họ và tên'] === studentId);
+                    let hk2St = appData.hk2Data.find(x => x['Họ và tên'] === studentId);
+
+                    if(hk1St) dtbHK1 = calcAvg(hk1St['TX 1'], hk1St['TX 2'], hk1St['TX 3'], hk1St['TX 4'], hk1St['ĐĐGgk'], hk1St['ĐĐGck']);
+                    if(hk2St) dtbHK2 = calcAvg(hk2St['TX 1'], hk2St['TX 2'], hk2St['TX 3'], hk2St['TX 4'], hk2St['ĐĐGgk'], hk2St['ĐĐGck']);
+                    dtbCN = calcCNAuto(dtbHK1, dtbHK2);
+
+                    let scoreText = currentTerm === 'CN' ? dtbCN : (currentTerm === 'HK1' ? dtbHK1 : dtbHK2);
+                    let score = parseLocalFloat(scoreText);
+                    
+                    if(isNaN(score)) return false; 
+                    
+                    if(filterVal === 'TOT') return score >= 8.0;
+                    if(filterVal === 'KHA') return score >= 6.5 && score < 8.0;
+                    if(filterVal === 'DAT') return score >= 5.0 && score < 6.5;
+                    if(filterVal === 'CHUA_DAT') return score < 5.0;
+                    return true;
+                });
+
+                if (filteredStudents.length === 0) {
+                    tbodyHTML += `<tr><td colspan="15" class="p-8 text-center text-slate-500">Không có học sinh nào phù hợp với bộ lọc hiện tại.</td></tr>`;
+                } else {
+                    filteredStudents.forEach((s, index) => {
+                        const studentId = s['Họ và tên']; 
+                        if(!studentId) return;
+
+                        let dtbHK1 = '', dtbHK2 = '', dtbCN = '';
+                        let hk1St = appData.hk1Data.find(x => x['Họ và tên'] === studentId);
+                        let hk2St = appData.hk2Data.find(x => x['Họ và tên'] === studentId);
+                        let cnSt = appData.cnData.find(x => x['Họ và tên'] === studentId);
+
+                        if(hk1St) dtbHK1 = calcAvg(hk1St['TX 1'], hk1St['TX 2'], hk1St['TX 3'], hk1St['TX 4'], hk1St['ĐĐGgk'], hk1St['ĐĐGck']);
+                        if(hk2St) dtbHK2 = calcAvg(hk2St['TX 1'], hk2St['TX 2'], hk2St['TX 3'], hk2St['TX 4'], hk2St['ĐĐGgk'], hk2St['ĐĐGck']);
+                        dtbCN = calcCNAuto(dtbHK1, dtbHK2);
+
+                        let currentSt = currentTerm === 'HK1' ? hk1St : (currentTerm === 'HK2' ? hk2St : null);
+                        if (currentSt) {
+                            processStat(currentSt['TX 1'], 'tx1');
+                            processStat(currentSt['TX 2'], 'tx2');
+                            processStat(currentSt['TX 3'], 'tx3');
+                            processStat(currentSt['TX 4'], 'tx4');
+                            processStat(currentSt['ĐĐGgk'], 'gk');
+                            processStat(currentSt['ĐĐGck'], 'ck');
+                        }
+                        
+                        processStat(dtbHK1, 'dtbHK1');
+                        if (currentTerm === 'HK2' || currentTerm === 'CN') {
+                            processStat(dtbHK2, 'dtbHK2');
+                            processStat(dtbCN, 'dtbCN');
+                        }
+
+                        const styleHK1 = (parseLocalFloat(dtbHK1) < 5.0) ? 'text-red-600 bg-red-50' : 'text-slate-700 bg-slate-50';
+                        const styleHK2 = (parseLocalFloat(dtbHK2) < 5.0) ? 'text-red-600 bg-red-50' : 'text-slate-700 bg-slate-50';
+                        const styleCN = (parseLocalFloat(dtbCN) < 5.0) ? 'text-red-600 bg-purple-50/50' : 'text-purple-700 bg-purple-50/50';
+
+                        const createInput = (field, val, isText = false, placeholder = '') => {
+                            const isUnsaved = unsavedChanges.some(item => item.id === studentId && item.field === field);
+                            
+                            let displayVal = val !== null && val !== undefined ? String(val) : '';
+                            if (!isText && displayVal !== '') displayVal = displayVal.replace(/\./g, ',');
+
+                            let numVal = parseLocalFloat(displayVal);
+                            let style = (!isText && displayVal !== '' && !isNaN(numVal) && numVal < 5.0) ? 'score-low ' : '';
+                            if (isUnsaved) style += 'unsaved ';
+
+                            let inputMode = isText ? '' : 'inputmode="decimal"'; 
+                            let align = isText ? 'input-text' : '';
+                            
+                            let isCurrentLocked = lockState[currentTerm];
+                            let readonlyAttr = isCurrentLocked ? 'readonly title="Sổ điểm của Học kỳ này đang bị khóa"' : '';
+                            let lockedStyle = isCurrentLocked ? 'bg-slate-50 cursor-not-allowed text-slate-500' : '';
+
+                            return `<input type="text" ${inputMode} ${readonlyAttr} class="input-grade ${align} ${style} ${lockedStyle}" value="${displayVal}" placeholder="${placeholder}" oninput="markChange('${studentId}', '${field}', this, ${isText})">`;
+                        };
+
+                        let rowHTML = `<tr class="hover:bg-blue-50/30 transition-colors">
+                            <td class="p-1 text-center text-slate-500 font-medium">${s['STT'] || index + 1}</td>
+                            <td class="p-0 hidden">${createInput('Mã học sinh', s['Mã học sinh'], true)}</td>
+                            <td class="p-0 sticky-col border-r-2 border-slate-300 shadow-sm">${createInput('Họ và tên', s['Họ và tên'], true)}</td>
+                            <td class="p-0 border-r-2 border-slate-300 hidden">${createInput('Ngày sinh', s['Ngày sinh'], true)}</td>`;
+
+                        if (currentTerm === 'HK1') {
+                            rowHTML += `
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 1', s['TX 1'])}</td>
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 2', s['TX 2'])}</td>
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 3', s['TX 3'])}</td>
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 4', s['TX 4'])}</td>
+                                <td class="p-0">${createInput('ĐĐGgk', s['ĐĐGgk'])}</td>
+                                <td class="p-0">${createInput('ĐĐGck', s['ĐĐGck'])}</td>
+                                <td class="p-2 text-center font-bold ${styleHK1}">${dtbHK1}</td>
+                                <td class="p-0">${createInput('Nhận xét', s['Nhận xét'], true)}</td>`;
+                        } else if (currentTerm === 'HK2') {
+                            rowHTML += `
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 1', s['TX 1'])}</td>
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 2', s['TX 2'])}</td>
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 3', s['TX 3'])}</td>
+                                <td class="p-0 bg-blue-50/10">${createInput('TX 4', s['TX 4'])}</td>
+                                <td class="p-0">${createInput('ĐĐGgk', s['ĐĐGgk'])}</td>
+                                <td class="p-0">${createInput('ĐĐGck', s['ĐĐGck'])}</td>
+                                <td class="p-0 border-r-2 border-slate-300">${createInput('Nhận xét', s['Nhận xét'], true)}</td>
+                                <td class="p-2 text-center font-bold ${styleHK1}">${dtbHK1}</td>
+                                <td class="p-2 text-center font-bold ${styleHK2}">${dtbHK2}</td>
+                                <td class="p-2 text-center font-bold text-lg ${styleCN}">${dtbCN}</td>`;
+                        } else if (currentTerm === 'CN') {
+                            rowHTML += `
+                                <td class="p-2 text-center font-bold ${styleHK1}">${dtbHK1}</td>
+                                <td class="p-2 text-center font-bold ${styleHK2}">${dtbHK2}</td>
+                                <td class="p-2 text-center font-bold text-lg border-r-2 border-purple-200 ${styleCN}">${dtbCN}</td>
+                                <td class="p-0">${createInput('Nhận xét', cnSt ? cnSt['Nhận xét'] : '', true, 'Nhập nhận xét tổng hợp...')}</td>`;
+                        }
+                        
+                        rowHTML += `</tr>`;
+                        tbodyHTML += rowHTML;
+                    });
+
+                    const getAvg = (stat) => stat.count > 0 ? (stat.sum / stat.count).toFixed(1).replace('.', ',') : '-';
+
+                    let summaryRow = `<tr class="bg-blue-100/50 font-bold text-blue-900 border-t-2 border-blue-300">
+                        <td class="p-2 text-center"></td>
+                        <td class="hidden"></td>
+                        <td class="p-2 text-right sticky-col !bg-blue-100 border-r-2 border-slate-300 shadow-sm pr-4" style="background-color: #dbeafe;">TRUNG BÌNH MÔN:</td>
+                        <td class="hidden border-r-2 border-slate-300"></td>`;
+
+                    if (currentTerm === 'HK1') {
+                        summaryRow += `
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx1)}</td>
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx2)}</td>
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx3)}</td>
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx4)}</td>
+                            <td class="p-2 text-center">${getAvg(stats.gk)}</td>
+                            <td class="p-2 text-center">${getAvg(stats.ck)}</td>
+                            <td class="p-2 text-center text-orange-700 text-lg">${getAvg(stats.dtbHK1)}</td>
+                            <td class="p-0"></td>`;
+                    } else if (currentTerm === 'HK2') {
+                        summaryRow += `
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx1)}</td>
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx2)}</td>
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx3)}</td>
+                            <td class="p-2 text-center bg-blue-50/50">${getAvg(stats.tx4)}</td>
+                            <td class="p-2 text-center">${getAvg(stats.gk)}</td>
+                            <td class="p-2 text-center">${getAvg(stats.ck)}</td>
+                            <td class="p-0 border-r-2 border-slate-300"></td>
+                            <td class="p-2 text-center">${getAvg(stats.dtbHK1)}</td>
+                            <td class="p-2 text-center">${getAvg(stats.dtbHK2)}</td>
+                            <td class="p-2 text-center text-purple-700 text-lg">${getAvg(stats.dtbCN)}</td>`;
+                    } else if (currentTerm === 'CN') {
+                        summaryRow += `
+                            <td class="p-2 text-center">${getAvg(stats.dtbHK1)}</td>
+                            <td class="p-2 text-center">${getAvg(stats.dtbHK2)}</td>
+                            <td class="p-2 text-center text-purple-700 text-lg border-r-2 border-purple-200">${getAvg(stats.dtbCN)}</td>
+                            <td class="p-0"></td>`;
+                    }
+                    
+                    summaryRow += `</tr>`;
+                    tbodyHTML += summaryRow;
+                }
+            }
+            tbodyHTML += '</tbody>';
+            table.innerHTML = theadHTML + tbodyHTML;
+        }
+
+        function markChange(id, field, el, isText = false) {
+            if(lockState[currentTerm]) return; 
+
+            el.classList.add('unsaved');
+            
+            if (!isText && el.value.includes('.')) {
+                let cursor = el.selectionStart;
+                el.value = el.value.replace(/\./g, ',');
+                el.setSelectionRange(cursor, cursor);
+            }
+
+            if(!isText) {
+                let num = parseLocalFloat(el.value);
+                if (el.value !== '' && !isNaN(num) && num < 5.0) {
+                    el.classList.add('score-low'); 
+                } else {
+                    el.classList.remove('score-low');
+                }
+            } else {
+                el.classList.remove('score-low');
+            }
+            
+            unsavedChanges = unsavedChanges.filter(item => !(item.id === id && item.field === field));
+            unsavedChanges.push({ id, field, value: el.value });
+            
+            if(!isText) {
+                let targetData = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+                let sIndex = targetData.findIndex(x => x['Họ và tên'] === id);
+                if(sIndex > -1) {
+                    targetData[sIndex][field] = el.value;
+                    renderTable(); 
+                    
+                    let inputs = document.querySelectorAll(`input`);
+                    for(let i=0; i<inputs.length; i++){
+                        if(inputs[i].getAttribute('oninput').includes(`'${id}', '${field}'`)){
+                            inputs[i].focus();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function pushSyncChange(id, field, value) {
+            if (!unsavedChanges.some(item => item.id === id && item.field === field)) {
+                unsavedChanges.push({ id, field, value });
+            }
+        }
+
+        async function saveGrades() {
+            if (lockState[currentTerm]) return Swal.fire('Sổ điểm đã khóa', 'Vui lòng mở khóa trước khi lưu.', 'warning');
+
+            appData.hk1Data.forEach(s => {
+                const studentId = s['Họ và tên'];
+                if(!studentId) return;
+
+                let hk1St = appData.hk1Data.find(x => x['Họ và tên'] === studentId) || {};
+                let hk2St = appData.hk2Data.find(x => x['Họ và tên'] === studentId) || {};
+                let cnSt = appData.cnData.find(x => x['Họ và tên'] === studentId) || {};
+                
+                let dtbHK1 = calcAvg(hk1St['TX 1'], hk1St['TX 2'], hk1St['TX 3'], hk1St['TX 4'], hk1St['ĐĐGgk'], hk1St['ĐĐGck']);
+                let dtbHK2 = calcAvg(hk2St['TX 1'], hk2St['TX 2'], hk2St['TX 3'], hk2St['TX 4'], hk2St['ĐĐGgk'], hk2St['ĐĐGck']);
+                let dtbCN = calcCNAuto(dtbHK1, dtbHK2);
+
+                if (currentTerm === 'HK1') {
+                    if (dtbHK1 !== String(hk1St['ĐTBmhk'] || '').trim()) pushSyncChange(studentId, 'ĐTBmhk', dtbHK1);
+                } else if (currentTerm === 'HK2') {
+                    if (dtbHK1 !== String(hk2St['HKI'] || '').trim()) pushSyncChange(studentId, 'HKI', dtbHK1);
+                    if (dtbHK2 !== String(hk2St['HKII'] || '').trim()) pushSyncChange(studentId, 'HKII', dtbHK2);
+                    if (dtbCN !== String(hk2St['CN'] || '').trim()) pushSyncChange(studentId, 'CN', dtbCN);
+                } else if (currentTerm === 'CN') {
+                    if (dtbHK1 !== String(cnSt['HKI'] || '').trim()) pushSyncChange(studentId, 'HKI', dtbHK1);
+                    if (dtbHK2 !== String(cnSt['HKII'] || '').trim()) pushSyncChange(studentId, 'HKII', dtbHK2);
+                    if (dtbCN !== String(cnSt['CN'] || '').trim()) pushSyncChange(studentId, 'CN', dtbCN);
+                }
+            });
+
+            if(unsavedChanges.length === 0) return Swal.fire('Thông báo', 'Không có điểm mới để lưu.', 'info');
+            
+            Swal.fire({ title: 'Đang đồng bộ lên Google Sheets...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'saveGrades', className: getActiveSheetName(), updates: unsavedChanges })
+                });
+
+                const rawText = await response.text();
+                let res = JSON.parse(rawText);
+                if(res.success === false) throw new Error(res.message);
+
+                updateLocalDataAfterSave(false);
+            } catch (err) {
+                console.log("Save error, falling back to mock save");
+                setTimeout(() => { updateLocalDataAfterSave(true); }, 800);
+            }
+        }
+
+        function updateLocalDataAfterSave(isMock = false) {
+            let targetData;
+            if (currentTerm === 'HK1') targetData = appData.hk1Data;
+            else if (currentTerm === 'HK2') targetData = appData.hk2Data;
+            else targetData = appData.cnData;
+
+            unsavedChanges.forEach(change => {
+                let studentIndex = targetData.findIndex(s => s['Họ và tên'] === change.id);
+                if(studentIndex === -1) {
+                    targetData.push({'Họ và tên': change.id});
+                    studentIndex = targetData.length - 1;
+                }
+                targetData[studentIndex][change.field] = change.value;
+            });
+
+            unsavedChanges = [];
+            document.querySelectorAll('.unsaved').forEach(el => el.classList.remove('unsaved'));
+            Swal.fire('Thành công!', isMock ? 'Dữ liệu đã được lưu (Demo/Chế độ xem trước).' : 'Tuyệt vời! Điểm đã được lưu vào Google Sheets.', 'success');
+            renderTable(); 
+        }
+
+        function importExcelPrompt() {
+            if (lockState[currentTerm]) {
+                return Swal.fire('Sổ điểm đã khóa', `Vui lòng bấm nút Mở khóa ở ${currentTerm === 'HK1' ? 'Học kỳ 1' : (currentTerm === 'HK2' ? 'Học kỳ 2' : 'Cả năm')} để tiến hành nạp file Excel.`, 'warning');
+            }
+            document.getElementById('file-upload').click();
+        }
+
+        function showStatistics() {
+            let targetData = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+            if(currentTerm === 'CN') targetData = appData.hk1Data; 
+
+            const calculateDetailedStats = (dataField) => {
+                let stats = { total: 0, tot: 0, kha: 0, dat: 0, trenTb: 0, chuaDat: 0 };
+                targetData.forEach(s => {
+                    let val = '';
+                    if (dataField === 'DTB_HK1' || dataField === 'DTB_HK2' || dataField === 'DTB_CN') {
+                        let hk1St = appData.hk1Data.find(x => x['Họ và tên'] === s['Họ và tên']);
+                        let hk2St = appData.hk2Data.find(x => x['Họ và tên'] === s['Họ và tên']);
+                        let dtbHK1 = hk1St ? calcAvg(hk1St['TX 1'], hk1St['TX 2'], hk1St['TX 3'], hk1St['TX 4'], hk1St['ĐĐGgk'], hk1St['ĐĐGck']) : '';
+                        let dtbHK2 = hk2St ? calcAvg(hk2St['TX 1'], hk2St['TX 2'], hk2St['TX 3'], hk2St['TX 4'], hk2St['ĐĐGgk'], hk2St['ĐĐGck']) : '';
+                        let dtbCN = calcCNAuto(dtbHK1, dtbHK2);
+
+                        if (dataField === 'DTB_HK1') val = dtbHK1;
+                        if (dataField === 'DTB_HK2') val = dtbHK2;
+                        if (dataField === 'DTB_CN') val = dtbCN;
+                    } else {
+                        let st = currentTerm === 'HK1' ? appData.hk1Data.find(x => x['Họ và tên'] === s['Họ và tên']) : appData.hk2Data.find(x => x['Họ và tên'] === s['Họ và tên']);
+                        if (st) val = st[dataField];
+                    }
+
+                    let num = parseLocalFloat(val);
+                    if (!isNaN(num)) {
+                        stats.total++;
+                        if (num >= 8.0) stats.tot++;
+                        else if (num >= 6.5) stats.kha++;
+                        else if (num >= 5.0) stats.dat++;
+                        else stats.chuaDat++;
+
+                        if (num >= 5.0) stats.trenTb++;
+                    }
+                });
+                return stats;
+            };
+
+            const generateStatRow = (label, stats) => {
+                if (stats.total === 0) return '';
+                const pct = (val) => ((val / stats.total) * 100).toFixed(1).replace('.', ',') + '%';
+                return `
+                    <tr class="hover:bg-slate-50 border-b border-slate-200">
+                        <td class="p-3 text-left font-bold text-blue-700 border-r border-slate-200 whitespace-nowrap">${label}</td>
+                        <td class="p-3 font-bold border-r border-slate-200">${stats.total}</td>
+                        <td class="p-3 border-r border-slate-200 text-green-600 font-semibold">${stats.tot} <br><span class="text-xs text-slate-500 font-normal">(${pct(stats.tot)})</span></td>
+                        <td class="p-3 border-r border-slate-200 text-blue-600 font-semibold">${stats.kha} <br><span class="text-xs text-slate-500 font-normal">(${pct(stats.kha)})</span></td>
+                        <td class="p-3 border-r border-slate-200 text-orange-500 font-semibold">${stats.dat} <br><span class="text-xs text-slate-500 font-normal">(${pct(stats.dat)})</span></td>
+                        <td class="p-3 border-r border-slate-200 text-purple-600 font-bold bg-purple-50/30">${stats.trenTb} <br><span class="text-xs text-slate-500 font-normal">(${pct(stats.trenTb)})</span></td>
+                        <td class="p-3 text-red-500 font-semibold">${stats.chuaDat} <br><span class="text-xs text-slate-500 font-normal">(${pct(stats.chuaDat)})</span></td>
+                    </tr>
+                `;
+            };
+
+            let rowsHTML = '';
+            if (currentTerm === 'HK1' || currentTerm === 'HK2') {
+                rowsHTML += generateStatRow('Thường Xuyên 1', calculateDetailedStats('TX 1'));
+                rowsHTML += generateStatRow('Thường Xuyên 2', calculateDetailedStats('TX 2'));
+                rowsHTML += generateStatRow('Thường Xuyên 3', calculateDetailedStats('TX 3'));
+                rowsHTML += generateStatRow('Thường Xuyên 4', calculateDetailedStats('TX 4'));
+                rowsHTML += generateStatRow('Giữa Kỳ', calculateDetailedStats('ĐĐGgk'));
+                rowsHTML += generateStatRow('Cuối Kỳ', calculateDetailedStats('ĐĐGck'));
+                rowsHTML += generateStatRow('Trung Bình Môn', calculateDetailedStats(currentTerm === 'HK1' ? 'DTB_HK1' : 'DTB_HK2'));
+            } else {
+                rowsHTML += generateStatRow('Trung Bình HKI', calculateDetailedStats('DTB_HK1'));
+                rowsHTML += generateStatRow('Trung Bình HKII', calculateDetailedStats('DTB_HK2'));
+                rowsHTML += generateStatRow('Trung Bình Cả Năm', calculateDetailedStats('DTB_CN'));
+            }
+
+            if (rowsHTML === '') {
+                return Swal.fire('Thông báo', 'Lớp chưa có điểm để thống kê.', 'info');
+            }
+
+            let kyName = currentTerm === 'CN' ? 'Cả Năm' : (currentTerm === 'HK1' ? 'Học kỳ 1' : 'Học kỳ 2');
+            let html = `
+                <div class="overflow-x-auto w-full mt-4">
+                    <table class="w-full text-sm text-center border-collapse border border-slate-200">
+                        <thead class="bg-slate-100 text-slate-700">
+                            <tr>
+                                <th class="p-3 border border-slate-200 text-left whitespace-nowrap">Loại điểm</th>
+                                <th class="p-3 border border-slate-200 whitespace-nowrap">SL (có điểm)</th>
+                                <th class="p-3 border border-slate-200 text-green-600 whitespace-nowrap">Tốt (≥ 8.0)</th>
+                                <th class="p-3 border border-slate-200 text-blue-600 whitespace-nowrap">Khá (6.5 - 7.9)</th>
+                                <th class="p-3 border border-slate-200 text-orange-500 whitespace-nowrap">Đạt (5.0 - 6.4)</th>
+                                <th class="p-3 border border-slate-200 text-purple-600 whitespace-nowrap">Trên TB (≥ 5.0)</th>
+                                <th class="p-3 border border-slate-200 text-red-500 whitespace-nowrap">Chưa đạt (< 5.0)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHTML}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            Swal.fire({ 
+                title: `<div class="flex items-center gap-2 justify-center"><i class="fa-solid fa-chart-pie text-teal-600"></i> <span class="text-slate-800">Thống kê chi tiết từng loại điểm (${kyName})</span></div>`, 
+                html: html, 
+                confirmButtonText: 'Đóng', 
+                confirmButtonColor: '#4A90E2', 
+                width: '100%',
+                customClass: {
+                    popup: 'max-w-5xl'
+                }
+            });
+        }
+
+        // 4. GEMINI AI
+        async function callGeminiAI() {
+            if(!appData.geminiKey) {
+                return Swal.fire({
+                    title: '<div class="flex items-center gap-2 justify-center"><i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> <span class="text-slate-800">Phân tích Phổ Điểm</span></div>',
+                    html: '<div class="text-left text-slate-700 text-sm leading-relaxed"><p class="mb-2">Dựa vào phổ điểm hiện tại, tỷ lệ đạt Tốt/Khá đang ở mức ổn định.</p><p class="bg-blue-50 border-l-4 border-primary p-3 rounded text-blue-800 mt-2"><b>💡 Gợi ý cho Giáo viên:</b> Cần quan tâm hơn đến nhóm Chưa đạt, đặc biệt là kỹ năng tính toán trong bài kiểm tra giữa kỳ sắp tới.</p></div>',
+                    confirmButtonText: 'Đã hiểu', confirmButtonColor: '#4A90E2', width: 600
+                });
+            }
+
+            Swal.fire({ title: 'AI Đang phân tích...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            let tot = 0, kha = 0, dat = 0, chuaDat = 0;
+            let targetData = currentTerm === 'HK1' ? appData.hk1Data : appData.hk2Data;
+            
+            targetData.forEach(s => {
+                let dtbHK1 = '', dtbHK2 = '', dtbCN = '';
+                let hk1St = appData.hk1Data.find(x => x['Họ và tên'] === s['Họ và tên']);
+                let hk2St = appData.hk2Data.find(x => x['Họ và tên'] === s['Họ và tên']);
+
+                if(hk1St) dtbHK1 = calcAvg(hk1St['TX 1'], hk1St['TX 2'], hk1St['TX 3'], hk1St['TX 4'], hk1St['ĐĐGgk'], hk1St['ĐĐGck']);
+                if(hk2St) dtbHK2 = calcAvg(hk2St['TX 1'], hk2St['TX 2'], hk2St['TX 3'], hk2St['TX 4'], hk2St['ĐĐGgk'], hk2St['ĐĐGck']);
+                dtbCN = calcCNAuto(dtbHK1, dtbHK2);
+
+                let scoreText = currentTerm === 'CN' ? dtbCN : (currentTerm === 'HK1' ? dtbHK1 : dtbHK2);
+
+                if(scoreText !== '') {
+                    const score = parseLocalFloat(scoreText);
+                    if(!isNaN(score)) {
+                        if(score >= 8.0) tot++; else if(score >= 6.5) kha++; else if(score >= 5.0) dat++; else chuaDat++;
+                    }
+                }
+            });
+
+            const totalCoDiem = tot + kha + dat + chuaDat;
+            if(totalCoDiem === 0) return Swal.fire('Thông báo', 'Lớp chưa có đủ điểm để phân tích.', 'info');
+
+            let ky = currentTerm === 'CN' ? 'Cả Năm' : (currentTerm === 'HK1' ? 'Học kỳ 1' : 'Học kỳ 2');
+            const promptContext = `Tôi là giáo viên Toán. Thống kê điểm ${ky} của ${totalCoDiem} học sinh lớp ${currentClassId}: Tốt: ${tot}, Khá: ${kha}, Đạt: ${dat}, Chưa đạt: ${chuaDat}. Hãy viết 3 câu đánh giá và 1 câu khuyên giáo viên. Không dùng markdown in đậm.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${appData.geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptContext }] }] })
+                }).then(res => res.json());
+
+                Swal.fire({
+                    title: '<div class="flex items-center gap-2 justify-center"><i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> <span class="text-slate-800">Gemini Phân tích</span></div>',
+                    html: `<div class="text-left text-slate-700 text-sm">${response.candidates[0].content.parts[0].text}</div>`,
+                    confirmButtonText: 'Đã hiểu', confirmButtonColor: '#4A90E2', width: 600
+                });
+            } catch (error) {
+                Swal.fire('Lỗi AI', 'Không thể gọi API Gemini.', 'error');
+            }
+        }
+
+        // 5. NẠP TỪ EXCEL
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            Swal.fire({ title: 'Đang đọc file...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" }); 
+
+                    let updateCount = 0;
+                    const numberFields = ['TX 1', 'TX 2', 'TX 3', 'TX 4', 'ĐĐGgk', 'ĐĐGck'];
+                    
+                    let targetData;
+                    if (currentTerm === 'HK1') targetData = appData.hk1Data;
+                    else if (currentTerm === 'HK2') targetData = appData.hk2Data;
+                    else targetData = appData.cnData;
+
+                    rows.forEach(row => {
+                        const hoTen = row['Họ và tên'];
+                        if (!hoTen) return; 
+
+                        let student = targetData.find(s => s['Họ và tên'] == hoTen);
+                        let isNew = false;
+                        
+                        if(!student) {
+                            student = {'Họ và tên': hoTen};
+                            targetData.push(student);
+                            isNew = true;
+                        }
+
+                        const fieldsToCheck = currentTerm === 'CN' ? ['Nhận xét'] : ['Mã học sinh', 'Ngày sinh', 'TX 1', 'TX 2', 'TX 3', 'TX 4', 'ĐĐGgk', 'ĐĐGck', 'Nhận xét'];
+                        let hasChange = false;
+                        
+                        fieldsToCheck.forEach(field => {
+                            if (row[field] !== undefined && row[field] !== "") { 
+                                let importedVal = String(row[field]).trim();
+                                if(numberFields.includes(field)) importedVal = importedVal.replace(/\./g, ',');
+
+                                let currentVal = (student[field] !== null && student[field] !== undefined) ? String(student[field]).trim() : "";
+                                if(numberFields.includes(field)) currentVal = currentVal.replace(/\./g, ',');
+                                
+                                if (importedVal !== currentVal) {
+                                    unsavedChanges = unsavedChanges.filter(item => !(item.id === hoTen && item.field === field));
+                                    unsavedChanges.push({ id: hoTen, field: field, value: importedVal });
+                                    student[field] = importedVal;
+                                    hasChange = true;
+                                }
+                            }
+                        });
+
+                        if(hasChange || isNew) {
+                            updateCount++;
+                            unsavedChanges.push({ id: hoTen, field: 'Họ và tên', value: hoTen });
+                        }
+                    });
+
+                    if (updateCount > 0) {
+                        renderTable();
+                        Swal.fire('Thành công', `Đã nạp ${updateCount} ô dữ liệu mới. Các ô thay đổi đang có màu vàng. Hãy bấm <b>"Lưu điểm"</b>.`, 'success');
+                    } else {
+                        Swal.fire('Thông báo', 'Không có điểm mới nào để nạp.', 'info');
+                    }
+                } catch (error) {
+                    Swal.fire('Lỗi', 'Không thể đọc file Excel.', 'error');
+                }
+                e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // 6. TẢI FILE MẪU
+        function downloadTemplate() {
+            let headers = [];
+            let sampleData1 = [];
+            let colWidths = [];
+
+            if (currentTerm === 'CN') {
+                headers = ['STT', 'Mã học sinh', 'Họ và tên', 'Ngày sinh', 'Nhận xét'];
+                sampleData1 = [1, 'HS001', 'Nguyễn Văn A', '01/01/2010', 'Học sinh rất tích cực'];
+                colWidths = [{wch: 5}, {wch: 15}, {wch: 25}, {wch: 12}, {wch: 40}];
+            } else {
+                headers = ['STT', 'Mã học sinh', 'Họ và tên', 'Ngày sinh', 'TX 1', 'TX 2', 'TX 3', 'TX 4', 'ĐĐGgk', 'ĐĐGck', 'Nhận xét'];
+                sampleData1 = [1, 'HS001', 'Nguyễn Văn A', '01/01/2010', '7,0', '8,0', '7,5', '8,0', '7,0', '8,0', 'Chăm ngoan, học tốt'];
+                colWidths = [{wch: 5}, {wch: 15}, {wch: 25}, {wch: 12}, {wch: 6}, {wch: 6}, {wch: 6}, {wch: 6}, {wch: 8}, {wch: 8}, {wch: 25}];
+            }
+            
+            const ws = XLSX.utils.aoa_to_sheet([headers, sampleData1]);
+            ws['!cols'] = colWidths;
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, getActiveSheetName());
+            XLSX.writeFile(wb, `File_Mau_${getActiveSheetName()}.xlsx`);
+        }
+    </script>
+</body>
+</html>

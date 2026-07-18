@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhật Ký Hoạt Động AI Gemini</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Gemini Theme Colors */
+            --primary: #3b82f6;     /* Blue */
+            --secondary: #8b5cf6;   /* Purple */
+            --accent: #10b981;      /* Green */
+            --bg-dark: #0f172a;     /* Slate 900 */
+            --surface: rgba(30, 41, 59, 0.7); /* Slate 800 with opacity */
+            --surface-hover: rgba(51, 65, 85, 0.8);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            gap: 30px;
+        }
+
+        /* Glassmorphism Container */
+        .glass-panel {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Thêm hiệu ứng viền gradient phía trên */
+        .glass-panel::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .form-container {
+            max-width: 600px;
+            display: none; /* Ẩn form mặc định */
+            animation: slideDown 0.4s ease-out forwards;
+        }
+
+        .table-container {
+            max-width: 1200px;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 700;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .intro-text {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        /* Nút Tương Tác */
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-gradient:hover {
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Nút Google Sheet */
+        .action-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sheet {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            text-decoration: none;
+            max-width: 250px;
+        }
+
+        .btn-sheet:hover {
+            background: rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Nút Google Drive (Link minh chứng) */
+        .btn-drive {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            text-decoration: none;
+            max-width: 250px;
+        }
+
+        .btn-drive:hover {
+            background: rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Form styling */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        textarea {
+            padding-left: 15px;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        input:focus + i, select:focus + i {
+            color: var(--primary);
+        }
+
+        /* Table & Data Display */
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 2;
+            min-width: 250px;
+        }
+
+        .filter-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-wrapper::-webkit-scrollbar { height: 8px; }
+        .table-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .table-wrapper::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 4px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            min-width: 900px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: var(--surface-hover);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-canhan { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); } /* Xanh dương */
+        .badge-chuyenmon { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); } /* Tím */
+        .badge-chunhiem { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); } /* Xanh lá */
+        .badge-dang { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); } /* Đỏ */
+        .badge-nhatruong { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); } /* Vàng */
+        .badge-diaphuong { background: rgba(6, 182, 212, 0.2); color: #67e8f9; border: 1px solid rgba(6, 182, 212, 0.3); } /* Cyan */
+        .badge-khac { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); } /* Xám */
+
+        .link-btn {
+            color: #60a5fa;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .link-btn:hover { color: #93c5fd; text-decoration: underline; }
+
+        mark {
+            background-color: rgba(250, 204, 21, 0.3);
+            color: #fde047;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+
+        .loader-icon { display: none; }
+        
+        .alert-success {
+            display: none;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .filter-section { flex-direction: column; }
+            .header-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- KHU VỰC 1: BẢNG THEO DÕI & NÚT THÊM -->
+    <div class="glass-panel table-container">
+        <h1 class="header-title"><i class="fas fa-brain"></i> Hành Trình AI Gemini</h1>
+        <p class="intro-text">
+            Nơi lưu giữ, tổng hợp các hoạt động, cuộc thi, và dự án ứng dụng Trí Tuệ Nhân Tạo. 
+            <br>Hãy cùng nhau xây dựng cộng đồng AI vững mạnh!
+        </p>
+
+        <!-- Nhóm Nút Hành Động -->
+        <div class="action-group" id="mainActionGroup">
+            <!-- Nút Mở Form -->
+            <button type="button" class="btn-action btn-gradient" id="showFormBtn">
+                <i class="fas fa-plus-circle"></i> Thêm Hoạt Động Mới
+            </button>
+
+            <!-- Nút Mở Google Sheet -->
+            <a href="https://docs.google.com/spreadsheets/d/1CWbj7AkUyvfmgHaIll3Vkl5fJBT_PyzA2RK8WVfR5gg/edit" target="_blank" class="btn-action btn-sheet">
+                <i class="fas fa-file-excel"></i> Mở Google Sheet
+            </a>
+
+            <!-- Nút Mở Link Minh Chứng (Google Drive) -->
+            <a href="https://drive.google.com/drive/u/0/folders/1uRr8G4xlOm8SjOfFm2hXLkLDXBZvBT9M" target="_blank" class="btn-action btn-drive">
+                <i class="fab fa-google-drive"></i> Link minh chứng
+            </a>
+        </div>
+
+        <!-- Bộ Lọc -->
+        <div class="filter-section">
+            <div class="search-box">
+                <div class="input-wrapper">
+                    <i class="fas fa-search" style="z-index: 10;"></i>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm tên, người tham gia, kết quả...">
+                </div>
+            </div>
+            <div class="filter-box">
+                <div class="input-wrapper">
+                    <i class="fas fa-filter" style="z-index: 10;"></i>
+                    <select id="categoryFilter">
+                        <option value="">-- Tất cả phân loại --</option>
+                        <option value="Cá nhân">Cá nhân</option>
+                        <option value="Chuyên môn">Chuyên môn</option>
+                        <option value="Chủ nhiệm">Chủ nhiệm</option>
+                        <option value="Đảng">Đảng</option>
+                        <option value="Nhà trường">Nhà trường</option>
+                        <option value="Địa phương">Địa phương</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng Dữ Liệu -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tên Hoạt Động</th>
+                        <th>Phân Loại</th>
+                        <th>Thời Gian</th>
+                        <th>Thành Viên</th>
+                        <th>Kết Quả / Tiến Độ</th>
+                        <th>Link Minh Chứng</th>
+                        <th>Ghi Chú</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px;">
+                            <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary); margin-bottom: 10px;"></i>
+                            <br>Đang đồng bộ dữ liệu hệ thống...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- KHU VỰC 2: FORM NHẬP LIỆU (ẨN MẶC ĐỊNH) -->
+    <div class="glass-panel form-container" id="formPanel">
+        <h2 class="header-title" style="font-size: 1.4rem;"><i class="fas fa-rocket"></i> Đăng Ký Hoạt Động</h2>
+        
+        <form id="aiForm">
+            <div class="form-group">
+                <label>1. Tên Hoạt Động / Cuộc Thi <span style="color: #ef4444;">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-star"></i>
+                    <input type="text" id="activityName" placeholder="VD: Cuộc thi lập trình Prompt, Khóa học Gemini AI..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>2. Phân Loại <span style="color: #ef4444;">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-tags"></i>
+                    <select id="category" required>
+                        <option value="" disabled selected>-- Chọn phân loại --</option>
+                        <option value="Cá nhân">Cá nhân</option>
+                        <option value="Chuyên môn">Chuyên môn</option>
+                        <option value="Chủ nhiệm">Chủ nhiệm</option>
+                        <option value="Đảng">Đảng</option>
+                        <option value="Nhà trường">Nhà trường</option>
+                        <option value="Địa phương">Địa phương</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>3. Thời Gian Tham Gia <span style="color: #ef4444;">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="text" id="date" placeholder="VD: Tháng 10/2023, Ngày 15/05/2024..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>4. Thành Viên Tham Gia <span style="color: #ef4444;">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-users"></i>
+                    <input type="text" id="participants" placeholder="Tên cá nhân hoặc danh sách nhóm..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>5. Kết Quả / Thành Tích / Tiến Độ</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-trophy"></i>
+                    <input type="text" id="result" placeholder="VD: Giải Nhất, Đã hoàn thành, Đang triển khai...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>6. Link Minh Chứng (Nếu có)</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-link"></i>
+                    <input type="url" id="link" placeholder="https://...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>7. Ghi Chú Thêm</label>
+                <textarea id="notes" placeholder="Mô tả ngắn gọn về trải nghiệm, khó khăn, hoặc kinh nghiệm rút ra..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-action btn-gradient" id="submitBtn">
+                <span id="btnText">Gửi Ghi Nhận</span>
+                <i class="fas fa-paper-plane"></i>
+                <i class="fas fa-spinner fa-spin loader-icon" id="loader"></i>
+            </button>
+            <button type="button" class="btn-action btn-cancel" id="cancelBtn">
+                Hủy / Đóng Form
+            </button>
+        </form>
+
+        <div id="successMsg" class="alert-success">
+            <i class="fas fa-check-circle"></i> Đã lưu dữ liệu thành công lên hệ thống!
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CẤU HÌNH API LINK
+        // ==========================================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbx1ZH_DIZ0TgGwJr126qXhan7n5NDVPdIxhH6FFwCZ_XCZM2gDbQ4-bckh6BgWfHS6G/exec';
+
+        // Các biến DOM
+        const formPanel = document.getElementById('formPanel');
+        const showFormBtn = document.getElementById('showFormBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const aiForm = document.getElementById('aiForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const successMsg = document.getElementById('successMsg');
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+
+        let globalData = [];
+
+        // 1. Quản lý Ẩn/Hiện form
+        showFormBtn.addEventListener('click', () => {
+            formPanel.style.display = 'block';
+            document.getElementById('mainActionGroup').style.display = 'none';
+            formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            formPanel.style.display = 'none';
+            document.getElementById('mainActionGroup').style.display = 'flex';
+            aiForm.reset();
+        });
+
+        // 2. Hàm Hightlight text tìm kiếm
+        function highlightText(text, filter) {
+            if (!filter || !text) return text || '';
+            const strText = String(text);
+            const safeFilter = filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${safeFilter})`, 'gi');
+            return strText.replace(regex, '<mark>$1</mark>');
+        }
+
+        // 3. Render Badge màu sắc theo phân loại
+        function getBadgeClass(category) {
+            const cat = String(category).toLowerCase();
+            if(cat.includes('cá nhân')) return 'badge-canhan';
+            if(cat.includes('chuyên môn')) return 'badge-chuyenmon';
+            if(cat.includes('chủ nhiệm')) return 'badge-chunhiem';
+            if(cat.includes('đảng')) return 'badge-dang';
+            if(cat.includes('nhà trường')) return 'badge-nhatruong';
+            if(cat.includes('địa phương')) return 'badge-diaphuong';
+            return 'badge-khac';
+        }
+
+        // 4. Render Bảng Dữ Liệu
+        function renderTable() {
+            const searchText = searchInput.value.toLowerCase().trim();
+            const filterCat = categoryFilter.value;
+
+            if (globalData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">Chưa có hoạt động nào được ghi nhận.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            let hasVisibleRow = false;
+
+            // Đảo ngược mảng để hiện mới nhất lên đầu
+            const reversedData = [...globalData].reverse();
+
+            reversedData.forEach(row => {
+                const name = row[1] || '';
+                const category = row[2] || '';
+                let date = row[3] || '';
+                const result = row[4] || '';
+                const participants = row[5] || '';
+                const link = row[6] || '';
+                const notes = row[7] || '';
+                
+                // Xử lý định dạng ngày tháng hiển thị dạng dd/mm/yyyy nếu dữ liệu là chuẩn ISO
+                if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                    const d = new Date(date);
+                    if (!isNaN(d.getTime())) {
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        date = `${day}/${month}/${year}`;
+                    }
+                }
+
+                const rowText = [name, category, date, result, participants, notes].join(' ').toLowerCase();
+
+                const matchesCat = (filterCat === "") || (category === filterCat);
+                const matchesSearch = rowText.includes(searchText);
+
+                if (matchesCat && matchesSearch) {
+                    hasVisibleRow = true;
+                    
+                    let linkUI = '-';
+                    if (link.startsWith('http')) {
+                        linkUI = `<a href="${link}" target="_blank" class="link-btn"><i class="fas fa-external-link-alt"></i> Xem</a>`;
+                    }
+
+                    html += `<tr>
+                        <td><strong>${highlightText(name, searchText)}</strong></td>
+                        <td><span class="badge ${getBadgeClass(category)}">${highlightText(category, searchText)}</span></td>
+                        <td>${highlightText(date, searchText)}</td>
+                        <td>${highlightText(participants, searchText)}</td>
+                        <td>${highlightText(result, searchText)}</td>
+                        <td>${linkUI}</td>
+                        <td style="max-width: 200px; white-space: normal;">${highlightText(notes, searchText)}</td>
+                    </tr>`;
+                }
+            });
+
+            if (!hasVisibleRow) {
+                html = '<tr><td colspan="7" style="text-align: center; color: #fca5a5; padding: 20px;">Không tìm thấy dữ liệu phù hợp với bộ lọc.</td></tr>';
+            }
+
+            tableBody.innerHTML = html;
+        }
+
+        searchInput.addEventListener('input', renderTable);
+        categoryFilter.addEventListener('change', renderTable);
+
+        // 5. Tải dữ liệu từ Google Apps Script
+        function loadData() {
+            const url = GAS_URL + '?t=' + new Date().getTime();
+
+            // Sử dụng hàm fetch mặc định thay vì ép cấu hình redirect để tránh một số lỗi CORS của trình duyệt
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Server trả về lỗi: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.result === 'success') {
+                        globalData = data.data || [];
+                        renderTable();
+                    } else {
+                        throw new Error(data.message || 'Lỗi dữ liệu từ máy chủ');
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi lấy dữ liệu:', error);
+                    tableBody.innerHTML = `<tr>
+                        <td colspan="7" style="text-align: left; color: #ef4444; padding: 20px; line-height: 1.6; background: rgba(239, 68, 68, 0.05); border-radius: 8px;">
+                            <div style="text-align: center; margin-bottom: 12px; font-size: 1.1em;">
+                                <strong><i class="fas fa-exclamation-triangle"></i> Lỗi kết nối máy chủ (Failed to fetch)</strong>
+                            </div>
+                            Lỗi này do Google Apps Script đang chặn quyền truy cập (Lỗi CORS). Để khắc phục triệt để, bạn vui lòng thao tác trên Google Sheet theo các bước sau:<br><br>
+                            1. Mở lại màn hình code Google Apps Script (Code.gs).<br>
+                            2. Ở góc trên bên phải, chọn <b>Deploy</b> -> <b>Manage deployments</b> (Quản lý bản triển khai).<br>
+                            3. Bấm biểu tượng <b>Cây bút (Edit)</b> để chỉnh sửa bản triển khai hiện tại.<br>
+                            4. Mục <b>Version (Phiên bản)</b>: <span style="color:#ef4444; font-weight:bold;">BẮT BUỘC</span> mở ra và chọn <b>New version (Phiên bản mới)</b>.<br>
+                            5. Mục <b>Who has access (Người có quyền truy cập)</b>: <span style="color:#ef4444; font-weight:bold;">BẮT BUỘC</span> chọn <b>Anyone (Bất kỳ ai)</b>.<br>
+                            6. Bấm <b>Deploy</b>. (Nếu link thay đổi, copy link mới dán lại vào biến GAS_URL).
+                        </td>
+                    </tr>`;
+                });
+        }
+
+        loadData();
+        setInterval(loadData, 15000);
+
+        // 6. Xử lý Gửi Form
+        aiForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            loader.style.display = 'inline-block';
+            btnText.textContent = 'Đang xử lý...';
+            successMsg.style.display = 'none';
+
+            const payload = {
+                activityName: document.getElementById('activityName').value,
+                category: document.getElementById('category').value,
+                date: document.getElementById('date').value,
+                participants: document.getElementById('participants').value,
+                result: document.getElementById('result').value,
+                link: document.getElementById('link').value,
+                notes: document.getElementById('notes').value
+            };
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                cache: 'no-cache',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                aiForm.reset();
+                formPanel.style.display = 'none';
+                document.getElementById('mainActionGroup').style.display = 'flex';
+                
+                successMsg.style.display = 'block';
+                setTimeout(() => { successMsg.style.display = 'none'; }, 5000);
+                
+                setTimeout(loadData, 1500);
+            })
+            .catch(error => {
+                alert('Có lỗi xảy ra khi gửi dữ liệu: ' + error);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                loader.style.display = 'none';
+                btnText.textContent = 'Gửi Ghi Nhận';
+            });
+        });
+    </script>
+</body>
+</html>

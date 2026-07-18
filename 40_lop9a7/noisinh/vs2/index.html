@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Cập Nhật Nơi Sinh 9A7 ✨</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Nunito & Dancing Script -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Thư viện SheetJS để xuất file .xlsx -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                        script: ['Dancing Script', 'cursive'],
+                    },
+                    colors: {
+                        pastel: {
+                            blue: '#dbeafe',
+                            pink: '#fce7f3',
+                            yellow: '#fef08a',
+                            green: '#dcfce3',
+                            purple: '#f3e8ff'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            min-height: 100vh;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        #toast {
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        #toast.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .heart-btn {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .heart-btn:active { transform: scale(0.7); }
+        .liked svg { fill: #ef4444; color: #ef4444; }
+
+        /* Upload Area Styles */
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .upload-area.dragover {
+            border-color: #14b8a6;
+            background-color: #f0fdfa;
+        }
+        .upload-area:hover {
+            border-color: #14b8a6;
+            background-color: #f8fafc;
+        }
+
+        /* Custom Scrollbar for Modals */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-700 pb-20 flex flex-col items-center overflow-x-hidden">
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Sidebar Menu -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-white/95 backdrop-blur-xl shadow-[20px_0_30px_rgba(0,0,0,0.1)] z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col rounded-r-3xl border-r border-white">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-500">Menu</h2>
+            <button id="closeMenuBtn" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="p-4 flex-grow">
+            <button id="loginBtn" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-600 font-bold transition-all border-2 border-transparent hover:border-teal-200 group">
+                <div class="bg-teal-100 p-2 rounded-xl group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                </div>
+                Đăng nhập Quản trị
+            </button>
+
+            <!-- Khu vực chứa các tính năng nâng cao của Admin (Mặc định ẩn) -->
+            <div id="adminActions" class="hidden mt-4 space-y-3">
+                <button id="exportExcelBtn" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold transition-all border-2 border-transparent hover:border-emerald-200 group">
+                    <div class="bg-emerald-100 p-2 rounded-xl group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </div>
+                    Xuất file Excel
+                </button>
+                
+                <hr class="border-slate-200 my-2">
+
+                <button id="downloadTemplateBtn" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold transition-all border-2 border-transparent hover:border-blue-200 group">
+                    <div class="bg-blue-100 p-2 rounded-xl group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    Tải File Mẫu
+                </button>
+
+                <label class="w-full flex items-center gap-3 p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold transition-all border-2 border-transparent hover:border-purple-200 group cursor-pointer">
+                    <div class="bg-purple-100 p-2 rounded-xl group-hover:scale-110 transition-transform">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    </div>
+                    Nhập từ file Excel
+                    <input type="file" id="importExcelInput" accept=".xlsx, .xls" class="hidden">
+                </label>
+            </div>
+        </div>
+        <div class="p-4 text-center text-xs text-slate-400">
+            Version 2.0.0
+        </div>
+    </aside>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 border border-white/50 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-24 h-24 bg-teal-200 rounded-full mix-blend-multiply filter blur-2xl opacity-70"></div>
+            
+            <h3 class="text-2xl font-bold text-slate-800 mb-2 relative z-10">Đăng nhập Admin 🔒</h3>
+            <p class="text-slate-500 text-sm mb-6 relative z-10">Vui lòng nhập mật khẩu để tiếp tục.</p>
+            
+            <input type="password" id="adminPassword" class="relative z-10 w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 outline-none mb-6 text-xl tracking-[0.5em] text-center font-bold" placeholder="••••••••">
+            
+            <div class="flex gap-3 relative z-10">
+                <button id="cancelLoginBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmLoginBtn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold transition-all shadow-lg shadow-teal-500/30">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4 py-8">
+        <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 relative flex flex-col max-h-full">
+            <h3 class="text-2xl font-bold text-slate-800 mb-4 shrink-0">Chỉnh sửa thông tin ✏️</h3>
+            
+            <div class="space-y-4 mb-4 overflow-y-auto custom-scrollbar pr-2 shrink min-h-0">
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Tên:</label>
+                    <input type="text" id="editName" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg" disabled>
+                    <p class="text-xs text-slate-400 mt-1">* Tên được cố định, không thể sửa.</p>
+                </div>
+                <hr class="border-slate-200">
+                <div class="font-bold text-teal-700">📜 Thông tin cũ (GKS):</div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Nơi sinh (GKS):</label>
+                    <input type="text" id="editBirthplace" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Nơi ĐK Khai sinh (Ấp/Khu phố):</label>
+                    <input type="text" id="editRegBirthplaceHamlet" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Nơi ĐK Khai sinh (Tỉnh/Thành phố):</label>
+                    <input type="text" id="editRegBirthplaceProvince" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Quê quán:</label>
+                    <input type="text" id="editHometown" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg">
+                </div>
+                <hr class="border-slate-200">
+                <div class="font-bold text-teal-700">🔄 Địa chỉ mới (34 Tỉnh thành):</div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Nơi sinh (Địa chỉ mới):</label>
+                    <input type="text" id="editNewBirthplace" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Nơi ĐK Khai sinh (Tỉnh/Thành phố mới):</label>
+                    <input type="text" id="editNewRegBirthplaceProvince" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Quê quán (Địa chỉ mới):</label>
+                    <input type="text" id="editNewHometown" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none font-semibold text-lg">
+                </div>
+                <hr class="border-slate-200">
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Ghi chú:</label>
+                    <input type="text" id="editNote" class="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-200 focus:border-teal-400 outline-none">
+                </div>
+            </div>
+            
+            <div class="flex gap-3 shrink-0 mt-2">
+                <button id="cancelEditBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmEditBtn" class="flex-1 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold transition-all shadow-lg shadow-teal-500/30">Lưu lại</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4">
+        <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300 text-center relative">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🗑️</div>
+            <h3 class="text-2xl font-bold text-slate-800 mb-2">Xác nhận xóa?</h3>
+            <p class="text-slate-500 mb-6">Dữ liệu sau khi xóa sẽ không thể khôi phục. Bạn có chắc chắn không?</p>
+            
+            <div class="flex gap-3">
+                <button id="cancelDeleteBtn" class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Hủy</button>
+                <button id="confirmDeleteBtn" class="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-all shadow-lg shadow-red-500/30">Xóa luôn</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Missing Students Modal -->
+    <div id="missingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center px-4 py-8">
+        <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300 relative flex flex-col max-h-full">
+            <div class="flex justify-between items-center mb-4 shrink-0">
+                <h3 class="text-2xl font-bold text-slate-800">Chưa nộp thông tin 📭</h3>
+                <button id="closeMissingBtn" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="text-sm text-slate-500 mb-4 font-semibold shrink-0" id="missingCountText">Đang tính toán...</div>
+            <div class="overflow-y-auto flex-grow shrink min-h-0 bg-slate-50 rounded-xl p-4 border border-slate-100 shadow-inner custom-scrollbar pr-2">
+                <ul id="missingList" class="space-y-3 text-slate-700 font-medium text-sm">
+                    <!-- Danh sách học sinh chưa nộp sẽ được render tại đây -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="w-full text-center pt-12 pb-8 px-4 relative">
+        <button id="menuBtn" class="absolute top-8 left-4 md:left-8 p-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 hover:shadow-md hover:scale-105 transition-all z-30 text-slate-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h8m-8 6h16"></path></svg>
+        </button>
+
+        <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-emerald-500 mb-3 tracking-tight mt-4 md:mt-0">
+            🎉 Cập Nhật Nơi Sinh 9A7 🎉
+        </h1>
+        <p class="text-lg md:text-xl text-slate-500 font-medium">Hoàn thành thông tin cá nhân của lớp mình nhé! 🚀</p>
+    </header>
+
+    <!-- Main Form Section -->
+    <main class="w-full max-w-3xl px-4 flex-grow">
+        <div class="bg-white/80 backdrop-blur-lg p-6 md:p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.08)] mb-12 border border-white/50 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-teal-200 rounded-full mix-blend-multiply filter blur-2xl opacity-70"></div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-200 rounded-full mix-blend-multiply filter blur-2xl opacity-70"></div>
+
+            <form id="surveyForm" class="relative z-10 space-y-6">
+                <!-- Tên học sinh -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">👤 Tên của bạn là gì?</label>
+                    <div class="relative">
+                        <select id="studentName" required
+                            class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100 outline-none transition-all text-lg font-semibold appearance-none cursor-pointer text-slate-700">
+                            <option value="" disabled selected hidden>-- Chọn tên của bạn --</option>
+                            <option value="1. Nguyễn Thị Minh Ánh">1. Nguyễn Thị Minh Ánh</option>
+                            <option value="2. Trần Kim Ánh">2. Trần Kim Ánh</option>
+                            <option value="3. Trương Gia Bảo">3. Trương Gia Bảo</option>
+                            <option value="4. Nguyễn Đức Công">4. Nguyễn Đức Công</option>
+                            <option value="5. Phạm Tuấn Dũng">5. Phạm Tuấn Dũng</option>
+                            <option value="6. Phạm Thanh Hiển">6. Phạm Thanh Hiển</option>
+                            <option value="7. Nguyễn Văn Hùng">7. Nguyễn Văn Hùng</option>
+                            <option value="8. Võ Quang Huy">8. Võ Quang Huy</option>
+                            <option value="9. Nguyễn Trọng Khang">9. Nguyễn Trọng Khang</option>
+                            <option value="10. Lê Đăng Khôi">10. Lê Đăng Khôi</option>
+                            <option value="11. Phạm Tuấn Kiệt">11. Phạm Tuấn Kiệt</option>
+                            <option value="12. Trần Anh Kiệt">12. Trần Anh Kiệt</option>
+                            <option value="13. Thượng Lê Bích Lam">13. Thượng Lê Bích Lam</option>
+                            <option value="14. Nguyễn Ngọc Linh">14. Nguyễn Ngọc Linh</option>
+                            <option value="15. Nguyễn Trường Linh">15. Nguyễn Trường Linh</option>
+                            <option value="16. Đoàn Văn Long">16. Đoàn Văn Long</option>
+                            <option value="17. Nguyễn Minh Lộc">17. Nguyễn Minh Lộc</option>
+                            <option value="18. Nguyễn Bảo Ngọc">18. Nguyễn Bảo Ngọc</option>
+                            <option value="19. Huỳnh Yến Nhi">19. Huỳnh Yến Nhi</option>
+                            <option value="20. Nguyễn Ngọc Bảo Nhi">20. Nguyễn Ngọc Bảo Nhi</option>
+                            <option value="21. Ngô Tiến Phát">21. Ngô Tiến Phát</option>
+                            <option value="22. Nguyễn Minh Phước">22. Nguyễn Minh Phước</option>
+                            <option value="23. Phạm Thị Huyền Sinh">23. Phạm Thị Huyền Sinh</option>
+                            <option value="24. Nguyễn Tấn Tài">24. Nguyễn Tấn Tài</option>
+                            <option value="25. Lý Thu Thảo">25. Lý Thu Thảo</option>
+                            <option value="26. Đoàn Phan Bảo Thi">26. Đoàn Phan Bảo Thi</option>
+                            <option value="27. Huỳnh Vũ Anh Thư">27. Huỳnh Vũ Anh Thư</option>
+                            <option value="28. Nguyễn Thị Mỹ Trâm">28. Nguyễn Thị Mỹ Trâm</option>
+                            <option value="29. Trần Ngọc Bảo Trân">29. Trần Ngọc Bảo Trân</option>
+                            <option value="30. Từ Thái Trân">30. Từ Thái Trân</option>
+                            <option value="31. Lương Huỳnh Minh Trí">31. Lương Huỳnh Minh Trí</option>
+                            <option value="32. Nguyễn Thị Phương Trinh">32. Nguyễn Thị Phương Trinh</option>
+                            <option value="33. Nguyễn Xuân Trọng">33. Nguyễn Xuân Trọng</option>
+                            <option value="34. Võ Thị Thanh Trúc">34. Võ Thị Thanh Trúc</option>
+                            <option value="35. Phương Hoàng Anh Tú">35. Phương Hoàng Anh Tú</option>
+                            <option value="36. Đoàn Huỳnh Thanh Tuấn">36. Đoàn Huỳnh Thanh Tuấn</option>
+                            <option value="37. Ngô Thị Ngọc Tuyền">37. Ngô Thị Ngọc Tuyền</option>
+                            <option value="38. Trần Đại Vinh">38. Trần Đại Vinh</option>
+                            <option value="39. Nguyễn Bảo Vy">39. Nguyễn Bảo Vy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nơi sinh -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">📍 Nơi sinh (Theo Giấy khai sinh):</label>
+                    <input type="text" id="studentBirthplace" required list="birthplaceSuggestions" autocomplete="off"
+                        class="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100 outline-none transition-all font-medium text-lg"
+                        placeholder="VD: Bình Dương, TP. Hồ Chí Minh...">
+                    
+                    <!-- Danh sách gợi ý -->
+                    <datalist id="birthplaceSuggestions">
+                        <option value="Bình Dương"></option>
+                        <option value="Đồng Nai"></option>
+                        <option value="TP. Hồ Chí Minh"></option>
+                        <option value="Bình Phước"></option>
+                        <option value="Tây Ninh"></option>
+                        <option value="Bà Rịa - Vũng Tàu"></option>
+                        <option value="Long An"></option>
+                        <option value="An Giang"></option>
+                        <option value="Nghệ An"></option>
+                        <option value="Thanh Hóa"></option>
+                    </datalist>
+                </div>
+
+                <!-- Nơi đăng ký khai sinh -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">🏢 Nơi đăng ký khai sinh (Theo Giấy khai sinh):</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input type="text" id="studentRegBirthplaceHamlet" required
+                            class="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100 outline-none transition-all font-medium text-lg"
+                            placeholder="VD: Ấp 1 / Khu phố 2...">
+                        <input type="text" id="studentRegBirthplaceProvince" required list="birthplaceSuggestions" autocomplete="off"
+                            class="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100 outline-none transition-all font-medium text-lg"
+                            placeholder="Tỉnh/Thành phố...">
+                    </div>
+                </div>
+
+                <!-- Quê quán -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">🏡 Quê quán (Theo Giấy khai sinh):</label>
+                    <input type="text" id="studentHometown" required list="birthplaceSuggestions" autocomplete="off"
+                        class="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100 outline-none transition-all font-medium text-lg"
+                        placeholder="VD: Xã ABC, Huyện XYZ, Tỉnh...">
+                </div>
+
+                <!-- Tải ảnh -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">📸 Tải ảnh giấy khai sinh</label>
+                    <div id="dropzone" class="upload-area relative w-full h-48 bg-slate-50 rounded-2xl flex flex-col items-center justify-center cursor-pointer overflow-hidden group">
+                        <!-- Input file ẩn -->
+                        <input type="file" id="fileInput" class="hidden" accept="image/*">
+                        
+                        <!-- Hiển thị khi chưa có ảnh -->
+                        <div id="uploadPlaceholder" class="text-center p-4 flex flex-col items-center">
+                            <div class="w-12 h-12 bg-teal-100 text-teal-500 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+                            <p class="font-bold text-slate-600 text-sm">Nhấn để chọn ảnh</p>
+                            <p class="text-xs text-slate-400 mt-1">hoặc <span class="font-bold text-teal-500">Ctrl + V</span> để dán ảnh trực tiếp</p>
+                        </div>
+
+                        <!-- Hiển thị Preview ảnh -->
+                        <div id="imagePreviewContainer" class="hidden absolute inset-0 bg-black/5 flex items-center justify-center p-2">
+                            <img id="imagePreview" src="" class="max-h-full max-w-full rounded-xl object-contain shadow-md" alt="Preview">
+                            <button type="button" id="removeImageBtn" class="absolute top-2 right-2 bg-white/80 hover:bg-red-100 text-slate-600 hover:text-red-500 p-2 rounded-full shadow-sm transition-all backdrop-blur-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <!-- Loading overlay lúc upload Cloudinary -->
+                        <div id="uploadLoading" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                            <svg class="animate-spin h-8 w-8 text-teal-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span class="text-sm font-bold text-slate-600">Đang tải ảnh lên...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ghi chú -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-2 ml-1">💭 Ghi chú thêm (Tùy chọn):</label>
+                    <input type="text" id="studentNote"
+                        class="w-full px-5 py-3 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-teal-400 focus:bg-white focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+                        placeholder="VD: Em cần sửa lại thông tin...">
+                </div>
+
+                <!-- Nút Submit -->
+                <button type="submit" id="submitBtn"
+                    class="w-full py-4 rounded-2xl bg-gradient-to-r from-teal-500 hover:from-teal-600 to-emerald-500 hover:to-emerald-600 text-white font-bold text-xl shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2">
+                    <span>Gửi Thông Tin</span>
+                    <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </button>
+            </form>
+        </div>
+
+        <!-- Thống Kê Section -->
+        <div class="grid grid-cols-2 md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-teal-50/80 backdrop-blur border-2 border-teal-100 rounded-[1.5rem] p-4 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="text-3xl mb-1">👥</div>
+                <div class="text-sm font-bold text-teal-600 mb-1">Đã cập nhật</div>
+                <div class="text-3xl font-extrabold text-teal-700" id="statTotal">0</div>
+            </div>
+            <div class="bg-rose-50/80 backdrop-blur border-2 border-rose-100 rounded-[1.5rem] p-4 text-center shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer" id="viewMissingBtnClick">
+                <div class="text-3xl mb-1">📭</div>
+                <div class="text-sm font-bold text-rose-600 mb-1">Chưa cập nhật</div>
+                <div class="text-3xl font-extrabold text-rose-700" id="missingBadge">0</div>
+            </div>
+        </div>
+
+        <!-- Nút xem danh sách & Xuất file Excel -->
+        <div class="text-center mb-10 flex flex-wrap justify-center gap-3">
+            <button id="viewMissingBtn" class="inline-flex items-center gap-2 bg-white/60 hover:bg-white backdrop-blur border border-slate-200 text-slate-600 hover:text-teal-600 px-5 py-2.5 rounded-full font-bold shadow-sm transition-all text-sm group">
+                <svg class="w-5 h-5 text-teal-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                Xem danh sách chưa cập nhật
+            </button>
+            <button id="publicExportExcelBtn" class="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 backdrop-blur border border-emerald-200 text-emerald-700 hover:text-emerald-800 px-5 py-2.5 rounded-full font-bold shadow-sm transition-all text-sm group">
+                <svg class="w-5 h-5 text-emerald-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Tải danh sách Excel (.xlsx)
+            </button>
+        </div>
+
+        <!-- Kết quả Realtime Section -->
+        <div class="mb-6 flex items-center justify-between px-2">
+            <h2 class="text-2xl font-extrabold text-slate-700">📌 Bảng Thông Tin Lớp</h2>
+            <span class="bg-teal-100 text-teal-700 text-sm font-bold px-3 py-1 rounded-full animate-pulse">Live🔴</span>
+        </div>
+        
+        <!-- Grid chứa Card -->
+        <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-10">
+            <div class="col-span-full text-center py-10 text-slate-400 font-medium">
+                <svg class="animate-spin h-8 w-8 mx-auto text-teal-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                Đang tải dữ liệu...
+            </div>
+        </div>
+    </main>
+
+    <footer class="fixed bottom-0 w-full py-3 bg-white/70 backdrop-blur-md border-t border-slate-200 z-50 text-center">
+        <p class="font-script text-xl text-slate-600 tracking-wide">
+            © 2026 Designed with <span class="text-red-500 text-base">❤️</span> thầy Nguyễn Cường
+        </p>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-1/2 left-1/2 bg-slate-800/95 backdrop-blur-sm text-white px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-3 z-[100] pointer-events-none border border-slate-600/50">
+        <span class="text-2xl" id="toastIcon">🎉</span>
+        <span class="font-bold text-lg tracking-wide" id="toastMsg">Gửi thông tin thành công!</span>
+    </div>
+
+    <!-- Image Viewer Modal (Mới) -->
+    <div id="imageViewerModal" class="fixed inset-0 bg-black/95 backdrop-blur-sm z-[100] hidden opacity-0 transition-opacity duration-300 flex flex-col items-center justify-center select-none">
+        <!-- Thanh công cụ (Toolbar) -->
+        <div class="absolute top-4 right-4 md:top-8 md:right-8 flex gap-2 z-10 bg-black/50 p-2 rounded-2xl backdrop-blur-md border border-white/10">
+            <button onclick="zoomOut()" class="p-3 text-white hover:bg-white/20 rounded-xl transition-all" title="Thu nhỏ">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path></svg>
+            </button>
+            <button onclick="resetZoom()" class="p-3 text-white hover:bg-white/20 rounded-xl transition-all font-bold text-sm w-12" title="Khôi phục">
+                1:1
+            </button>
+            <button onclick="zoomIn()" class="p-3 text-white hover:bg-white/20 rounded-xl transition-all" title="Phóng to">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+            </button>
+            <div class="w-px bg-white/20 mx-1"></div>
+            <button onclick="closeImageViewer()" class="p-3 text-red-400 hover:bg-red-500 hover:text-white rounded-xl transition-all" title="Đóng">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <!-- Khu vực hiển thị và kéo ảnh -->
+        <div id="imageDragArea" class="w-full h-full flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing">
+            <img id="viewerImage" src="" class="max-w-[90%] max-h-[90%] object-contain transition-transform duration-200 pointer-events-none" alt="Full Image">
+        </div>
+    </div>
+
+    <!-- Firebase SDK v9 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, onSnapshot, 
+            serverTimestamp, doc, updateDoc, increment, deleteDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Cấu hình Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const collectionName = "noisinh9a7";
+        const dbRef = collection(db, collectionName);
+
+        // Biến toàn cục
+        let isAdmin = false;
+        let globalSurveys = [];
+        let currentEditId = null;
+        let currentDeleteId = null;
+        let uploadedImageUrl = ""; // Biến lưu URL ảnh sau khi upload
+
+        // --- TỪ ĐIỂN TỰ ĐỘNG CHUYỂN ĐỔI 63 TỈNH THÀNH 34 TỈNH ---
+        const provinceMapping = {
+            "hà giang": "Tỉnh Tuyên Quang", "tuyên quang": "Tỉnh Tuyên Quang",
+            "lào cai": "Tỉnh Lào Cai", "yên bái": "Tỉnh Lào Cai",
+            "bắc kạn": "Tỉnh Thái Nguyên", "thái nguyên": "Tỉnh Thái Nguyên",
+            "vĩnh phúc": "Tỉnh Phú Thọ", "phú thọ": "Tỉnh Phú Thọ", "hòa bình": "Tỉnh Phú Thọ", "hoà bình": "Tỉnh Phú Thọ",
+            "bắc ninh": "Tỉnh Bắc Ninh", "bắc giang": "Tỉnh Bắc Ninh",
+            "hưng yên": "Tỉnh Hưng Yên", "thái bình": "Tỉnh Hưng Yên",
+            "hải dương": "Thành phố Hải Phòng", "hải phòng": "Thành phố Hải Phòng",
+            "hà nam": "Tỉnh Ninh Bình", "ninh bình": "Tỉnh Ninh Bình", "nam định": "Tỉnh Ninh Bình",
+            "quảng bình": "Tỉnh Quảng Trị", "quảng trị": "Tỉnh Quảng Trị",
+            "quảng nam": "Thành phố Đà Nẵng", "đà nẵng": "Thành phố Đà Nẵng",
+            "kon tum": "Tỉnh Quảng Ngãi", "quảng ngãi": "Tỉnh Quảng Ngãi",
+            "gia lai": "Tỉnh Gia Lai", "bình định": "Tỉnh Gia Lai",
+            "khánh hòa": "Tỉnh Khánh Hòa", "khánh hoà": "Tỉnh Khánh Hòa",
+            "lâm đồng": "Tỉnh Lâm Đồng", "đắk nông": "Tỉnh Lâm Đồng", "đăk nông": "Tỉnh Lâm Đồng", "bình thuận": "Tỉnh Lâm Đồng",
+            "đắk lắk": "Tỉnh Đắk Lắk", "đăk lăk": "Tỉnh Đắk Lắk", "phú yên": "Tỉnh Đắk Lắk",
+            "bà rịa": "Thành phố Hồ Chí Minh", "vũng tàu": "Thành phố Hồ Chí Minh", "bình dương": "Thành phố Hồ Chí Minh", "hồ chí minh": "Thành phố Hồ Chí Minh", "sài gòn": "Thành phố Hồ Chí Minh", "tphcm": "Thành phố Hồ Chí Minh", "tp.hcm": "Thành phố Hồ Chí Minh",
+            "đồng nai": "Tỉnh Đồng Nai", "bình phước": "Tỉnh Đồng Nai",
+            "tây ninh": "Tỉnh Tây Ninh", "long an": "Tỉnh Tây Ninh",
+            "cần thơ": "Thành phố Cần Thơ", "sóc trăng": "Thành phố Cần Thơ", "hậu giang": "Thành phố Cần Thơ",
+            "bến tre": "Tỉnh Vĩnh Long", "vĩnh long": "Tỉnh Vĩnh Long", "trà vinh": "Tỉnh Vĩnh Long",
+            "tiền giang": "Tỉnh Đồng Tháp", "đồng tháp": "Tỉnh Đồng Tháp",
+            "bạc liêu": "Tỉnh Cà Mau", "cà mau": "Tỉnh Cà Mau",
+            "an giang": "Tỉnh An Giang", "kiên giang": "Tỉnh An Giang",
+            "hà nội": "Thành phố Hà Nội",
+            "thừa thiên huế": "Thành phố Huế", "huế": "Thành phố Huế"
+        };
+
+        function getNewBirthplace(oldBirthplace) {
+            if (!oldBirthplace) return "";
+            const lower = oldBirthplace.toLowerCase();
+            for (const [key, value] of Object.entries(provinceMapping)) {
+                if (lower.includes(key)) {
+                    return value;
+                }
+            }
+            return oldBirthplace; // Giữ nguyên nếu tỉnh không nằm trong danh sách sáp nhập
+        }
+
+        // DOM Elements
+        const form = document.getElementById('surveyForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const toast = document.getElementById('toast');
+        const pastelColors = ['bg-pastel-blue', 'bg-pastel-pink', 'bg-pastel-yellow', 'bg-pastel-green', 'bg-pastel-purple'];
+
+        // --- XỬ LÝ ẢNH (CLOUDINARY & PASTE) ---
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const removeImageBtn = document.getElementById('removeImageBtn');
+        const uploadLoading = document.getElementById('uploadLoading');
+
+        // Hàm Upload ảnh lên Cloudinary
+        async function uploadImageToCloudinary(file) {
+            uploadLoading.classList.remove('hidden');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'noisinh9a7'); // Preset name của bạn
+            
+            try {
+                // Cloud name: damxt8noh
+                const response = await fetch('https://api.cloudinary.com/v1_1/damxt8noh/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if(data.secure_url) {
+                    uploadedImageUrl = data.secure_url;
+                    // Hiển thị ảnh Preview
+                    imagePreview.src = uploadedImageUrl;
+                    uploadPlaceholder.classList.add('hidden');
+                    imagePreviewContainer.classList.remove('hidden');
+                } else {
+                    showToast("Lỗi tải ảnh, vui lòng thử lại!", "❌");
+                }
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                showToast("Đã xảy ra lỗi kết nối Cloudinary", "❌");
+            } finally {
+                uploadLoading.classList.add('hidden');
+                fileInput.value = ''; // Reset input file
+            }
+        }
+
+        // Xử lý Click chọn ảnh
+        dropzone.addEventListener('click', (e) => {
+            if(e.target === removeImageBtn || removeImageBtn.contains(e.target)) return;
+            if(imagePreviewContainer.classList.contains('hidden')) {
+                fileInput.click();
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                uploadImageToCloudinary(file);
+            }
+        });
+
+        // Xử lý Dán (Paste) Ctrl+V
+        document.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const blob = item.getAsFile();
+                    uploadImageToCloudinary(blob);
+                }
+            }
+        });
+
+        // Nút xóa ảnh đã chọn
+        removeImageBtn.addEventListener('click', () => {
+            uploadedImageUrl = "";
+            imagePreview.src = "";
+            imagePreviewContainer.classList.add('hidden');
+            uploadPlaceholder.classList.remove('hidden');
+        });
+
+
+        // --- CHỨC NĂNG THÊM MỚI (Lưu lên Firestore) ---
+        if(form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('studentName').value.trim();
+                const birthplace = document.getElementById('studentBirthplace').value.trim();
+                const regBirthplaceHamlet = document.getElementById('studentRegBirthplaceHamlet').value.trim();
+                const regBirthplaceProvince = document.getElementById('studentRegBirthplaceProvince').value.trim();
+                const hometown = document.getElementById('studentHometown').value.trim();
+                const note = document.getElementById('studentNote').value.trim();
+
+                // Chuẩn hóa tên (bỏ số thứ tự) để kiểm tra trùng lặp với dữ liệu cũ
+                const cleanNameInput = name.replace(/^\d+\.\s*/, '').trim();
+
+                const isAlreadySubmitted = globalSurveys.some(item => {
+                    const cleanItemName = item.name.replace(/^\d+\.\s*/, '').trim();
+                    return cleanItemName === cleanNameInput;
+                });
+
+                if (isAlreadySubmitted) {
+                    showToast("Bạn đã nộp thông tin rồi! Không thể gửi lần 2.", "⚠️");
+                    return; 
+                }
+                
+                const originalBtnHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<svg class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                submitBtn.disabled = true;
+
+                try {
+                    // Tự động ánh xạ ra địa chỉ mới
+                    const mappedNewBirthplace = getNewBirthplace(birthplace);
+                    const mappedNewRegBirthplaceProvince = getNewBirthplace(regBirthplaceProvince);
+                    const mappedNewHometown = getNewBirthplace(hometown);
+
+                    await addDoc(dbRef, {
+                        name: name,
+                        birthplace: birthplace,
+                        regBirthplaceHamlet: regBirthplaceHamlet,     
+                        regBirthplaceProvince: regBirthplaceProvince, 
+                        hometown: hometown,                           
+                        newBirthplace: mappedNewBirthplace,
+                        newRegBirthplaceProvince: mappedNewRegBirthplaceProvince,
+                        newHometown: mappedNewHometown,
+                        imageUrl: uploadedImageUrl,
+                        note: note,
+                        likes: 0,
+                        createdAt: serverTimestamp()
+                    });
+
+                    form.reset();
+                    removeImageBtn.click(); // Reset khu vực upload
+                    showToast("Cập nhật thông tin thành công!", "🎉");
+                } catch (error) {
+                    console.error("Lỗi thêm dữ liệu: ", error);
+                    alert("Có lỗi xảy ra, vui lòng thử lại sau!");
+                } finally {
+                    submitBtn.innerHTML = originalBtnHtml;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        // --- LẮNG NGHE REAL-TIME TỪ FIRESTORE ---
+        onSnapshot(dbRef, (snapshot) => {
+            let surveys = [];
+            snapshot.forEach((doc) => {
+                surveys.push({ id: doc.id, ...doc.data() });
+            });
+
+            // Hàm hỗ trợ lấy số thứ tự từ tên
+            const getStudentNumber = (name) => {
+                const match = name.match(/^(\d+)\./);
+                if (match) return parseInt(match[1], 10);
+                
+                const cleanName = name.trim();
+                const allOptions = Array.from(document.querySelectorAll('#studentName option')).map(opt => opt.value);
+                const foundIndex = allOptions.findIndex(opt => opt.replace(/^\d+\.\s*/, '').trim() === cleanName);
+                
+                return foundIndex > 0 ? foundIndex : 999;
+            };
+
+            // Sắp xếp dữ liệu theo số thứ tự
+            surveys.sort((a, b) => {
+                return getStudentNumber(a.name) - getStudentNumber(b.name);
+            });
+
+            globalSurveys = surveys; 
+            updateStats(surveys);    
+            renderCards(surveys);
+        }, (error) => {
+            console.error("Lỗi Realtime: ", error);
+            if(cardsContainer) {
+                cardsContainer.innerHTML = `<div class="col-span-full text-red-500 text-center font-bold">Không thể tải dữ liệu. Vui lòng kiểm tra cấu hình Firebase.</div>`;
+            }
+        });
+
+        // Thống kê
+        function updateStats(data) {
+            const allStudents = Array.from(document.querySelectorAll('#studentName option'))
+                                     .map(opt => opt.value)
+                                     .filter(v => v !== '');
+            const totalStudents = allStudents.length;
+
+            const cleanSubmittedNames = data.map(item => item.name.replace(/^\d+\.\s*/, '').trim());
+
+            const missingStudents = allStudents.filter(name => {
+                const cleanOptionName = name.replace(/^\d+\.\s*/, '').trim();
+                return !cleanSubmittedNames.includes(cleanOptionName);
+            });
+
+            const uniqueSubmissions = new Set(cleanSubmittedNames).size;
+
+            const statTotalEl = document.getElementById('statTotal');
+            const missingBadge = document.getElementById('missingBadge');
+
+            if(statTotalEl) statTotalEl.innerText = `${uniqueSubmissions}/${totalStudents}`;
+            if(missingBadge) missingBadge.innerText = missingStudents.length;
+
+            window.currentMissingStudents = missingStudents;
+        }
+
+        // Render Cards
+        function renderCards(data) {
+            if(!cardsContainer) return;
+
+            if (data.length === 0) {
+                cardsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white/50 rounded-3xl border-2 border-dashed border-slate-300">
+                        <span class="text-4xl block mb-3">📭</span>
+                        <p class="text-slate-500 font-bold">Chưa có dữ liệu nào được gửi!</p>
+                    </div>`;
+                return;
+            }
+
+            cardsContainer.innerHTML = '';
+            const likedList = JSON.parse(localStorage.getItem('likedCards') || '[]');
+
+            data.forEach((item, index) => {
+                const colorClass = pastelColors[index % pastelColors.length];
+                const isLiked = likedList.includes(item.id);
+
+                // Hiển thị Khai sinh cũ
+                let regBirthplaceDisplay = 'Chưa cập nhật';
+                if (item.regBirthplaceHamlet || item.regBirthplaceProvince) {
+                    regBirthplaceDisplay = [item.regBirthplaceHamlet, item.regBirthplaceProvince].filter(Boolean).join(', ');
+                } else if (item.regBirthplace) {
+                    regBirthplaceDisplay = item.regBirthplace;
+                }
+
+                // Hiển thị Khai sinh mới (Ấp/Khu phố giữ nguyên, Tỉnh đổi)
+                let newRegBirthplaceDisplay = 'Chưa cập nhật';
+                let mappedNewRegProv = item.newRegBirthplaceProvince || getNewBirthplace(item.regBirthplaceProvince || item.regBirthplace);
+                if (item.regBirthplaceHamlet || mappedNewRegProv) {
+                     newRegBirthplaceDisplay = [item.regBirthplaceHamlet, mappedNewRegProv].filter(Boolean).join(', ');
+                }
+
+                const cardHTML = `
+                    <div class="${colorClass} p-5 rounded-[1.5rem] card-hover transition-all duration-300 border border-white/60 relative overflow-hidden flex flex-col h-full shadow-sm">
+                        <div class="flex-grow">
+                            <h3 class="font-extrabold text-xl text-slate-800 mb-2">${item.name}</h3>
+                            
+                            <div class="bg-white/70 px-3 py-2 rounded-xl text-sm font-bold text-slate-700 shadow-sm mb-3 border border-white flex flex-col gap-1">
+                                <div class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-1 mt-1">📜 Theo Giấy Khai Sinh</div>
+                                <div>📍 Nơi sinh: <span class="text-teal-600">${item.birthplace || 'Chưa cập nhật'}</span></div>
+                                <div>🏢 Nơi ĐK khai sinh: <span class="text-teal-600">${regBirthplaceDisplay}</span></div>
+                                <div>🏡 Quê quán: <span class="text-teal-600">${item.hometown || 'Chưa cập nhật'}</span></div>
+                                
+                                <div class="w-full h-px bg-slate-200/60 my-2"></div>
+                                
+                                <div class="text-xs font-extrabold text-teal-600 uppercase tracking-wider mb-1">🔄 Địa giới 34 Tỉnh thành</div>
+                                <div>📍 Nơi sinh: <span class="text-teal-600">${item.newBirthplace || getNewBirthplace(item.birthplace) || 'Chưa cập nhật'}</span></div>
+                                <div>🏢 Nơi ĐK khai sinh: <span class="text-teal-600">${newRegBirthplaceDisplay}</span></div>
+                                <div>🏡 Quê quán: <span class="text-teal-600">${item.newHometown || getNewBirthplace(item.hometown) || 'Chưa cập nhật'}</span></div>
+                            </div>
+                            
+                            ${item.imageUrl ? `
+                                <div class="w-full h-40 bg-white/50 rounded-xl overflow-hidden border border-white mb-3 relative group cursor-pointer" onclick="openImageViewer('${item.imageUrl}')">
+                                    <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="Ảnh kèm theo" loading="lazy">
+                                    <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                        <span class="bg-white/95 text-slate-800 text-sm font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-lg">
+                                            <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                                            Xem ảnh
+                                        </span>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${item.note ? `<p class="text-slate-600 text-sm bg-white/40 p-3 rounded-xl italic mb-3 border border-white">"${item.note}"</p>` : ''}
+                        </div>
+                        
+                        <div class="mt-2 flex items-center justify-between pt-3 border-t border-slate-300/40">
+                            <span class="text-xs text-slate-500 font-semibold flex items-center gap-1">
+                                🕒 ${formatTime(item.createdAt)}
+                            </span>
+                            
+                            <button onclick="handleLike('${item.id}')" id="like-btn-${item.id}" 
+                                class="heart-btn flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full shadow-sm hover:shadow-md border border-slate-100 ${isLiked ? 'liked' : 'text-slate-400'}">
+                                <svg class="w-5 h-5 transition-colors duration-300" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
+                                </svg>
+                                <span class="font-bold ${isLiked ? 'text-red-500' : 'text-slate-600'}">${item.likes || 0}</span>
+                            </button>
+                        </div>
+
+                        <!-- Nút Sửa và Xóa (Đã mở công khai) -->
+                        <div class="mt-3 flex gap-2 justify-end border-t border-slate-300/40 pt-3 relative z-10">
+                            <button onclick="openEditModal('${item.id}')" class="bg-teal-100 hover:bg-teal-200 text-teal-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1">
+                                Sửa
+                            </button>
+                            <button onclick="openDeleteModal('${item.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-1">
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                `;
+                cardsContainer.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        // Logic xử lý thả tim
+        window.handleLike = async (docId) => {
+            let likedList = JSON.parse(localStorage.getItem('likedCards') || '[]');
+            if (likedList.includes(docId)) return; 
+
+            likedList.push(docId);
+            localStorage.setItem('likedCards', JSON.stringify(likedList));
+
+            const btn = document.getElementById(`like-btn-${docId}`);
+            if(btn) {
+                btn.classList.add('liked');
+                const countSpan = btn.querySelector('span');
+                if(countSpan) {
+                    countSpan.innerText = parseInt(countSpan.innerText) + 1;
+                    countSpan.classList.replace('text-slate-600', 'text-red-500');
+                }
+            }
+
+            try {
+                const cardRef = doc(db, collectionName, docId);
+                await updateDoc(cardRef, { likes: increment(1) });
+            } catch (error) {
+                console.error("Lỗi khi thả tim: ", error);
+            }
+        };
+
+        function showToast(message = "Thao tác thành công!", icon = "✅") {
+            const toastIconEl = document.getElementById('toastIcon');
+            const toastMsgEl = document.getElementById('toastMsg');
+            
+            if(toastIconEl) toastIconEl.innerText = icon;
+            if(toastMsgEl) toastMsgEl.innerText = message;
+            
+            if(toast) {
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        }
+
+        // --- GIAO DIỆN ADMIN VÀ MENU ---
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const loginBtn = document.getElementById('loginBtn');
+        const adminActions = document.getElementById('adminActions');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        
+        const loginModal = document.getElementById('loginModal');
+        const cancelLoginBtn = document.getElementById('cancelLoginBtn');
+        const confirmLoginBtn = document.getElementById('confirmLoginBtn');
+        const adminPassword = document.getElementById('adminPassword');
+
+        function openSidebar() {
+            if(!sidebarOverlay || !sidebar) return;
+            sidebarOverlay.classList.remove('hidden');
+            setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+            sidebar.classList.remove('-translate-x-full');
+        }
+
+        function closeSidebar() {
+            if(!sidebarOverlay || !sidebar) return;
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('opacity-0');
+            setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+        }
+
+        if(menuBtn) menuBtn.addEventListener('click', openSidebar);
+        if(closeMenuBtn) closeMenuBtn.addEventListener('click', closeSidebar);
+        if(sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+        function openLoginModal() {
+            closeSidebar(); 
+            if(!loginModal || !adminPassword) return;
+            const modalContent = loginModal.querySelector('div');
+            
+            adminPassword.value = '';
+            loginModal.classList.remove('hidden');
+            setTimeout(() => {
+                loginModal.classList.remove('opacity-0');
+                if(modalContent) modalContent.classList.remove('scale-95');
+            }, 10);
+            setTimeout(() => adminPassword.focus(), 300);
+        }
+
+        function closeLoginModal() {
+            if(!loginModal) return;
+            const modalContent = loginModal.querySelector('div');
+            
+            loginModal.classList.add('opacity-0');
+            if(modalContent) modalContent.classList.add('scale-95');
+            setTimeout(() => loginModal.classList.add('hidden'), 300);
+        }
+
+        if(loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                if(isAdmin) {
+                    isAdmin = false;
+                    closeSidebar();
+                    showToast("Đã đăng xuất khỏi Admin!", "👋");
+                    loginBtn.innerHTML = `<div class="bg-teal-100 p-2 rounded-xl group-hover:scale-110 transition-transform"><svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg></div> Đăng nhập Quản trị`;
+                    if(adminActions) adminActions.classList.add('hidden');
+                    renderCards(globalSurveys);
+                } else {
+                    openLoginModal();
+                }
+            });
+        }
+        if(cancelLoginBtn) cancelLoginBtn.addEventListener('click', closeLoginModal);
+        
+        if(adminPassword) {
+            adminPassword.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && confirmLoginBtn) confirmLoginBtn.click();
+            });
+        }
+
+        if(confirmLoginBtn) {
+            confirmLoginBtn.addEventListener('click', () => {
+                if(adminPassword && adminPassword.value === '0788095095') {
+                    closeLoginModal();
+                    showToast("Đăng nhập Admin thành công!", "👑");
+                    
+                    isAdmin = true;
+                    if(loginBtn) {
+                        loginBtn.innerHTML = `<div class="bg-red-100 p-2 rounded-xl group-hover:scale-110 transition-transform"><svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></div> Đăng xuất Admin`;
+                    }
+                    if(adminActions) adminActions.classList.remove('hidden');
+                    renderCards(globalSurveys); 
+                } else {
+                    alert('Mật khẩu không chính xác!');
+                    if(adminPassword) {
+                        adminPassword.value = '';
+                        adminPassword.focus();
+                    }
+                }
+            });
+        }
+
+        // --- SỬA VÀ XÓA (ADMIN) ---
+        const editModal = document.getElementById('editModal');
+        const deleteModal = document.getElementById('deleteModal');
+        
+        window.openEditModal = (id) => {
+            const survey = globalSurveys.find(s => s.id === id);
+            if(!survey || !editModal) return;
+            currentEditId = id;
+            
+            document.getElementById('editName').value = survey.name;
+            document.getElementById('editBirthplace').value = survey.birthplace || '';
+            
+            if (survey.regBirthplace && !survey.regBirthplaceHamlet && !survey.regBirthplaceProvince) {
+                document.getElementById('editRegBirthplaceHamlet').value = '';
+                document.getElementById('editRegBirthplaceProvince').value = survey.regBirthplace || '';
+            } else {
+                document.getElementById('editRegBirthplaceHamlet').value = survey.regBirthplaceHamlet || '';
+                document.getElementById('editRegBirthplaceProvince').value = survey.regBirthplaceProvince || '';
+            }
+
+            document.getElementById('editHometown').value = survey.hometown || '';
+            
+            // Các trường Mới (34 Tỉnh)
+            document.getElementById('editNewBirthplace').value = survey.newBirthplace || getNewBirthplace(survey.birthplace) || '';
+            document.getElementById('editNewRegBirthplaceProvince').value = survey.newRegBirthplaceProvince || getNewBirthplace(survey.regBirthplaceProvince || survey.regBirthplace) || '';
+            document.getElementById('editNewHometown').value = survey.newHometown || getNewBirthplace(survey.hometown) || '';
+            
+            document.getElementById('editNote').value = survey.note || '';
+            
+            editModal.classList.remove('hidden');
+            setTimeout(() => {
+                editModal.classList.remove('opacity-0');
+                const modalContent = editModal.querySelector('div');
+                if(modalContent) modalContent.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeEditModal = () => {
+            if(!editModal) return;
+            editModal.classList.add('opacity-0');
+            const modalContent = editModal.querySelector('div');
+            if(modalContent) modalContent.classList.add('scale-95');
+            setTimeout(() => editModal.classList.add('hidden'), 300);
+            currentEditId = null;
+        };
+
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const confirmEditBtn = document.getElementById('confirmEditBtn');
+        if(cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModal);
+        
+        if(confirmEditBtn) {
+            confirmEditBtn.addEventListener('click', async () => {
+                if(!currentEditId) return;
+                const newBirthplaceValue = document.getElementById('editBirthplace').value.trim();
+                const newRegBirthplaceHamlet = document.getElementById('editRegBirthplaceHamlet').value.trim();
+                const newRegBirthplaceProvince = document.getElementById('editRegBirthplaceProvince').value.trim();
+                const newHometownValue = document.getElementById('editHometown').value.trim();
+                
+                const newNewBirthplaceValue = document.getElementById('editNewBirthplace').value.trim();
+                const newNewRegBirthplaceProvince = document.getElementById('editNewRegBirthplaceProvince').value.trim();
+                const newNewHometownValue = document.getElementById('editNewHometown').value.trim();
+                const newNote = document.getElementById('editNote').value.trim();
+
+                try {
+                    const docRef = doc(db, collectionName, currentEditId);
+                    await updateDoc(docRef, {
+                        birthplace: newBirthplaceValue,
+                        regBirthplaceHamlet: newRegBirthplaceHamlet,
+                        regBirthplaceProvince: newRegBirthplaceProvince,
+                        hometown: newHometownValue,
+                        newBirthplace: newNewBirthplaceValue,
+                        newRegBirthplaceProvince: newNewRegBirthplaceProvince,
+                        newHometown: newNewHometownValue,
+                        note: newNote
+                    });
+                    showToast("Cập nhật thành công!", "✏️");
+                    closeEditModal();
+                } catch (error) {
+                    console.error("Lỗi cập nhật: ", error);
+                }
+            });
+        }
+
+        window.openDeleteModal = (id) => {
+            currentDeleteId = id;
+            if(!deleteModal) return;
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteModal.classList.remove('opacity-0');
+                const modalContent = deleteModal.querySelector('div');
+                if(modalContent) modalContent.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeDeleteModal = () => {
+            if(!deleteModal) return;
+            deleteModal.classList.add('opacity-0');
+            const modalContent = deleteModal.querySelector('div');
+            if(modalContent) modalContent.classList.add('scale-95');
+            setTimeout(() => deleteModal.classList.add('hidden'), 300);
+            currentDeleteId = null;
+        };
+
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+        
+        if(confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', async () => {
+                if(!currentDeleteId) return;
+                try {
+                    await deleteDoc(doc(db, collectionName, currentDeleteId));
+                    showToast("Đã xóa dữ liệu!", "🗑️");
+                    closeDeleteModal();
+                } catch(error) {
+                    console.error("Lỗi xóa: ", error);
+                }
+            });
+        }
+
+        // --- HIỂN THỊ MODAL CHƯA NỘP ---
+        const missingModal = document.getElementById('missingModal');
+        const viewMissingBtn = document.getElementById('viewMissingBtn');
+        const viewMissingBtnClick = document.getElementById('viewMissingBtnClick');
+        const closeMissingBtn = document.getElementById('closeMissingBtn');
+        const missingList = document.getElementById('missingList');
+        const missingCountText = document.getElementById('missingCountText');
+
+        function openMissingModal() {
+            if(!missingModal) return;
+            if(missingList) {
+                missingList.innerHTML = '';
+                const missing = window.currentMissingStudents || [];
+                
+                if(missing.length === 0) {
+                    missingList.innerHTML = `<li class="text-green-600 font-bold text-center py-6 text-lg">🎉 Tuyệt vời!<br>Cả lớp đã hoàn thành cập nhật!</li>`;
+                    if(missingCountText) missingCountText.innerText = "Không còn ai thiếu!";
+                } else {
+                    if(missingCountText) missingCountText.innerText = `Còn ${missing.length} bạn chưa nộp:`;
+                    missing.forEach((name, i) => {
+                        const match = name.match(/^(\d+)\.\s*(.+)$/);
+                        const stt = match ? match[1] : (i + 1);
+                        const displayName = match ? match[2] : name;
+
+                        missingList.innerHTML += `
+                            <li class="flex items-center gap-3 py-1 border-b border-slate-100 last:border-0">
+                                <span class="bg-red-100 text-red-500 font-bold text-xs w-6 h-6 flex items-center justify-center rounded-full shrink-0">${stt}</span> 
+                                <span class="font-bold">${displayName}</span>
+                            </li>`;
+                    });
+                }
+            }
+
+            missingModal.classList.remove('hidden');
+            setTimeout(() => {
+                missingModal.classList.remove('opacity-0');
+                const modalContent = missingModal.querySelector('div');
+                if(modalContent) modalContent.classList.remove('scale-95');
+            }, 10);
+        }
+
+        if(viewMissingBtn) viewMissingBtn.addEventListener('click', openMissingModal);
+        if(viewMissingBtnClick) viewMissingBtnClick.addEventListener('click', openMissingModal);
+
+        if(closeMissingBtn) {
+            closeMissingBtn.addEventListener('click', () => {
+                if(!missingModal) return;
+                missingModal.classList.add('opacity-0');
+                const modalContent = missingModal.querySelector('div');
+                if(modalContent) modalContent.classList.add('scale-95');
+                setTimeout(() => missingModal.classList.add('hidden'), 300);
+            });
+        }
+
+        // --- XUẤT EXCEL (.XLSX) LUÔN GIỮ ĐÚNG 39 HỌC SINH ---
+        function exportToExcel() {
+            const allStudents = Array.from(document.querySelectorAll('#studentName option'))
+                                     .map(opt => opt.value)
+                                     .filter(v => v !== '');
+
+            const excelData = allStudents.map(studentName => {
+                const match = studentName.match(/^(\d+)\.\s*(.+)$/);
+                const stt = match ? match[1] : '';
+                const cleanName = match ? match[2] : studentName;
+
+                const item = globalSurveys.find(s => s.name === studentName);
+
+                if (item) {
+                    let timeStr = "Chưa có";
+                    if(item.createdAt) {
+                        const d = item.createdAt.toDate();
+                        timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} - ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                    }
+                    return {
+                        "STT": parseInt(stt),
+                        "Tên học sinh": cleanName,
+                        "Nơi sinh (GKS)": item.birthplace || '',
+                        "Nơi ĐK Khai sinh (Ấp/Khu phố)": item.regBirthplaceHamlet || '',
+                        "Nơi ĐK Khai sinh (Tỉnh/Thành phố)": item.regBirthplaceProvince || item.regBirthplace || '',
+                        "Quê quán": item.hometown || '',
+                        "Nơi sinh (34 Tỉnh)": item.newBirthplace || getNewBirthplace(item.birthplace) || '',
+                        "Nơi ĐK Khai sinh (34 Tỉnh)": item.newRegBirthplaceProvince || getNewBirthplace(item.regBirthplaceProvince || item.regBirthplace) || '',
+                        "Quê quán (34 Tỉnh)": item.newHometown || getNewBirthplace(item.hometown) || '',
+                        "Hình ảnh (Link)": item.imageUrl || 'Không có',
+                        "Ghi chú": item.note || '',
+                        "Thời gian cập nhật": timeStr
+                    };
+                } else {
+                    return {
+                        "STT": parseInt(stt),
+                        "Tên học sinh": cleanName,
+                        "Nơi sinh (GKS)": "❌ Chưa cập nhật",
+                        "Nơi ĐK Khai sinh (Ấp/Khu phố)": "❌ Chưa cập nhật",
+                        "Nơi ĐK Khai sinh (Tỉnh/Thành phố)": "❌ Chưa cập nhật",
+                        "Quê quán": "❌ Chưa cập nhật",
+                        "Nơi sinh (34 Tỉnh)": "❌ Chưa cập nhật",
+                        "Nơi ĐK Khai sinh (34 Tỉnh)": "❌ Chưa cập nhật",
+                        "Quê quán (34 Tỉnh)": "❌ Chưa cập nhật",
+                        "Hình ảnh (Link)": "",
+                        "Ghi chú": "",
+                        "Thời gian cập nhật": ""
+                    };
+                }
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "NoiSinh_9A7");
+
+            const wscols = [
+                {wch: 5},  // STT
+                {wch: 25}, // Tên
+                {wch: 25}, // Nơi sinh (GKS)
+                {wch: 30}, // Nơi ĐK Khai sinh (Ấp/Khu phố)
+                {wch: 30}, // Nơi ĐK Khai sinh (Tỉnh/Thành phố)
+                {wch: 25}, // Quê quán
+                {wch: 25}, // Nơi sinh (Mới)
+                {wch: 30}, // Nơi ĐK (Mới)
+                {wch: 25}, // Quê quán (Mới)
+                {wch: 50}, // Link ảnh
+                {wch: 35}, // Ghi chú
+                {wch: 25}  // Thời gian
+            ];
+            worksheet['!cols'] = wscols;
+
+            XLSX.writeFile(workbook, `DanhSach_NoiSinh_9A7_${new Date().getTime()}.xlsx`);
+            showToast("Đã tải xuống file Excel!", "📊");
+        }
+
+        // Bắt sự kiện xuất Excel cho nút trong Menu Admin
+        if(exportExcelBtn) {
+            exportExcelBtn.addEventListener('click', () => {
+                exportToExcel();
+                closeSidebar();
+            });
+        }
+        
+        // Bắt sự kiện xuất Excel cho nút Công khai ngoài trang chủ
+        const publicExportExcelBtn = document.getElementById('publicExportExcelBtn');
+        if(publicExportExcelBtn) {
+            publicExportExcelBtn.addEventListener('click', exportToExcel);
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return "Vừa xong";
+            const date = timestamp.toDate();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const mins = String(date.getMinutes()).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `${hours}:${mins} - ${day}/${month}/${year}`;
+        }
+
+        // --- IMAGE VIEWER LOGIC (XEM ẢNH, PHÓNG TO, THU NHỎ) ---
+        let currentZoom = 1;
+        let imgPosX = 0;
+        let imgPosY = 0;
+        let isDraggingImg = false;
+        let startDragX = 0, startDragY = 0;
+
+        const imageViewerModal = document.getElementById('imageViewerModal');
+        const viewerImage = document.getElementById('viewerImage');
+        const imageDragArea = document.getElementById('imageDragArea');
+
+        window.openImageViewer = (url) => {
+            viewerImage.src = url;
+            currentZoom = 1;
+            imgPosX = 0;
+            imgPosY = 0;
+            updateImageTransform();
+            imageViewerModal.classList.remove('hidden');
+            setTimeout(() => imageViewerModal.classList.remove('opacity-0'), 10);
+        };
+
+        window.closeImageViewer = () => {
+            imageViewerModal.classList.add('opacity-0');
+            setTimeout(() => {
+                imageViewerModal.classList.add('hidden');
+                viewerImage.src = '';
+            }, 300);
+        };
+
+        window.zoomIn = () => {
+            currentZoom += 0.5;
+            if(currentZoom > 5) currentZoom = 5;
+            updateImageTransform();
+        };
+
+        window.zoomOut = () => {
+            currentZoom -= 0.5;
+            if(currentZoom < 0.5) currentZoom = 0.5;
+            updateImageTransform();
+        };
+
+        window.resetZoom = () => {
+            currentZoom = 1;
+            imgPosX = 0;
+            imgPosY = 0;
+            updateImageTransform();
+        };
+
+        window.updateImageTransform = () => {
+            viewerImage.style.transform = `translate(${imgPosX}px, ${imgPosY}px) scale(${currentZoom})`;
+        };
+
+        if (imageDragArea) {
+            imageDragArea.addEventListener('mousedown', (e) => {
+                isDraggingImg = true;
+                startDragX = e.clientX - imgPosX;
+                startDragY = e.clientY - imgPosY;
+                viewerImage.style.transition = 'none'; 
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDraggingImg) return;
+                imgPosX = e.clientX - startDragX;
+                imgPosY = e.clientY - startDragY;
+                updateImageTransform();
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDraggingImg) {
+                    isDraggingImg = false;
+                    viewerImage.style.transition = 'transform 0.2s ease-out';
+                }
+            });
+            
+            imageDragArea.addEventListener('touchstart', (e) => {
+                if(e.touches.length === 1) {
+                    isDraggingImg = true;
+                    startDragX = e.touches[0].clientX - imgPosX;
+                    startDragY = e.touches[0].clientY - imgPosY;
+                    viewerImage.style.transition = 'none';
+                }
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!isDraggingImg || e.touches.length !== 1) return;
+                imgPosX = e.touches[0].clientX - startDragX;
+                imgPosY = e.touches[0].clientY - startDragY;
+                updateImageTransform();
+            });
+
+            window.addEventListener('touchend', () => {
+                if (isDraggingImg) {
+                    isDraggingImg = false;
+                    viewerImage.style.transition = 'transform 0.2s ease-out';
+                }
+            });
+            
+            imageDragArea.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if(e.deltaY < 0) {
+                    window.zoomIn();
+                } else {
+                    window.zoomOut();
+                }
+            }, { passive: false });
+        }
+
+        // --- TẢI FILE MẪU EXCEL ---
+        const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+        if(downloadTemplateBtn) {
+            downloadTemplateBtn.addEventListener('click', () => {
+                const allStudents = Array.from(document.querySelectorAll('#studentName option'))
+                                         .map(opt => opt.value)
+                                         .filter(v => v !== '');
+
+                const templateData = allStudents.map(studentName => {
+                    const match = studentName.match(/^(\d+)\.\s*(.+)$/);
+                    return {
+                        "STT": match ? parseInt(match[1]) : '',
+                        "Tên học sinh": match ? match[2] : studentName,
+                        "Nơi sinh (GKS)": "",
+                        "Nơi ĐK Khai sinh (Ấp/Khu phố)": "",
+                        "Nơi ĐK Khai sinh (Tỉnh/Thành phố)": "",
+                        "Quê quán": "",
+                        "Ghi chú": ""
+                    };
+                });
+
+                const worksheet = XLSX.utils.json_to_sheet(templateData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Mau_Nhap_Lieu");
+
+                const wscols = [
+                    {wch: 5},  // STT
+                    {wch: 25}, // Tên
+                    {wch: 25}, // Nơi sinh (GKS)
+                    {wch: 30}, // Nơi ĐK Khai sinh (Ấp/Khu phố)
+                    {wch: 30}, // Nơi ĐK Khai sinh (Tỉnh/Thành phố)
+                    {wch: 25}, // Quê quán
+                    {wch: 35}  // Ghi chú
+                ];
+                worksheet['!cols'] = wscols;
+
+                XLSX.writeFile(workbook, `Mau_Nhap_Lieu_9A7.xlsx`);
+                showToast("Đã tải xuống File mẫu!", "📥");
+                closeSidebar();
+            });
+        }
+
+        // --- NHẬP DỮ LIỆU TỪ FILE EXCEL ---
+        const importExcelInput = document.getElementById('importExcelInput');
+        if (importExcelInput) {
+            importExcelInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+
+                showToast("Đang xử lý file, vui lòng đợi...", "⏳");
+                
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                        const allOptions = Array.from(document.querySelectorAll('#studentName option'))
+                                               .map(opt => opt.value)
+                                               .filter(v => v !== '');
+
+                        let successCount = 0;
+
+                        for (const row of jsonData) {
+                            const excelName = row["Tên học sinh"]?.toString().trim();
+                            if(!excelName) continue; 
+
+                            const fullDropdownName = allOptions.find(opt => opt.replace(/^\d+\.\s*/, '').trim() === excelName);
+                            if (!fullDropdownName) continue; 
+
+                            const existingDoc = globalSurveys.find(s => s.name === fullDropdownName);
+
+                            if (existingDoc) {
+                                // GHI ĐÈ / CẬP NHẬT: Chỉ cập nhật những ô có chứa dữ liệu
+                                const updateData = {};
+
+                                const bp = row["Nơi sinh (GKS)"]?.toString().trim();
+                                if (bp !== undefined && bp !== "") {
+                                    updateData.birthplace = bp;
+                                    updateData.newBirthplace = getNewBirthplace(bp);
+                                }
+
+                                const regHamlet = row["Nơi ĐK Khai sinh (Ấp/Khu phố)"]?.toString().trim();
+                                if (regHamlet !== undefined && regHamlet !== "") {
+                                    updateData.regBirthplaceHamlet = regHamlet;
+                                }
+
+                                const regProv = row["Nơi ĐK Khai sinh (Tỉnh/Thành phố)"]?.toString().trim();
+                                if (regProv !== undefined && regProv !== "") {
+                                    updateData.regBirthplaceProvince = regProv;
+                                    updateData.newRegBirthplaceProvince = getNewBirthplace(regProv);
+                                }
+
+                                const ht = row["Quê quán"]?.toString().trim();
+                                if (ht !== undefined && ht !== "") {
+                                    updateData.hometown = ht;
+                                    updateData.newHometown = getNewBirthplace(ht);
+                                }
+
+                                const note = row["Ghi chú"]?.toString().trim();
+                                if (note !== undefined && note !== "") {
+                                    updateData.note = note;
+                                }
+
+                                // Chỉ gọi API nếu có ít nhất 1 dòng thay đổi
+                                if (Object.keys(updateData).length > 0) {
+                                    const docRef = doc(db, collectionName, existingDoc.id);
+                                    await updateDoc(docRef, updateData);
+                                    successCount++;
+                                }
+                            } else {
+                                // THÊM MỚI BẢN GHI: Lấy dữ liệu hoặc để trống
+                                const bp = row["Nơi sinh (GKS)"]?.toString().trim() || "";
+                                const regHamlet = row["Nơi ĐK Khai sinh (Ấp/Khu phố)"]?.toString().trim() || "";
+                                const regProv = row["Nơi ĐK Khai sinh (Tỉnh/Thành phố)"]?.toString().trim() || "";
+                                const ht = row["Quê quán"]?.toString().trim() || "";
+                                const note = row["Ghi chú"]?.toString().trim() || "";
+
+                                await addDoc(dbRef, {
+                                    name: fullDropdownName,
+                                    birthplace: bp,
+                                    regBirthplaceHamlet: regHamlet,
+                                    regBirthplaceProvince: regProv,
+                                    hometown: ht,
+                                    newBirthplace: getNewBirthplace(bp),
+                                    newRegBirthplaceProvince: getNewBirthplace(regProv),
+                                    newHometown: getNewBirthplace(ht),
+                                    note: note,
+                                    imageUrl: "", 
+                                    likes: 0,
+                                    createdAt: serverTimestamp()
+                                });
+                                successCount++;
+                            }
+                        }
+
+                        showToast(`Đã cập nhật ${successCount} dòng dữ liệu!`, "✅");
+                        closeSidebar();
+                    } catch (error) {
+                        console.error("Lỗi khi đọc file Excel:", error);
+                        showToast("File không đúng định dạng!", "❌");
+                    } finally {
+                        importExcelInput.value = ''; 
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+    </script>
+</body>
+</html>

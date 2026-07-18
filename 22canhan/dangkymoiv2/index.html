@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>Đăng Ký Khóa Học Toán</title>
+    <meta name="title" content="Đăng Ký Khóa Học Toán">
+    <meta name="description" content="Đăng ký lớp Toán THCS cùng Thầy Cường, hỗ trợ học sinh củng cố kiến thức, học chắc nền tảng và ôn thi hiệu quả.">
+
+    <!-- Open Graph / Facebook / Zalo -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://thaycuongtoanc2.byethost14.com/22canhan/dangkymoi/">
+    <meta property="og:title" content="Đăng Ký Khóa Học Toán">
+    <meta property="og:description" content="Đăng ký lớp Toán THCS cùng Thầy Cường, hỗ trợ học sinh củng cố kiến thức, học chắc nền tảng và ôn thi hiệu quả.">
+    <meta property="og:image" content="https://res.cloudinary.com/dwqtplan3/image/upload/v1781149997/60473000-D2CA-4A4B-BFAF-D9CD8A843108_cbpb9i.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://thaycuongtoanc2.byethost14.com/22canhan/dangkymoi/">
+    <meta property="twitter:title" content="Đăng Ký Khóa Học Toán">
+    <meta property="twitter:description" content="Đăng ký lớp Toán THCS cùng Thầy Cường, hỗ trợ học sinh củng cố kiến thức, học chắc nền tảng và ôn thi hiệu quả.">
+    <meta property="twitter:image" content="https://res.cloudinary.com/dwqtplan3/image/upload/v1781149997/60473000-D2CA-4A4B-BFAF-D9CD8A843108_cbpb9i.png">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Theme Colors - Teal Theme */
+            --primary: #14B8A6;        /* Teal chính */
+            --primary-dark: #0F766E;   /* Teal đậm */
+            --primary-light: #CCFBF1;  /* Teal nhạt */
+            --bg-main: #F0FDFA;        /* Nền rất nhạt */
+            --surface: #ffffff;        /* Nền form trắng */
+            --text-main: #1f2937;      /* Chữ chính (xám đậm) */
+            --text-muted: #4b5563;     /* Chữ phụ (xám vừa) */
+            --border-color: #cbd5e1;   /* Viền */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(20, 184, 166, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(15, 118, 110, 0.1), transparent 25%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            gap: 20px;
+        }
+
+        /* Glassmorphism Container */
+        .glass-panel {
+            background: var(--surface);
+            border: 1px solid var(--primary-light);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px -10px rgba(15, 118, 110, 0.15);
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out forwards;
+        }
+
+        .glass-panel::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 5px;
+            background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 700;
+            font-size: 2rem;
+            background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .intro-text {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        /* Form styling */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        textarea {
+            padding-left: 15px;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+            background: #ffffff;
+        }
+
+        input:focus + i, select:focus + i {
+            color: var(--primary-dark);
+        }
+
+        /* Submit Button */
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(20, 184, 166, 0.3);
+        }
+
+        .btn-gradient:hover {
+            box-shadow: 0 6px 20px rgba(15, 118, 110, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-gradient:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loader-icon { display: none; }
+        
+        .alert-success {
+            display: none;
+            background: var(--primary-light);
+            border: 1px solid var(--primary);
+            color: var(--primary-dark);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: 500;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        /* Footer Signature */
+        .professional-footer {
+            margin-top: 10px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 20px;
+        }
+
+        .zalo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(20, 184, 166, 0.1);
+            color: var(--primary-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .zalo-link:hover {
+            background: rgba(20, 184, 166, 0.2);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.2);
+        }
+
+        .zalo-badge {
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        /* Admin Link Styling */
+        .admin-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-decoration: none;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .admin-link:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Modal Overlay (Password & Alerts) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-overlay.active .modal-content {
+            animation: popInModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popInModal {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .header-title { font-size: 1.6rem; }
+            .glass-panel { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel" id="formPanel">
+        <h1 class="header-title"><i class="fas fa-graduation-cap"></i> Đăng Ký Học Cùng Thầy Cường</h1>
+        <p class="intro-text">
+            Vui lòng điền đầy đủ thông tin bên dưới để hoàn tất việc đăng ký khóa học. Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất!
+        </p>
+        
+        <form id="registrationForm">
+            <div class="form-group">
+                <label>1. Họ và tên học sinh <span style="color: #ef4444;">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="studentName" placeholder="Nhập họ và tên đầy đủ..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>2. Số điện thoại phụ huynh <span style="color: #ef4444;">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-phone-alt"></i>
+                    <input type="tel" id="parentPhone" placeholder="Số điện thoại ba/mẹ để liên lạc..." required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>3. Lớp đang học <span style="color: #ef4444;">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fas fa-school"></i>
+                    <select id="grade" required>
+                        <option value="" disabled selected>-- Chọn khối lớp --</option>
+                        <option value="Lớp 6">Lớp 6</option>
+                        <option value="Lớp 7">Lớp 7</option>
+                        <option value="Lớp 8">Lớp 8</option>
+                        <option value="Lớp 9">Lớp 9</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>4. Số điện thoại học sinh (nếu có)</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-user-friends"></i>
+                    <input type="tel" id="phone" placeholder="Số điện thoại cá nhân của học sinh...">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>5. Ghi chú / Nguyện vọng</label>
+                <textarea id="notes" placeholder="Mục tiêu học tập, tình trạng học lực hiện tại..."></textarea>
+            </div>
+
+            <div id="networkError" style="color: #ef4444; font-size: 0.95rem; margin-top: 10px; text-align: center; display: none;">
+                <i class="fas fa-exclamation-triangle"></i> Có lỗi mạng xảy ra. Vui lòng kiểm tra kết nối Internet!
+            </div>
+
+            <button type="submit" class="btn-action btn-gradient" id="submitBtn">
+                <span id="btnText">Đăng Ký Ngay</span>
+                <i class="fas fa-paper-plane"></i>
+                <i class="fas fa-spinner fa-spin loader-icon" id="loader"></i>
+            </button>
+        </form>
+
+        <div id="successMsg" class="alert-success">
+            <div style="font-size: 1.2rem; margin-bottom: 10px; color: var(--primary-dark);">
+                <i class="fas fa-check-circle"></i> Đăng ký thành công! Xin cảm ơn bạn.
+            </div>
+            <div style="margin-top: 10px;">
+                <button type="button" id="registerAnotherBtn" style="background: #ffffff; border: 1px solid var(--primary); color: var(--primary-dark); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-family: inherit; font-weight: 500;">
+                    <i class="fas fa-undo"></i> Đăng ký thêm học sinh khác
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="professional-footer">
+        <span>Thầy Nguyễn Cường dạy Toán</span>
+        <a href="https://zalo.me/0788095095" target="_blank" class="zalo-link">
+            <span class="zalo-badge">Zalo</span>
+            0788095095
+        </a>
+        <!-- Nút Admin cho giáo viên -->
+        <a id="adminLinkBtn" class="admin-link">
+            <i class="fas fa-list-alt"></i> Danh sách học sinh (Admin)
+        </a>
+    </div>
+
+    <!-- Modal Yêu Cầu Mật Khẩu -->
+    <div id="authModal" class="modal-overlay">
+        <div class="glass-panel modal-content" style="padding: 30px; border-radius: 20px; text-align: center; width: 90%; max-width: 400px; animation: none;">
+            <div style="margin-bottom: 15px; color: var(--primary-dark); font-size: 2.5rem;">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3 style="color: var(--text-main); margin-bottom: 10px; font-size: 1.3rem;">Xác thực Admin</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Vui lòng nhập mật khẩu để xem danh sách đăng ký.</p>
+            
+            <div class="input-wrapper" style="margin-bottom: 15px; text-align: left;">
+                <i class="fas fa-key"></i>
+                <input type="password" id="adminPwdInput" placeholder="Nhập mật khẩu..." style="background: #f8fafc;">
+            </div>
+            
+            <div id="authErrorMsg" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 15px; display: none;">
+                Mật khẩu không đúng, vui lòng thử lại!
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="closeAuthBtn" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); background: #f8fafc; color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.3s;">Hủy</button>
+                <button id="submitAuthBtn" class="btn-gradient" style="flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CẤU HÌNH API LINK
+        // ==========================================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwgnM5BM7Vyyg3F-VJBQXu3rY-GhFuHD_d-iDkwV4-QlqYp76hmQKUXQ-Xn1IrD4Ray6g/exec';
+
+        const registrationForm = document.getElementById('registrationForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const loader = document.getElementById('loader');
+        const successMsg = document.getElementById('successMsg');
+        const networkError = document.getElementById('networkError');
+
+        registrationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Giao diện loading
+            submitBtn.disabled = true;
+            loader.style.display = 'inline-block';
+            btnText.textContent = 'Đang gửi thông tin...';
+            successMsg.style.display = 'none';
+            networkError.style.display = 'none';
+
+            // Thu thập dữ liệu
+            const payload = {
+                studentName: document.getElementById('studentName').value,
+                parentPhone: document.getElementById('parentPhone').value,
+                grade: document.getElementById('grade').value,
+                phone: document.getElementById('phone').value,
+                notes: document.getElementById('notes').value
+            };
+
+            // Đóng gói dữ liệu thành dạng URL-Encoded (Bắt buộc để Google Sheet nhận mà không bị lỗi CORS)
+            const formBody = new URLSearchParams(payload).toString();
+
+            // Gửi dữ liệu qua Apps Script
+            fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Chế độ này kết hợp với urlencoded sẽ tương thích 100% với Google
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded' 
+                },
+                body: formBody
+            })
+            .then(() => {
+                // Trình duyệt sẽ không đọc được phản hồi vì đang ở mode no-cors
+                // Nhưng với định dạng formBody ở trên, dữ liệu chắc chắn đã được gửi đi
+                registrationForm.reset();
+                registrationForm.style.display = 'none';
+                successMsg.style.display = 'block';
+            })
+            .catch(error => {
+                networkError.style.display = 'block'; // Thay thế window.alert để đẹp và an toàn hơn
+                console.error(error);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                loader.style.display = 'none';
+                btnText.textContent = 'Đăng Ký Ngay';
+            });
+        });
+
+        // Xử lý nút quay lại form đăng ký
+        document.getElementById('registerAnotherBtn').addEventListener('click', function() {
+            successMsg.style.display = 'none';
+            registrationForm.style.display = 'block';
+        });
+
+        // ==========================================
+        // XỬ LÝ NÚT ADMIN VÀ MẬT KHẨU
+        // ==========================================
+        const adminLinkBtn = document.getElementById('adminLinkBtn');
+        const authModal = document.getElementById('authModal');
+        const closeAuthBtn = document.getElementById('closeAuthBtn');
+        const submitAuthBtn = document.getElementById('submitAuthBtn');
+        const adminPwdInput = document.getElementById('adminPwdInput');
+        const authErrorMsg = document.getElementById('authErrorMsg');
+        const ADMIN_URL = "https://docs.google.com/spreadsheets/d/1-ZFPDxbDZE_NbN9iacIObRzJWqnPwu0bNPLOUYlGU-A/edit";
+
+        // Mở popup
+        adminLinkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            authModal.classList.add('active');
+            adminPwdInput.value = '';
+            authErrorMsg.style.display = 'none';
+            adminPwdInput.focus();
+        });
+
+        // Đóng popup
+        function closeAuthModal() {
+            authModal.classList.remove('active');
+        }
+
+        closeAuthBtn.addEventListener('click', closeAuthModal);
+
+        // Đóng khi click ngoài khung modal
+        authModal.addEventListener('click', function(e) {
+            if (e.target === authModal) {
+                closeAuthModal();
+            }
+        });
+
+        // Kiểm tra mật khẩu
+        function verifyPassword() {
+            const pwd = adminPwdInput.value;
+            if (pwd === '0788095095') {
+                window.open(ADMIN_URL, '_blank');
+                closeAuthModal();
+            } else {
+                authErrorMsg.style.display = 'block';
+            }
+        }
+
+        submitAuthBtn.addEventListener('click', verifyPassword);
+
+        // Hỗ trợ ấn Enter để submit
+        adminPwdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyPassword();
+            }
+        });
+    </script>
+</body>
+</html>

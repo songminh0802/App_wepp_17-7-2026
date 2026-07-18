@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Đánh giá & Nhận xét Học bạ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thêm thư viện SheetJS để xử lý file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        /* Toast Animation */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-enter { animation: slideIn 0.3s ease-out forwards; }
+        .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
+        /* Custom Checkbox */
+        input[type="checkbox"]:indeterminate {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 10h8'/%3e%3c/svg%3e");
+            background-color: currentColor;
+            border-color: transparent;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-blue-600 text-white shadow-md py-4">
+        <div class="container mx-auto px-4 max-w-5xl flex items-center justify-between">
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Hệ thống Nhận xét Học bạ Tự động</h1>
+            
+            <div class="flex items-center gap-3">
+                <div class="text-sm bg-blue-700 px-3 py-1 rounded-full hidden sm:flex items-center gap-2">
+                    <span id="db-status-indicator" class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                    <span id="db-status-text">Đang kết nối...</span>
+                </div>
+                <!-- Nút Mở Cài Đặt -->
+                <button id="btn-open-settings" class="bg-blue-700 hover:bg-blue-800 p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400" title="Tùy chỉnh mẫu nhận xét">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 max-w-5xl py-8 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Input Form -->
+        <div class="lg:col-span-1">
+            <div class="sticky top-8 space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Nhập Điểm Học Sinh</h2>
+                    
+                    <form id="student-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="studentName">Họ và Tên</label>
+                            <input type="text" id="studentName" placeholder="VD: Nguyễn Văn A" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="gpaScore">Điểm trung bình</label>
+                            <input type="number" id="gpaScore" step="0.1" placeholder="0-10" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                        </div>
+                        <button type="submit" id="submitBtn" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2">
+                            <span>Tính điểm & Lưu</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Thêm chức năng Tải lên & Xuất file -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">Công cụ Hàng loạt (Excel)</h2>
+                    <div class="space-y-3">
+                        <button id="btnDownloadTemplate" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm border border-gray-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Tải file mẫu (.xlsx)
+                        </button>
+                        
+                        <div class="relative">
+                            <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden">
+                            <button id="btnImportExcel" class="w-full bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                Nhập danh sách từ Excel
+                            </button>
+                            <!-- Tùy chọn tự động xuất file -->
+                            <label class="flex items-center justify-center gap-2 mt-2.5 text-xs text-gray-600 cursor-pointer">
+                                <input type="checkbox" id="autoExportCheck" checked class="rounded border-gray-300 text-teal-600 focus:ring-teal-500"> 
+                                Tự động tải về file kết quả
+                            </label>
+                        </div>
+
+                        <hr class="border-gray-100 my-1">
+
+                        <button id="btnExportExcel" class="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Xuất tất cả dữ liệu
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Database Records -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full min-h-[500px]">
+                
+                <!-- List Header with Selection Controls -->
+                <div class="p-5 border-b border-gray-100 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-xl font-semibold text-gray-700">Danh sách Học bạ (<span id="record-count">0</span>)</h2>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end min-h-[32px]">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                            <input type="checkbox" id="selectAllCheckbox" disabled class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer">
+                            Chọn tất cả
+                        </label>
+                        
+                        <!-- Batch Actions Toolbar -->
+                        <div id="batch-actions" class="hidden items-center gap-3 animate-[slideIn_0.2s_ease-out]">
+                            <span class="text-sm font-medium text-red-500"><span id="selected-count">0</span> dòng</span>
+                            <button id="btn-delete-selected" class="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5 focus:ring-2 focus:ring-red-500 focus:outline-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-0 flex-1 overflow-auto bg-gray-50/50 relative">
+                    <div id="loading-spinner" class="flex flex-col items-center justify-center h-40 text-gray-400">
+                        <svg class="animate-spin h-8 w-8 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Đang tải dữ liệu...</span>
+                    </div>
+                    
+                    <ul id="students-list" class="divide-y divide-gray-100 hidden">
+                        <!-- Danh sách học sinh sẽ được render ở đây -->
+                    </ul>
+                    
+                    <div id="empty-state" class="hidden flex-col items-center justify-center h-40 text-gray-400 absolute inset-0 bg-gray-50/50 z-10">
+                        <svg class="w-12 h-12 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Chưa có dữ liệu. Hãy nhập học sinh đầu tiên!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Tùy Chỉnh Lời Nhận Xét -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 transform transition-all flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-full text-blue-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Tùy chỉnh Mẫu Nhận xét</h3>
+                </div>
+                <button id="btn-close-settings-x" class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-5 overflow-y-auto flex-1 bg-white">
+                <p class="text-sm text-gray-500 mb-4">Thay đổi lời nhận xét tự động tương ứng với từng mức điểm. Hệ thống sẽ tự động áp dụng các mẫu này khi bạn nhập điểm hoặc tải file Excel lên.</p>
+                <div id="settings-list" class="space-y-3">
+                    <!-- JS sẽ render danh sách cài đặt vào đây -->
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-gray-100 flex flex-col sm:flex-row justify-between gap-3 bg-gray-50 rounded-b-xl">
+                <button id="btn-reset-settings" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200">Khôi phục Mặc định</button>
+                <div class="flex gap-3">
+                    <button id="btn-cancel-settings" class="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300">Hủy</button>
+                    <button id="btn-save-settings" class="flex-1 sm:flex-none px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500">Lưu Thay Đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác nhận Xóa -->
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4 transform transition-all scale-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-red-100 p-2 rounded-full text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">Xác nhận xóa</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-6">Bạn có chắc chắn muốn xóa <span id="delete-student-name"></span>? Hành động này không thể hoàn tác.</p>
+            <div class="flex justify-end gap-3">
+                <button id="cancel-delete-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300">Hủy</button>
+                <button id="confirm-delete-btn" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500">Xóa dữ liệu</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            serverTimestamp,
+            deleteDoc,
+            doc,
+            writeBatch 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Cấu hình Firebase theo yêu cầu
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-8kCyIv8n7jB-GiKXGeWllpXtoBNPKzA",
+            authDomain: "cuongcsdl.firebaseapp.com",
+            databaseURL: "https://cuongcsdl-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cuongcsdl",
+            storageBucket: "cuongcsdl.firebasestorage.app",
+            messagingSenderId: "510371041821",
+            appId: "1:510371041821:web:b37e8534f4f1132df62cf4"
+        };
+
+        // Khởi tạo Firebase App và Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Tên Collection lưu trữ dữ liệu
+        const COLLECTION_NAME = "students_records";
+        const studentsRef = collection(db, COLLECTION_NAME);
+
+        // --- CÁC HÀM TIỆN ÍCH GIAO DIỆN ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+            const icon = type === 'error' 
+                ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+
+            toast.className = `toast-enter flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white ${bgColor} max-w-xs pointer-events-auto`;
+            toast.innerHTML = `${icon} <span class="text-sm font-medium">${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function updateDBStatus(status, isError = false) {
+            const textEl = document.getElementById('db-status-text');
+            const indicatorEl = document.getElementById('db-status-indicator');
+            textEl.textContent = status;
+            
+            indicatorEl.className = 'w-2 h-2 rounded-full ' + (isError ? 'bg-red-500' : 'bg-green-400');
+        }
+
+        // --- LOGIC TÍNH TOÁN, ĐIỀU KIỆN & CÀI ĐẶT MẪU NHẬN XÉT ---
+        
+        const defaultCommentRules = [
+            { min: 9.0, type: "Xuất sắc", color: "text-purple-600 bg-purple-50 border-purple-200", text: "Học tập rất tốt, ý thức tự giác cao." },
+            { min: 8.0, type: "Giỏi", color: "text-blue-600 bg-blue-50 border-blue-200", text: "Học tập tốt, tiếp thu bài nhanh." },
+            { min: 7.0, type: "Khá", color: "text-green-600 bg-green-50 border-green-200", text: "Học khá, có nhiều cố gắng." },
+            { min: 6.0, type: "TB Khá", color: "text-teal-600 bg-teal-50 border-teal-200", text: "Hoàn thành nội dung học tập." },
+            { min: 5.0, type: "Trung bình", color: "text-yellow-600 bg-yellow-50 border-yellow-200", text: "Có cố gắng, hoàn thành nội dung học tập." },
+            { min: 4.0, type: "Yếu", color: "text-orange-600 bg-orange-50 border-orange-200", text: "Cần tập trung và luyện tập thêm." },
+            { min: 3.0, type: "Yếu", color: "text-orange-600 bg-orange-50 border-orange-200", text: "Cần cố gắng nhiều hơn trong học tập." },
+            { min: 2.0, type: "Kém", color: "text-red-600 bg-red-50 border-red-200", text: "Cần nâng cao ý thức tự học." },
+            { min: 1.0, type: "Kém", color: "text-red-600 bg-red-50 border-red-200", text: "Cần quan tâm hơn đến việc học." },
+            { min: 0.0, type: "Kém", color: "text-red-600 bg-red-50 border-red-200", text: "Cần nỗ lực nhiều hơn để tiến bộ." }
+        ];
+
+        // Lấy dữ liệu tùy chỉnh từ trình duyệt, nếu không có thì dùng mặc định
+        let currentCommentRules = JSON.parse(localStorage.getItem('customComments_v1')) || JSON.parse(JSON.stringify(defaultCommentRules));
+
+        function generateComment(gpa) {
+            for (let rule of currentCommentRules) {
+                if (gpa >= rule.min) {
+                    return { text: rule.text, type: rule.type, color: rule.color };
+                }
+            }
+            // Trả về rule thấp nhất nếu có lỗi
+            return currentCommentRules[currentCommentRules.length - 1];
+        }
+
+        // --- XỬ LÝ MODAL CÀI ĐẶT MẪU NHẬN XÉT ---
+        const settingsModal = document.getElementById('settings-modal');
+        const btnOpenSettings = document.getElementById('btn-open-settings');
+        const btnCloseSettingsX = document.getElementById('btn-close-settings-x');
+        const btnCancelSettings = document.getElementById('btn-cancel-settings');
+        const btnSaveSettings = document.getElementById('btn-save-settings');
+        const btnResetSettings = document.getElementById('btn-reset-settings');
+        const settingsListContainer = document.getElementById('settings-list');
+
+        function renderSettingsInputs() {
+            settingsListContainer.innerHTML = currentCommentRules.map((rule, index) => `
+                <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                    <div class="w-full sm:w-20 font-bold text-gray-700 text-sm">>= ${rule.min}</div>
+                    <div class="w-full sm:w-28">
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-full border ${rule.color}">
+                            ${rule.type}
+                        </span>
+                    </div>
+                    <input type="text" id="rule-text-${index}" value="${rule.text}" 
+                        class="flex-1 w-full px-3 py-1.5 border border-gray-300 rounded text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                </div>
+            `).join('');
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
+        }
+
+        btnOpenSettings.addEventListener('click', () => {
+            renderSettingsInputs(); // Vẽ lại mỗi khi mở để đề phòng họ chưa lưu lần trước
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+        });
+
+        btnCloseSettingsX.addEventListener('click', closeSettingsModal);
+        btnCancelSettings.addEventListener('click', closeSettingsModal);
+
+        btnSaveSettings.addEventListener('click', () => {
+            currentCommentRules.forEach((rule, index) => {
+                const inputVal = document.getElementById(`rule-text-${index}`).value;
+                rule.text = inputVal.trim() !== '' ? inputVal : rule.text; // Không cho phép để trống
+            });
+            localStorage.setItem('customComments_v1', JSON.stringify(currentCommentRules));
+            showToast('Đã lưu các tùy chỉnh mẫu nhận xét!');
+            closeSettingsModal();
+        });
+
+        btnResetSettings.addEventListener('click', () => {
+             currentCommentRules = JSON.parse(JSON.stringify(defaultCommentRules));
+             renderSettingsInputs();
+             localStorage.removeItem('customComments_v1');
+             showToast('Đã khôi phục các nhận xét về mặc định!');
+        });
+
+
+        function validateInput(name, gpaStr) {
+            if (!name.trim()) return "Vui lòng nhập tên học sinh.";
+            if (!gpaStr) return "Vui lòng nhập điểm trung bình.";
+            const gpa = parseFloat(gpaStr);
+            if (isNaN(gpa)) return "Điểm phải là định dạng số.";
+            if (gpa < 0 || gpa > 10) return "Điểm hợp lệ phải nằm trong khoảng từ 0 đến 10.";
+            return { isValid: true, data: { name, gpa } };
+        }
+
+        // --- QUẢN LÝ TRẠNG THÁI CHỌN (SELECTION) ---
+        let selectedIds = new Set();
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const batchActions = document.getElementById('batch-actions');
+        const selectedCountSpan = document.getElementById('selected-count');
+
+        function updateSelectionUI() {
+            const total = currentStudentsData.length;
+            const selected = selectedIds.size;
+
+            selectedCountSpan.textContent = selected;
+            
+            if (selected > 0) {
+                batchActions.classList.remove('hidden');
+                batchActions.classList.add('flex');
+            } else {
+                batchActions.classList.add('hidden');
+                batchActions.classList.remove('flex');
+            }
+
+            if (total === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.disabled = true;
+            } else {
+                selectAllCheckbox.disabled = false;
+                if (selected === total) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (selected > 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                }
+            }
+        }
+
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            
+            if (isChecked) {
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    selectedIds.add(cb.value);
+                });
+            } else {
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                });
+                selectedIds.clear();
+            }
+            updateSelectionUI();
+        });
+
+        document.getElementById('students-list').addEventListener('change', (e) => {
+            if (e.target.classList.contains('student-checkbox')) {
+                if (e.target.checked) {
+                    selectedIds.add(e.target.value);
+                } else {
+                    selectedIds.delete(e.target.value);
+                }
+                updateSelectionUI();
+            }
+        });
+
+        // --- XỬ LÝ SỰ KIỆN FORM NHẬP LẺ ---
+        const form = document.getElementById('student-form');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById('studentName').value;
+            const gpaInput = document.getElementById('gpaScore').value;
+
+            const validation = validateInput(nameInput, gpaInput);
+            if (validation !== true && validation.isValid !== true) {
+                showToast(validation, 'error');
+                return;
+            }
+
+            const { name, gpa } = validation.data;
+            const finalGpa = Math.round(gpa * 10) / 10;
+            const commentInfo = generateComment(finalGpa);
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mr-2 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang lưu...';
+
+            try {
+                await addDoc(studentsRef, {
+                    name: name.trim(),
+                    gpa: finalGpa,
+                    rating: commentInfo.type,
+                    comment: commentInfo.text,
+                    createdAt: serverTimestamp()
+                });
+                showToast(`Đã lưu thành công! ĐTB: ${finalGpa.toFixed(1)}`);
+                form.reset();
+                document.getElementById('studentName').focus();
+            } catch (error) {
+                console.error("Lỗi khi thêm dữ liệu: ", error);
+                if(error.code === 'permission-denied') {
+                    showToast("Lỗi quyền truy cập! Vui lòng kiểm tra lại Firestore Rules.", "error");
+                } else {
+                    showToast("Lỗi kết nối cơ sở dữ liệu.", "error");
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Tính điểm & Lưu</span>';
+            }
+        });
+
+        // --- HIỂN THỊ DỮ LIỆU REALTIME ---
+        const listContainer = document.getElementById('students-list');
+        const emptyState = document.getElementById('empty-state');
+        const spinner = document.getElementById('loading-spinner');
+        const countBadge = document.getElementById('record-count');
+        let currentStudentsData = []; 
+
+        onSnapshot(studentsRef, (snapshot) => {
+            updateDBStatus('Đã kết nối Firestore');
+            spinner.classList.add('hidden');
+            
+            const students = [];
+            snapshot.forEach((doc) => {
+                students.push({ id: doc.id, ...doc.data() });
+            });
+
+            students.sort((a, b) => {
+                const timeA = a.createdAt?.toMillis() || Date.now();
+                const timeB = b.createdAt?.toMillis() || Date.now();
+                return timeB - timeA;
+            });
+
+            currentStudentsData = students;
+            countBadge.textContent = students.length;
+
+            const currentIdsSet = new Set(students.map(s => s.id));
+            for (const id of selectedIds) {
+                if (!currentIdsSet.has(id)) {
+                    selectedIds.delete(id);
+                }
+            }
+
+            if (students.length === 0) {
+                listContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+                listContainer.classList.remove('hidden');
+                
+                listContainer.innerHTML = students.map(student => {
+                    const commentData = generateComment(student.gpa);
+                    const isChecked = selectedIds.has(student.id) ? 'checked' : '';
+                    
+                    return `
+                        <li class="p-4 sm:p-6 hover:bg-white transition-colors relative group border-b border-gray-50 last:border-0">
+                            <div class="flex flex-row items-center gap-4">
+                                <!-- Nút Checkbox -->
+                                <div class="flex-shrink-0">
+                                    <input type="checkbox" value="${student.id}" class="student-checkbox w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 cursor-pointer transition-colors" ${isChecked}>
+                                </div>
+                                
+                                <div class="flex flex-col md:flex-row justify-between gap-4 flex-1">
+                                    <div class="flex-1 pr-0 sm:pr-6">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <h3 class="text-lg font-semibold text-gray-800">${student.name}</h3>
+                                            <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full border ${commentData.color}">
+                                                ${student.rating}
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-gray-700 italic border-l-2 border-blue-400 pl-3 py-1 bg-white">
+                                            "Nhận xét: ${student.comment}"
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center md:border-l md:pl-6 md:ml-2 border-gray-100">
+                                        <span class="text-sm text-gray-500 uppercase font-semibold hidden md:block">Điểm TB</span>
+                                        <span class="text-2xl sm:text-3xl font-bold ${student.gpa >= 5.0 ? 'text-blue-600' : 'text-red-500'}">
+                                            ${student.gpa.toFixed(1)}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Nút Xóa Lẻ (Hiển thị mờ, hiện rõ khi hover) -->
+                                <button class="delete-btn flex-shrink-0 text-gray-300 hover:text-red-500 bg-white hover:bg-red-50 rounded-full p-2 transition-all opacity-0 group-hover:opacity-100 shadow-sm border border-gray-100 hover:border-red-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-200" 
+                                    data-id="${student.id}" 
+                                    data-name="${student.name}" 
+                                    title="Xóa học sinh này">
+                                    <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                }).join('');
+            }
+            updateSelectionUI();
+        }, (error) => {
+            console.error("Lỗi đồng bộ dữ liệu: ", error);
+            spinner.classList.add('hidden');
+            updateDBStatus('Mất kết nối', true);
+            showToast('Không thể tải dữ liệu. Kiểm tra quyền truy cập DB.', 'error');
+        });
+
+        // --- XỬ LÝ CHỨC NĂNG XÓA (LẺ & NHIỀU) ---
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const deleteStudentNameEl = document.getElementById('delete-student-name');
+        const btnDeleteSelected = document.getElementById('btn-delete-selected');
+        
+        let deleteMode = 'single'; // 'single' hoặc 'batch'
+        let currentDeleteId = null;
+
+        listContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.delete-btn');
+            if (btn) {
+                deleteMode = 'single';
+                currentDeleteId = btn.getAttribute('data-id');
+                const studentName = btn.getAttribute('data-name');
+                
+                deleteStudentNameEl.innerHTML = `học sinh <span class="font-semibold text-gray-800">${studentName}</span>`;
+                deleteModal.classList.remove('hidden');
+                deleteModal.classList.add('flex');
+            }
+        });
+
+        btnDeleteSelected.addEventListener('click', () => {
+            if (selectedIds.size === 0) return;
+            
+            deleteMode = 'batch';
+            deleteStudentNameEl.innerHTML = `<span class="font-bold text-red-600 text-lg">${selectedIds.size}</span> học sinh đã chọn`;
+            deleteModal.classList.remove('hidden');
+            deleteModal.classList.add('flex');
+        });
+
+        function closeDeleteModal() {
+            deleteModal.classList.add('hidden');
+            deleteModal.classList.remove('flex');
+            currentDeleteId = null;
+        }
+
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            const originalHtml = confirmDeleteBtn.innerHTML;
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang xóa...';
+
+            try {
+                if (deleteMode === 'single' && currentDeleteId) {
+                    await deleteDoc(doc(db, COLLECTION_NAME, currentDeleteId));
+                    showToast("Đã xóa dữ liệu thành công!");
+                } 
+                else if (deleteMode === 'batch' && selectedIds.size > 0) {
+                    const batch = writeBatch(db);
+                    selectedIds.forEach(id => {
+                        const docRef = doc(db, COLLECTION_NAME, id);
+                        batch.delete(docRef);
+                    });
+                    await batch.commit(); 
+                    
+                    showToast(`Đã xóa thành công ${selectedIds.size} hồ sơ!`);
+                    selectedIds.clear(); 
+                    updateSelectionUI(); 
+                }
+                closeDeleteModal();
+            } catch (error) {
+                console.error("Lỗi khi xóa: ", error);
+                if(error.code === 'permission-denied') {
+                    showToast("Lỗi quyền truy cập khi xóa!", "error");
+                } else {
+                    showToast("Không thể xóa. Vui lòng thử lại.", "error");
+                }
+            } finally {
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = originalHtml;
+            }
+        });
+
+        // --- CHỨC NĂNG NHẬP / XUẤT FILE EXCEL ---
+        
+        document.getElementById('btnDownloadTemplate').addEventListener('click', () => {
+            const templateData = [
+                { "Họ và Tên": "Nguyễn Văn A", "Điểm trung bình": 8.5 },
+                { "Họ và Tên": "Trần Thị B", "Điểm trung bình": 6.0 },
+                { "Họ và Tên": "Lê Văn C", "Điểm trung bình": 4.5 }
+            ];
+            const ws = XLSX.utils.json_to_sheet(templateData);
+            ws['!cols'] = [{ wch: 25 }, { wch: 20 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "DanhSach");
+            XLSX.writeFile(wb, "mau_nhap_diem.xlsx");
+        });
+
+        document.getElementById('btnExportExcel').addEventListener('click', () => {
+            if (currentStudentsData.length === 0) {
+                showToast("Không có dữ liệu để xuất!", "error");
+                return;
+            }
+            const exportData = currentStudentsData.map(student => ({
+                "Họ và Tên": student.name,
+                "Điểm trung bình": student.gpa,
+                "Xếp loại": student.rating,
+                "Nhận xét": student.comment
+            }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            ws['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 50 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "HocBa");
+            XLSX.writeFile(wb, "danh_sach_hoc_ba.xlsx");
+        });
+
+        const fileInput = document.getElementById('fileInput');
+        const autoExportCheck = document.getElementById('autoExportCheck');
+        document.getElementById('btnImportExcel').addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    if (jsonData.length === 0) {
+                        showToast("File Excel trống hoặc không có dữ liệu.", "error");
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    let successCount = 0;
+                    let errorCount = 0;
+                    let processedData = []; 
+
+                    const btn = document.getElementById('btnImportExcel');
+                    const originalHtml = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang xử lý...';
+
+                    for (const row of jsonData) {
+                        let processedRow = { ...row }; 
+                        const nameKey = Object.keys(row).find(key => key.toLowerCase().includes('tên') || key.toLowerCase().includes('name'));
+                        const gpaKey = Object.keys(row).find(key => key.toLowerCase().includes('điểm') || key.toLowerCase().includes('gpa') || key.toLowerCase().includes('trung bình'));
+                        
+                        if (nameKey && gpaKey && row[nameKey] !== undefined && row[gpaKey] !== undefined) {
+                            const nameRaw = String(row[nameKey]).trim();
+                            const gpaRaw = String(row[gpaKey]).trim();
+                            const validation = validateInput(nameRaw, gpaRaw);
+                            
+                            if (validation.isValid) {
+                                const { name, gpa } = validation.data;
+                                const finalGpa = Math.round(gpa * 10) / 10;
+                                const commentInfo = generateComment(finalGpa);
+
+                                try {
+                                    await addDoc(studentsRef, {
+                                        name: name,
+                                        gpa: finalGpa,
+                                        rating: commentInfo.type,
+                                        comment: commentInfo.text,
+                                        createdAt: serverTimestamp()
+                                    });
+                                    successCount++;
+                                    processedRow['Xếp loại'] = commentInfo.type;
+                                    processedRow['Nhận xét'] = commentInfo.text;
+                                } catch (err) {
+                                    errorCount++;
+                                    processedRow['Ghi chú'] = 'Lỗi không thể lưu vào cơ sở dữ liệu';
+                                }
+                            } else {
+                                errorCount++;
+                                processedRow['Ghi chú'] = typeof validation === 'string' ? validation : 'Dữ liệu không hợp lệ';
+                            }
+                        } else {
+                            errorCount++;
+                            processedRow['Ghi chú'] = 'Thiếu cột Tên hoặc Điểm trung bình';
+                        }
+                        processedData.push(processedRow);
+                    }
+
+                    if (autoExportCheck.checked && processedData.length > 0) {
+                        const wsExport = XLSX.utils.json_to_sheet(processedData);
+                        wsExport['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 50 }];
+                        const wbExport = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wbExport, wsExport, "Kết quả");
+                        const fileNameNoExt = file.name.substring(0, file.name.lastIndexOf('.'));
+                        XLSX.writeFile(wbExport, `[Da_Xu_Ly]_${fileNameNoExt}.xlsx`);
+                    }
+
+                    fileInput.value = ''; 
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+
+                    if (successCount > 0) {
+                        showToast(`Đã nhập thành công ${successCount} dòng.${errorCount > 0 ? ` Bỏ qua ${errorCount} dòng lỗi.` : ''}`);
+                        if(autoExportCheck.checked) {
+                            setTimeout(() => showToast('Đã tải xuống file Excel chứa kết quả nhận xét!'), 1500);
+                        }
+                    } else {
+                        showToast("Không dòng nào được nhập hợp lệ. Vui lòng kiểm tra lại cấu trúc cột.", "error");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast("Lỗi đọc file Excel. Vui lòng kiểm tra định dạng file.", "error");
+                    fileInput.value = '';
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Lớp Học Thầy Cường</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: { colors: { primary: '#0d9488', darkbg: '#111827', darkcard: '#1f2937' } }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20mm; }
+            .no-print { display: none !important; }
+            @page { size: A4; margin: 0; }
+        }
+
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #0d9488; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .modal-active { overflow: hidden; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 transition-colors duration-200 dark:bg-darkbg dark:text-gray-200">
+
+    <div id="global-loader" class="fixed inset-0 bg-white/80 dark:bg-darkbg/80 z-50 flex flex-col justify-center items-center">
+        <div class="loader mb-4" style="width: 50px; height: 50px; border-width: 5px;"></div>
+        <p class="font-semibold text-primary">Đang tải dữ liệu, vui lòng đợi...</p>
+    </div>
+
+    <header class="bg-white dark:bg-darkcard shadow-sm sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary text-white p-2 rounded-lg"><i class="fa-solid fa-graduation-cap text-xl"></i></div>
+                    <span class="font-bold text-xl tracking-tight">LỚP HỌC THẦY CƯỜNG</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        <i id="theme-icon" class="fa-solid fa-moon text-gray-500 dark:text-yellow-400 text-lg"></i>
+                    </button>
+                    <div class="flex flex-col text-right hidden sm:block">
+                        <span class="text-sm font-semibold">Quản trị viên</span>
+                        <span class="text-xs text-gray-500">Giáo viên</span>
+                    </div>
+                    <img class="h-8 w-8 rounded-full border border-gray-200" src="https://ui-avatars.com/api/?name=TC&background=0d9488&color=fff" alt="Avatar">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6 no-print">
+        
+        <nav class="w-full md:w-64 flex-shrink-0 space-y-1">
+            <script>
+                const menuItems = [
+                    { id: 'dashboard', icon: 'fa-chart-pie', text: 'Tổng quan' },
+                    { id: 'students', icon: 'fa-user-graduate', text: 'Học sinh' },
+                    { id: 'classes', icon: 'fa-chalkboard-user', text: 'Lớp học' },
+                    { id: 'schedule', icon: 'fa-calendar-days', text: 'Lịch & Điểm danh' },
+                    { id: 'payments', icon: 'fa-money-bill-wave', text: 'Học phí' },
+                    { id: 'scores', icon: 'fa-star', text: 'Điểm số & Nhận xét' },
+                    { id: 'staff', icon: 'fa-users-gear', text: 'Nhân sự' }
+                ];
+                
+                document.write(menuItems.map(item => `
+                    <button onclick="app.switchTab('${item.id}')" id="nav-${item.id}" 
+                            class="nav-btn w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl font-medium transition-all duration-200 hover:bg-primary/10 hover:text-primary dark:hover:bg-gray-800">
+                        <i class="fa-solid ${item.icon} w-5 text-center"></i>
+                        ${item.text}
+                    </button>
+                `).join(''));
+            </script>
+            <div class="pt-6 mt-6 border-t border-gray-200 dark:border-gray-700">
+                <button onclick="google.script.run.withSuccessHandler(()=>Swal.fire('OK', 'Đã setup DB', 'success')).setupDatabase()" class="w-full flex items-center gap-3 px-4 py-2 text-left rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm">
+                    <i class="fa-solid fa-database w-5 text-center"></i> Setup Database
+                </button>
+            </div>
+        </nav>
+
+        <main class="flex-1 bg-white dark:bg-darkcard rounded-2xl shadow-sm p-4 sm:p-6 min-h-[500px] border border-gray-100 dark:border-gray-800">
+            
+            <div id="tab-dashboard" class="tab-content hidden">
+                <h2 class="text-2xl font-bold mb-6">Tổng quan trung tâm</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" id="dashboard-stats"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="border dark:border-gray-700 p-4 rounded-xl">
+                        <h3 class="font-semibold mb-4 text-gray-600 dark:text-gray-300">Doanh thu học phí</h3>
+                        <canvas id="revenueChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-students" class="tab-content hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold">Quản lý Học sinh</h2>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <input type="text" id="search-student" placeholder="Tìm tên, SĐT..." class="w-full sm:w-64 px-4 py-2 rounded-lg border dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-primary outline-none" onkeyup="app.renderStudents()">
+                        <button onclick="app.openModal('student-modal')" class="bg-primary hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium whitespace-nowrap"><i class="fa-solid fa-plus mr-1"></i> Thêm HS</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto rounded-lg border dark:border-gray-700">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+                            <tr>
+                                <th class="p-4 font-semibold">Mã HS</th>
+                                <th class="p-4 font-semibold">Họ Tên</th>
+                                <th class="p-4 font-semibold">Ngày sinh</th>
+                                <th class="p-4 font-semibold">SĐT Phụ huynh</th>
+                                <th class="p-4 font-semibold">Trạng thái</th>
+                                <th class="p-4 font-semibold text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-tbody" class="divide-y dark:divide-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-classes" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Danh sách Lớp học</h2>
+                    <button onclick="app.openModal('class-modal')" class="bg-primary hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-medium"><i class="fa-solid fa-plus mr-1"></i> Mở lớp mới</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="classes-grid"></div>
+            </div>
+
+            <div id="tab-schedule" class="tab-content hidden">
+                <h2 class="text-2xl font-bold mb-6">Điểm danh & Lịch học</h2>
+                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl mb-6 flex flex-wrap gap-4 items-end">
+                    <div class="w-full sm:w-auto flex-1">
+                        <label class="block text-sm mb-1">Chọn lớp</label>
+                        <select id="att-class-select" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 outline-none" onchange="app.loadAttendanceForm()">
+                            <option value="">-- Chọn lớp --</option>
+                        </select>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <label class="block text-sm mb-1">Ngày học</label>
+                        <input type="date" id="att-date" class="w-full px-4 py-2 rounded-lg border dark:bg-gray-700 dark:border-gray-600 outline-none" onchange="app.loadAttendanceForm()">
+                    </div>
+                </div>
+                
+                <div id="attendance-area" class="hidden">
+                    <div class="mb-4 flex gap-4">
+                        <input type="text" id="att-content" placeholder="Nội dung bài học..." class="flex-1 px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                    </div>
+                    <div class="overflow-x-auto border rounded-lg dark:border-gray-700">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-700">
+                                <tr>
+                                    <th class="p-3">Học sinh</th>
+                                    <th class="p-3 text-center">Có mặt</th>
+                                    <th class="p-3 text-center">Vắng phép</th>
+                                    <th class="p-3 text-center">Vắng K.phép</th>
+                                    <th class="p-3 text-center">Đi trễ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-tbody" class="divide-y dark:divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 text-right">
+                        <button onclick="app.saveAttendance()" class="bg-primary text-white px-6 py-2 rounded-lg font-medium"><i class="fa-solid fa-save mr-1"></i> Lưu điểm danh</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-payments" class="tab-content hidden">
+                 <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">Quản lý Học phí</h2>
+                    <button onclick="app.openModal('payment-modal')" class="bg-primary text-white px-4 py-2 rounded-lg"><i class="fa-solid fa-plus"></i> Thu tiền</button>
+                </div>
+                <div class="overflow-x-auto rounded-lg border dark:border-gray-700">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+                            <tr>
+                                <th class="p-4">Mã Phiếu</th>
+                                <th class="p-4">Tháng</th>
+                                <th class="p-4">Học sinh</th>
+                                <th class="p-4">Lớp</th>
+                                <th class="p-4">Số tiền</th>
+                                <th class="p-4">Trạng thái</th>
+                                <th class="p-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payments-tbody" class="divide-y dark:divide-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="tab-scores" class="tab-content hidden"><h2 class="text-2xl font-bold">Điểm số & Nhận xét</h2><p class="text-gray-500 mt-4">Module đang được cập nhật hiển thị...</p></div>
+            <div id="tab-staff" class="tab-content hidden"><h2 class="text-2xl font-bold">Quản lý Nhân sự</h2><p class="text-gray-500 mt-4">Module đang được cập nhật hiển thị...</p></div>
+
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div id="student-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-darkcard w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden transform transition-all">
+            <div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center">
+                <h3 class="text-lg font-bold" id="student-modal-title">Thêm Học Sinh</h3>
+                <button onclick="app.closeModal('student-modal')" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="student-form" onsubmit="app.saveStudent(event)">
+                    <input type="hidden" id="stu-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div><label class="block text-sm mb-1">Họ và tên *</label><input type="text" id="stu-name" required class="w-full border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-600"></div>
+                        <div><label class="block text-sm mb-1">Ngày sinh</label><input type="date" id="stu-dob" class="w-full border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-600"></div>
+                        <div><label class="block text-sm mb-1">SĐT Phụ huynh *</label><input type="text" id="stu-parent_phone" required class="w-full border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-600"></div>
+                        <div><label class="block text-sm mb-1">Trường học</label><input type="text" id="stu-school" class="w-full border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-600"></div>
+                        <div class="md:col-span-2"><label class="block text-sm mb-1">Ghi chú (Bệnh lý, tính cách...)</label><input type="text" id="stu-notes" class="w-full border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-600"></div>
+                        <div>
+                            <label class="block text-sm mb-1">Trạng thái</label>
+                            <select id="stu-status" class="w-full border px-3 py-2 rounded-lg dark:bg-gray-800 dark:border-gray-600">
+                                <option>Đang học</option><option>Tạm nghỉ</option><option>Đã nghỉ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-right mt-6">
+                        <button type="button" onclick="app.closeModal('student-modal')" class="px-4 py-2 text-gray-500 mr-2">Hủy</button>
+                        <button type="submit" class="px-6 py-2 bg-primary text-white rounded-lg font-medium shadow-md">Lưu thông tin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Modal Placeholder -->
+    <div id="class-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-darkcard w-full max-w-md rounded-2xl shadow-xl overflow-hidden p-6 text-center">
+            <h3 class="text-lg font-bold mb-4">Mở Lớp Mới</h3>
+            <p class="text-gray-500 mb-6">Form thêm lớp học đang được phát triển và sẽ sớm ra mắt.</p>
+            <button onclick="app.closeModal('class-modal')" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg w-full font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Đóng</button>
+        </div>
+    </div>
+
+    <!-- Payment Modal Placeholder -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-darkcard w-full max-w-md rounded-2xl shadow-xl overflow-hidden p-6 text-center">
+            <h3 class="text-lg font-bold mb-4">Thu Tiền Học Phí</h3>
+            <p class="text-gray-500 mb-6">Form lập phiếu thu đang được phát triển và sẽ sớm ra mắt.</p>
+            <button onclick="app.closeModal('payment-modal')" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg w-full font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Đóng</button>
+        </div>
+    </div>
+
+    <div id="qr-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-darkcard w-full max-w-sm rounded-2xl shadow-xl overflow-hidden p-6 text-center">
+            <h3 class="text-lg font-bold mb-4">Quét mã thanh toán</h3>
+            <div class="bg-gray-100 p-2 rounded-lg mb-4 inline-block">
+                <img id="qr-image" src="" alt="VietQR" class="w-48 h-48 object-contain">
+            </div>
+            <p class="font-bold text-xl text-primary" id="qr-amount"></p>
+            <p class="text-sm text-gray-500 mt-2" id="qr-content"></p>
+            <button onclick="app.closeModal('qr-modal')" class="mt-6 px-6 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg w-full">Đóng</button>
+        </div>
+    </div>
+
+    <!-- CORE LOGIC JS -->
+    <script>
+        // --- ADAPTER GOOGLE.SCRIPT.RUN ---
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyN_XS0EL05NtbnTiOUSafQXkuIKTWRVBpfZQp5K8S042FplNpmijcCps01qbmCqFQQ/exec";
+
+        if (typeof window.google === 'undefined') {
+            window.google = {
+                script: {
+                    run: {
+                        withSuccessHandler: function(cb) { this.successCb = cb; return this; },
+                        withFailureHandler: function(cb) { this.errorCb = cb; return this; },
+                        _callAPI: async function(action, params = {}) {
+                            // Lưu lại callback ngay để chống ghi đè luồng
+                            const onSuccess = this.successCb;
+                            const onFailure = this.errorCb;
+                            this.successCb = null;
+                            this.errorCb = null;
+
+                            try {
+                                const res = await fetch(GAS_URL, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                    body: JSON.stringify({ action: action, params: params })
+                                });
+                                if (!res.ok) throw new Error("HTTP Error " + res.status);
+                                const result = await res.json();
+                                if(onSuccess) onSuccess(result);
+                            } catch (e) {
+                                console.error("Lỗi khi gọi API: ", e);
+                                if(onFailure) onFailure(e);
+                            }
+                        },
+                        getInitialAppData: function() { this._callAPI('getInitialAppData'); },
+                        getDashboardStats: function() { this._callAPI('getDashboardStats'); },
+                        getSpecificData: function(sheetName) { this._callAPI('getSpecificData', {sheetName}); },
+                        setupDatabase: function() { this._callAPI('setupDatabase'); },
+                        createRecord: function(sheetName, recordData) { this._callAPI('createRecord', {sheetName, recordData}); },
+                        updateRecord: function(sheetName, id, recordData) { this._callAPI('updateRecord', {sheetName, id, recordData}); },
+                        deleteRecord: function(sheetName, id) { this._callAPI('deleteRecord', {sheetName, id}); },
+                        batchCreateRecords: function(sheetName, records) { this._callAPI('batchCreateRecords', {sheetName, records}); }
+                    }
+                }
+            };
+        }
+
+        const app = {
+            state: {
+                students: [], classes: [], staff: [], enrollments: [], settings: {}, payments: []
+            },
+            
+            init: function() {
+                this.setupTheme();
+                this.switchTab('dashboard');
+                this.fetchData();
+            },
+
+            setupTheme: function() {
+                const isDark = localStorage.getItem('theme') === 'dark';
+                if (isDark) document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = isDark ? 'fa-solid fa-sun text-yellow-400 text-lg' : 'fa-solid fa-moon text-gray-500 text-lg';
+                
+                document.getElementById('theme-toggle').onclick = () => {
+                    document.documentElement.classList.toggle('dark');
+                    const isNowDark = document.documentElement.classList.contains('dark');
+                    localStorage.setItem('theme', isNowDark ? 'dark' : 'light');
+                    document.getElementById('theme-icon').className = isNowDark ? 'fa-solid fa-sun text-yellow-400 text-lg' : 'fa-solid fa-moon text-gray-500 text-lg';
+                };
+            },
+
+            showLoader: function(show) {
+                document.getElementById('global-loader').style.display = show ? 'flex' : 'none';
+            },
+
+            fetchData: function() {
+                this.showLoader(true);
+                // Fetch Base Data
+                google.script.run.withSuccessHandler(res => {
+                    if(res && res.status === 'success') {
+                        this.state.students = Array.isArray(res.data.students) ? res.data.students : [];
+                        this.state.classes = Array.isArray(res.data.classes) ? res.data.classes : [];
+                        this.state.staff = Array.isArray(res.data.staff) ? res.data.staff : [];
+                        this.state.enrollments = Array.isArray(res.data.enrollments) ? res.data.enrollments : [];
+                        this.state.settings = res.data.settings || {};
+                        
+                        this.renderStudents();
+                        this.renderClasses();
+                        this.populateDropdowns();
+                    }
+                    
+                    // Fetch Dashboard
+                    google.script.run.withSuccessHandler(dashRes => {
+                        this.showLoader(false); // Tắt loader an toàn
+                        if(dashRes && dashRes.status === 'success') {
+                            this.renderDashboard(dashRes.data);
+                        }
+                    }).getDashboardStats();
+                    
+                    // Fetch Payments (Đã đổi tên sheet thành Học Phí)
+                    google.script.run.withSuccessHandler(payRes => {
+                        if(payRes && payRes.status === 'success') {
+                            this.state.payments = Array.isArray(payRes.data) ? payRes.data : [];
+                            this.renderPayments();
+                        }
+                    }).getSpecificData('Học Phí');
+
+                }).withFailureHandler(err => {
+                    this.showLoader(false);
+                    Swal.fire('Lỗi', err.toString(), 'error');
+                }).getInitialAppData();
+            },
+
+            switchTab: function(tabId) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+                
+                document.querySelectorAll('.nav-btn').forEach(el => {
+                    el.classList.remove('bg-primary/10', 'text-primary', 'border-r-4', 'border-primary');
+                    el.classList.add('text-gray-600', 'dark:text-gray-300');
+                });
+                
+                const activeBtn = document.getElementById(`nav-${tabId}`);
+                if(activeBtn) {
+                    activeBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
+                    activeBtn.classList.add('bg-primary/10', 'text-primary', 'border-r-4', 'border-primary');
+                }
+            },
+
+            openModal: function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    document.body.classList.add('modal-active');
+                } else {
+                    Swal.fire('Thông báo', 'Tính năng này đang được cập nhật!', 'info');
+                }
+            },
+            closeModal: function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('hidden');
+                    document.body.classList.remove('modal-active');
+                    if(modalId === 'student-modal') {
+                        const form = document.getElementById('student-form');
+                        if (form) form.reset();
+                    }
+                }
+            },
+
+            // --- DASHBOARD ---
+            renderDashboard: function(data) {
+                const formatVND = val => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+                
+                document.getElementById('dashboard-stats').innerHTML = `
+                    <div class="bg-white dark:bg-darkcard border dark:border-gray-700 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+                        <div class="bg-blue-100 text-blue-600 p-3 rounded-xl"><i class="fa-solid fa-users text-2xl"></i></div>
+                        <div><p class="text-sm text-gray-500">Học sinh đang học</p><p class="text-2xl font-bold">${data.activeStudents || 0}</p></div>
+                    </div>
+                    <div class="bg-white dark:bg-darkcard border dark:border-gray-700 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+                        <div class="bg-emerald-100 text-emerald-600 p-3 rounded-xl"><i class="fa-solid fa-chalkboard-user text-2xl"></i></div>
+                        <div><p class="text-sm text-gray-500">Lớp đang mở</p><p class="text-2xl font-bold">${data.activeClasses || 0}</p></div>
+                    </div>
+                    <div class="bg-white dark:bg-darkcard border dark:border-gray-700 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+                        <div class="bg-teal-100 text-teal-600 p-3 rounded-xl"><i class="fa-solid fa-wallet text-2xl"></i></div>
+                        <div><p class="text-sm text-gray-500">Đã thu học phí</p><p class="text-xl font-bold text-teal-600">${formatVND(data.totalCollected || 0)}</p></div>
+                    </div>
+                    <div class="bg-white dark:bg-darkcard border dark:border-gray-700 p-5 rounded-2xl shadow-sm flex items-center gap-4">
+                        <div class="bg-red-100 text-red-600 p-3 rounded-xl"><i class="fa-solid fa-file-invoice-dollar text-2xl"></i></div>
+                        <div><p class="text-sm text-gray-500">Tổng nợ</p><p class="text-xl font-bold text-red-500">${formatVND(data.totalDebt || 0)}</p></div>
+                    </div>
+                `;
+
+                if(window.myChart) window.myChart.destroy();
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+                const labels = Object.keys(data.chartData || {});
+                const values = Object.values(data.chartData || {});
+                
+                window.myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels.length ? labels : ['Tháng này'],
+                        datasets: [{
+                            label: 'Doanh thu (VNĐ)',
+                            data: values.length ? values : [0],
+                            backgroundColor: '#0d9488',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            },
+
+            // --- STUDENTS ---
+            renderStudents: function() {
+                const tbody = document.getElementById('students-tbody');
+                const search = document.getElementById('search-student').value.toLowerCase();
+                
+                // Cập nhật tìm kiếm theo trường Tiếng Việt
+                let filtered = this.state.students.filter(s => 
+                    (s['Họ Tên'] || '').toLowerCase().includes(search) || (s['SĐT Phụ Huynh'] || '').includes(search)
+                );
+
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Không có dữ liệu</td></tr>';
+                    return;
+                }
+
+                // Hàm hỗ trợ định dạng ngày sinh dd/mm/yyyy
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return '-';
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return dateStr; // Trả về chuỗi gốc nếu định dạng không hợp lệ
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                };
+
+                tbody.innerHTML = filtered.map(s => {
+                    let noteTag = s['Ghi Chú'] ? `<span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded border border-red-200 mt-1 inline-block"><i class="fa-solid fa-triangle-exclamation"></i> ${s['Ghi Chú'].substring(0,20)}...</span>` : '';
+                    let statusColor = s['Trạng Thái'] === 'Đang học' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600';
+                    return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                        <td class="p-4 font-mono text-xs text-gray-500">${s['Mã HS'] || '-'}</td>
+                        <td class="p-4"><div class="font-bold">${s['Họ Tên'] || ''}</div>${noteTag}</td>
+                        <td class="p-4 text-sm">${formatDate(s['Ngày Sinh'])}</td>
+                        <td class="p-4 text-sm">${s['SĐT Phụ Huynh'] || '-'}</td>
+                        <td class="p-4"><span class="${statusColor} text-xs px-2 py-1 rounded-full font-medium">${s['Trạng Thái'] || ''}</span></td>
+                        <td class="p-4 text-right">
+                            <button onclick="app.editStudent('${s['Mã HS']}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="app.deleteRecord('Học Sinh', '${s['Mã HS']}')" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `}).join('');
+            },
+
+            saveStudent: function(e) {
+                e.preventDefault();
+                const id = document.getElementById('stu-id').value;
+                const record = {
+                    'Họ Tên': document.getElementById('stu-name').value,
+                    'Ngày Sinh': document.getElementById('stu-dob').value,
+                    'SĐT Phụ Huynh': document.getElementById('stu-parent_phone').value,
+                    'Trường Học': document.getElementById('stu-school').value,
+                    'Ghi Chú': document.getElementById('stu-notes').value,
+                    'Trạng Thái': document.getElementById('stu-status').value
+                };
+
+                this.showLoader(true);
+                if (id) {
+                    google.script.run.withSuccessHandler(res => this.handleResponse(res, 'Học Sinh', 'Cập nhật thành công!')).updateRecord('Học Sinh', id, record);
+                } else {
+                    google.script.run.withSuccessHandler(res => this.handleResponse(res, 'Học Sinh', 'Thêm thành công!')).createRecord('Học Sinh', record);
+                }
+                this.closeModal('student-modal');
+            },
+
+            editStudent: function(id) {
+                const s = this.state.students.find(x => x['Mã HS'] === id);
+                if(!s) return;
+                document.getElementById('stu-id').value = s['Mã HS'] || '';
+                document.getElementById('stu-name').value = s['Họ Tên'] || '';
+                document.getElementById('stu-dob').value = s['Ngày Sinh'] || '';
+                document.getElementById('stu-parent_phone').value = s['SĐT Phụ Huynh'] || '';
+                document.getElementById('stu-school').value = s['Trường Học'] || '';
+                document.getElementById('stu-notes').value = s['Ghi Chú'] || '';
+                document.getElementById('stu-status').value = s['Trạng Thái'] || 'Đang học';
+                document.getElementById('student-modal-title').innerText = "Sửa Học Sinh";
+                this.openModal('student-modal');
+            },
+
+            // --- CLASSES ---
+            renderClasses: function() {
+                const grid = document.getElementById('classes-grid');
+                if (this.state.classes.length === 0) {
+                    grid.innerHTML = '<p class="text-gray-500 col-span-3">Chưa có lớp học nào.</p>';
+                    return;
+                }
+                grid.innerHTML = this.state.classes.map(c => `
+                    <div class="border dark:border-gray-700 rounded-xl p-5 hover:shadow-md transition bg-white dark:bg-gray-800">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-bold text-lg text-primary">${c['Tên Lớp'] || '-'}</h3>
+                            <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">${c['Trạng Thái'] || ''}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1 mb-4">
+                            <p><i class="fa-solid fa-book w-5"></i> ${c['Môn Học'] || ''} - Khối ${c['Khối'] || ''}</p>
+                            <p><i class="fa-regular fa-clock w-5"></i> ${c['Lịch Học'] || ''}</p>
+                            <p><i class="fa-solid fa-money-bill w-5"></i> ${new Intl.NumberFormat('vi-VN').format(c['Học Phí'] || 0)} đ/tháng</p>
+                        </div>
+                        <div class="border-t dark:border-gray-700 pt-3 flex justify-between items-center">
+                            <span class="text-sm font-medium"><i class="fa-solid fa-users text-gray-400"></i> ${this.state.enrollments.filter(e => e['Mã Lớp'] === c['Mã Lớp'] && e['Trạng Thái'] === 'Đang học').length} học sinh</span>
+                            <button class="text-primary hover:underline text-sm font-medium">Chi tiết &rarr;</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            // --- ATTENDANCE ---
+            populateDropdowns: function() {
+                const classSelect = document.getElementById('att-class-select');
+                classSelect.innerHTML = '<option value="">-- Chọn lớp --</option>' + 
+                    this.state.classes.filter(c => c['Trạng Thái'] === 'Đang mở').map(c => `<option value="${c['Mã Lớp']}">${c['Tên Lớp']}</option>`).join('');
+                document.getElementById('att-date').valueAsDate = new Date();
+            },
+
+            loadAttendanceForm: function() {
+                const classId = document.getElementById('att-class-select').value;
+                const area = document.getElementById('attendance-area');
+                if(!classId) { area.classList.add('hidden'); return; }
+                
+                const studentIds = this.state.enrollments.filter(e => e['Mã Lớp'] === classId && e['Trạng Thái'] === 'Đang học').map(e => e['Mã HS']);
+                const studentsInClass = this.state.students.filter(s => studentIds.includes(s['Mã HS']));
+                
+                const tbody = document.getElementById('attendance-tbody');
+                if(studentsInClass.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500">Lớp chưa có học sinh nào.</td></tr>';
+                } else {
+                    tbody.innerHTML = studentsInClass.map(s => `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800" data-student="${s['Mã HS']}">
+                            <td class="p-3 font-medium">${s['Họ Tên']} <br><span class="text-xs text-gray-400">${s['Mã HS']}</span></td>
+                            <td class="p-3 text-center"><input type="radio" name="att_${s['Mã HS']}" value="Có mặt" class="w-5 h-5 text-emerald-600" checked></td>
+                            <td class="p-3 text-center"><input type="radio" name="att_${s['Mã HS']}" value="Vắng phép" class="w-5 h-5 text-yellow-500"></td>
+                            <td class="p-3 text-center"><input type="radio" name="att_${s['Mã HS']}" value="Vắng K.phép" class="w-5 h-5 text-red-600"></td>
+                            <td class="p-3 text-center"><input type="radio" name="att_${s['Mã HS']}" value="Đi trễ" class="w-5 h-5 text-orange-500"></td>
+                        </tr>
+                    `).join('');
+                }
+                area.classList.remove('hidden');
+            },
+
+            saveAttendance: function() {
+                const classId = document.getElementById('att-class-select').value;
+                const date = document.getElementById('att-date').value;
+                const content = document.getElementById('att-content').value;
+                
+                if(!classId || !date) return Swal.fire('Lỗi', 'Vui lòng chọn lớp và ngày!', 'warning');
+
+                const lessonRecord = { 'Mã Buổi': `BH-${new Date().getTime()}`, 'Mã Lớp': classId, 'Ngày Học': date, 'Nội Dung': content };
+                const attendanceRecords = [];
+                
+                document.querySelectorAll('#attendance-tbody tr').forEach(tr => {
+                    const stuId = tr.getAttribute('data-student');
+                    if(stuId) {
+                        const status = document.querySelector(`input[name="att_${stuId}"]:checked`).value;
+                        attendanceRecords.push({ 'Mã Buổi': lessonRecord['Mã Buổi'], 'Mã HS': stuId, 'Trạng Thái': status });
+                    }
+                });
+
+                this.showLoader(true);
+                google.script.run.withSuccessHandler(res => {
+                    google.script.run.withSuccessHandler(res2 => {
+                        this.showLoader(false);
+                        Swal.fire('Thành công', 'Đã lưu điểm danh!', 'success');
+                    }).batchCreateRecords('Điểm Danh', attendanceRecords);
+                }).createRecord('Buổi Học', lessonRecord);
+            },
+
+            // --- PAYMENTS & VIETQR ---
+            renderPayments: function() {
+                const tbody = document.getElementById('payments-tbody');
+                const formatVND = val => new Intl.NumberFormat('vi-VN').format(val) + ' đ';
+                
+                const safePayments = Array.isArray(this.state.payments) ? this.state.payments : [];
+
+                if (safePayments.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-gray-500 dark:text-gray-400">Chưa có dữ liệu thu học phí nào.</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = safePayments.map(p => {
+                    const student = this.state.students.find(s => s['Mã HS'] === p['Mã HS']);
+                    const stuName = student ? student['Họ Tên'] : p['Mã HS'];
+                    const c = this.state.classes.find(c => c['Mã Lớp'] === p['Mã Lớp']);
+                    const className = c ? c['Tên Lớp'] : p['Mã Lớp'];
+                    
+                    let statusUI = p['Trạng Thái'] === 'Đã đóng' ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-medium">Đã đóng</span>' : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">Còn nợ</span>';
+                    
+                    return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td class="p-4 font-mono text-xs text-gray-500">${p['Mã Phiếu'] || '-'}</td>
+                        <td class="p-4">${p['Tháng'] || '-'}</td>
+                        <td class="p-4 font-medium">${stuName || '-'}</td>
+                        <td class="p-4">${className || '-'}</td>
+                        <td class="p-4 font-bold text-primary">${formatVND(p['Phải Đóng'] || 0)}</td>
+                        <td class="p-4">${statusUI}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="app.showVietQR('${p['Phải Đóng'] || 0}', 'HP ${stuName} ${className}')" class="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"><i class="fa-solid fa-qrcode mr-1"></i> QR</button>
+                        </td>
+                    </tr>
+                `}).join('');
+            },
+
+            showVietQR: function(amount, info) {
+                const bankId = this.state.settings.BANK_ID || 'MB';
+                const accountNo = this.state.settings.BANK_ACCOUNT || '0123456789';
+                const accountName = this.state.settings.BANK_NAME || 'NGUYEN VAN A';
+                
+                const cleanInfo = info.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+                
+                const url = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(cleanInfo)}&accountName=${encodeURIComponent(accountName)}`;
+                
+                document.getElementById('qr-image').src = url;
+                document.getElementById('qr-amount').innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+                document.getElementById('qr-content').innerText = `Nội dung: ${cleanInfo}`;
+                this.openModal('qr-modal');
+            },
+
+            deleteRecord: function(sheetName, id) {
+                Swal.fire({
+                    title: 'Bạn chắc chắn muốn xóa?',
+                    text: "Dữ liệu không thể khôi phục sau khi xóa!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Đồng ý xóa',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.showLoader(true);
+                        google.script.run.withSuccessHandler(res => this.handleResponse(res, sheetName, 'Đã xóa thành công!')).deleteRecord(sheetName, id);
+                    }
+                });
+            },
+
+            handleResponse: function(res, sheetToReload, successMsg) {
+                this.showLoader(false);
+                if(res && res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'Thành công', text: successMsg, timer: 1500, showConfirmButton: false });
+                    this.fetchData(); // Reload all state for simplicity and accuracy
+                } else {
+                    Swal.fire('Lỗi', res ? res.message : "Đã có lỗi xảy ra", 'error');
+                }
+            }
+        };
+
+        // Khởi tạo App
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
