@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Góc Học Tập - Video Khóa Học</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>window.ALLOWED_ROLES = ['STUDENT', 'TEACHER'];</script>
+    <script type="module" src="./auth-guard.js"></script>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <style>
+        body { user-select: none; } /* CHỐNG BÔI ĐEN SAO CHÉP */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #fcd34d; border-radius: 4px; }
+        
+        /* IFRAME BẢO MẬT */
+        .secure-video-wrapper { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .secure-video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .overlay-blocker { position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: transparent; z-index: 10; cursor: default;}
+        
+        /* Sửa lỗi Tailwind làm rớt dòng công thức MathJax inline */
+        mjx-container:not([display="true"]) svg {
+            display: inline !important;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
+    
+    <header id="main-header" class="bg-amber-400 text-amber-950 shadow-md z-10 flex-shrink-0 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showDashboard()">
+                <div class="bg-white p-1.5 rounded-full text-amber-500 shadow-sm"><i class="fa-solid fa-graduation-cap text-xl"></i></div>
+                <h1 class="text-xl font-black uppercase tracking-wider">Góc Học Tập</h1>
+            </div>
+            <div class="flex items-center gap-3 sm:gap-4">
+                <span class="font-bold hidden sm:inline"><i class="fa-solid fa-face-smile-wink mr-1"></i> <span id="user-name-display">Học viên</span></span>
+                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow transition" onclick="window.logout()">Đăng xuất</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="protected-content" class="hidden flex-1 flex overflow-hidden relative">
+        <div id="dashboard-view" class="hidden w-full h-full overflow-y-auto bg-amber-50 relative pb-20">
+            <div class="bg-amber-400 text-amber-950 pt-10 pb-20 px-6 lg:px-10 relative overflow-hidden">
+                <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                <div class="max-w-7xl mx-auto relative z-10">
+                    <h2 class="text-3xl lg:text-4xl font-black mb-2 flex items-center gap-3">Các khóa học Video của bạn 📺</h2>
+                    <p class="font-medium text-amber-800">Cùng tiếp tục theo dõi các bài giảng thật thú vị nhé.</p>
+                </div>
+            </div>
+            <div id="doc-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto px-6 lg:px-10 -mt-10 relative z-20"></div>
+        </div>
+
+        <div id="reader-view" class="hidden w-full h-full flex flex-col md:flex-row bg-white">
+            <div id="sidebar" class="w-full md:w-80 border-r border-amber-100 bg-amber-50 flex flex-col h-1/3 md:h-full flex-shrink-0 transition-all duration-300">
+                <div class="p-4 border-b border-amber-200 bg-amber-100 flex flex-col gap-3 shrink-0">
+                    <div class="flex items-center text-sm font-bold text-amber-700 cursor-pointer hover:text-amber-900 transition-colors w-fit" onclick="showDashboard()">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Về bảng điều khiển
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-black text-lg text-amber-900 pr-2 truncate flex-1" id="reader-doc-title">Tên Khóa</h3>
+                        <div class="flex items-center gap-1">
+                            <button onclick="refreshData()" class="bg-white text-amber-600 w-8 h-8 rounded-full shadow hover:bg-amber-50 transition flex items-center justify-center" title="Làm mới bài học"><i class="fa-solid fa-arrows-rotate"></i></button>
+                            <button onclick="toggleSidebar()" class="bg-white text-amber-600 w-8 h-8 rounded-full shadow hover:bg-amber-50 transition flex items-center justify-center md:flex hidden"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div id="toc-list" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+            </div>
+            
+            <div class="flex-1 flex flex-col h-2/3 md:h-full relative bg-gray-50 min-w-0" id="main-content-area">
+                <div id="reader-placeholder" class="absolute inset-0 flex items-center justify-center text-amber-700/50 z-10">
+                    <div class="text-center"><i class="fa-solid fa-play-circle text-6xl mb-4 animate-pulse"></i><p class="font-bold text-xl">Chọn một bài học bên trái để xem</p></div>
+                </div>
+
+                <div id="content-container" class="hidden flex-1 flex-col w-full h-full overflow-y-auto">
+                    <div class="flex justify-between items-center p-4 border-b border-gray-200 bg-white shrink-0 shadow-sm z-20 sticky top-0">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <button id="open-sidebar-btn" onclick="toggleSidebar()" class="hidden text-amber-500 hover:text-amber-700 transition bg-amber-50 hover:bg-amber-100 w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-bars text-lg"></i>
+                            </button>
+                            <h2 id="content-title" class="text-xl md:text-2xl font-black text-slate-800 truncate">Tiêu đề Video</h2>
+                        </div>
+                        <button onclick="openNoteModal()" class="text-amber-600 hover:text-amber-700 transition bg-amber-100 hover:bg-amber-200 px-4 py-2 rounded-xl flex items-center justify-center font-bold text-sm gap-2 shrink-0 shadow-sm">
+                            <i class="fa-solid fa-pencil"></i> <span class="hidden sm:inline">Ghi chú</span>
+                        </button>
+                    </div>
+                    
+                    <div class="p-6 lg:p-10 max-w-5xl mx-auto w-full pb-32">
+                        <div class="secure-video-wrapper mb-8">
+                            <div class="overlay-blocker" title="Video được bảo vệ"></div>
+                            <iframe id="videoPlayer" src="" allowfullscreen></iframe>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-xl mb-4 text-slate-800 border-l-4 border-amber-400 pl-3"><i class="fa-solid fa-list-ol text-amber-500 mr-2"></i> Nội dung trong Video</h3>
+                            <div id="student-timeline" class="space-y-3"></div>
+                            <div class="mt-6 p-4 bg-blue-50 text-blue-800 rounded-xl text-sm font-medium border border-blue-100 flex items-start gap-3">
+                                <i class="fa-solid fa-info-circle mt-0.5 text-blue-500"></i>
+                                <p>Kéo thanh thời gian trên trình phát video đến đúng mốc thời gian để xem nội dung tương ứng.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="note-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+            <div class="bg-yellow-50 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden border-4 border-yellow-300 flex flex-col transform transition-transform scale-100">
+                <div class="p-4 bg-yellow-200 flex justify-between items-center border-b-2 border-yellow-300">
+                    <h3 class="font-black text-yellow-900 text-lg flex items-center"><i class="fa-solid fa-book-open mr-2"></i> Ghi chú của mình</h3>
+                    <button onclick="closeNoteModal()" class="text-yellow-700 hover:text-red-500 transition w-8 h-8 rounded-full hover:bg-yellow-300 flex items-center justify-center"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="p-5 flex-1">
+                    <textarea id="personal-note" class="w-full p-5 rounded-2xl border-2 border-yellow-300 bg-white focus:border-amber-400 focus:ring-4 focus:ring-yellow-100 outline-none resize-none h-64 text-slate-700 text-lg font-medium" placeholder="Ghi lại những ý chính hoặc thắc mắc của bạn vào đây nhé..."></textarea>
+                </div>
+                <div class="p-4 bg-yellow-100/50 flex justify-end items-center gap-4 border-t border-yellow-200">
+                    <span id="note-save-status" class="text-sm font-bold text-green-600 hidden"><i class="fa-solid fa-check-circle"></i> Đã lưu</span>
+                    <button onclick="saveNote(true)" class="bg-amber-500 hover:bg-amber-600 text-white font-black py-2.5 px-8 rounded-xl shadow-lg transition transform hover:-translate-y-0.5">Lưu Ghi Chú</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let STUDENT_UID = ""; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbznJsvQtd5cDQno5HSjXQN1MEY7W0B2WnWzcT1NWsQzWE5M_RM3M4a_R0aTNBc2RkkH6g/exec";
+        
+        let courses = [], videos = [], studentNotes = {}, studentProgress = [];
+        let currentCourseId = null, currentVideoId = null, isSidebarOpen = true;
+
+        const cardGradients = ['from-pink-400 to-rose-500', 'from-purple-400 to-indigo-500', 'from-cyan-400 to-blue-500', 'from-emerald-400 to-teal-500', 'from-amber-400 to-orange-500', 'from-violet-400 to-fuchsia-500'];
+        const cardEmojis = ['🎬', '🎥', '🚀', '🌟', '🎯', '🔥', '✨', '🧠'];
+
+        function hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); }
+
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.onkeydown = function(e) { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false; };
+        setInterval(function() { debugger; }, 100);
+
+        window.addEventListener('auth-success', async () => { 
+            STUDENT_UID = window.CURRENT_USER_UID; 
+            showDashboard(); 
+            
+            // Đồng bộ User lên Google Sheet
+            try {
+                const { getAuth } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+                const user = getAuth().currentUser;
+                if (user && GAS_URL !== "YOUR_GAS_URL_HERE") {
+                    fetch(GAS_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ 
+                            action: 'syncUser', 
+                            data: { uid: user.uid, name: user.displayName || user.email.split('@')[0], email: user.email } 
+                        }) 
+                    }).catch(e=>console.log(e));
+                }
+            } catch(e) {}
+
+            fetchAllData(); 
+        });
+
+        async function fetchAllData() {
+            const isReaderView = !document.getElementById('reader-view').classList.contains('hidden');
+            if (!isReaderView) {
+                const grid = document.getElementById('doc-grid');
+                grid.innerHTML = '<div class="col-span-full text-center py-12 text-amber-600"><i class="fa-solid fa-spinner fa-spin text-5xl mb-3"></i><p class="font-bold text-lg">Đang kết nối thư viện Video...</p></div>';
+            }
+
+            try {
+                const res = await (await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudentData', data: { uid: STUDENT_UID } }) })).json();
+                courses = res.courses || []; videos = res.videos || [];
+                studentNotes = {}; (res.notes || []).forEach(n => studentNotes[n.id_video] = n.noi_dung_ghichu);
+                studentProgress = []; (res.progress || []).forEach(p => { try { studentProgress.push(...JSON.parse(p.danh_sach_video_json)); }catch(e){} });
+            } catch(e){}
+            
+            if (!isReaderView) {
+                renderDashboard();
+            } else {
+                if (currentCourseId) {
+                    renderTOC();
+                    if (currentVideoId) {
+                        const videoStillExists = videos.find(v => v.id_video === currentVideoId);
+                        if(videoStillExists) selectVideo(currentVideoId);
+                        else {
+                            currentVideoId = null;
+                            document.getElementById('content-container').classList.add('hidden');
+                            document.getElementById('reader-placeholder').classList.remove('hidden');
+                        }
+                    }
+                }
+            }
+        }
+
+        function refreshData() {
+            const btn = document.querySelector('.fa-arrows-rotate');
+            btn.classList.add('fa-spin');
+            fetchAllData().then(() => setTimeout(() => btn.classList.remove('fa-spin'), 300));
+        }
+
+        function toggleSidebar() {
+            isSidebarOpen = !isSidebarOpen;
+            const sidebar = document.getElementById('sidebar');
+            const openBtn = document.getElementById('open-sidebar-btn');
+            if (isSidebarOpen) {
+                sidebar.classList.remove('hidden'); sidebar.classList.add('flex'); openBtn.classList.add('hidden');
+            } else {
+                sidebar.classList.add('hidden'); sidebar.classList.remove('flex'); openBtn.classList.remove('hidden');
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard-view').classList.remove('hidden'); document.getElementById('reader-view').classList.add('hidden');
+        }
+
+        function renderDashboard() {
+            const grid = document.getElementById('doc-grid'); grid.innerHTML = '';
+            if (courses.length === 0) { grid.innerHTML = '<div class="col-span-full text-center py-10 text-amber-700 font-bold text-lg">Giáo viên chưa mở khóa học nào.</div>'; return; }
+
+            courses.forEach(c => {
+                const hash = hashCode(c.id_course);
+                const gradient = cardGradients[hash % cardGradients.length];
+                const emoji = cardEmojis[hash % cardEmojis.length];
+
+                grid.innerHTML += `
+                    <div class="bg-white rounded-3xl shadow-sm border border-amber-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group flex flex-col relative overflow-hidden" onclick="openCourse('${c.id_course}')">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${gradient} rounded-bl-full opacity-10 group-hover:opacity-20 transition-opacity"></div>
+                        <div class="w-16 h-16 bg-gradient-to-br ${gradient} text-white rounded-2xl flex items-center justify-center text-3xl mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-12 transition-transform">${emoji}</div>
+                        <h3 class="text-xl font-black text-slate-800 mb-2 flex-1 leading-tight group-hover:text-amber-600 transition-colors">${c.title}</h3>
+                        <div class="w-full bg-gray-100 h-1.5 rounded-full mb-4 overflow-hidden">
+                             <div class="bg-gradient-to-r ${gradient} h-full w-1/3 rounded-full opacity-50 group-hover:w-full transition-all duration-700 ease-in-out"></div>
+                        </div>
+                        <div class="mt-2 text-sm font-bold text-amber-600 flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
+                            Vào học ngay <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function openCourse(cid) {
+            currentCourseId = cid; currentVideoId = null;
+            document.getElementById('reader-doc-title').innerText = courses.find(c => c.id_course === cid).title;
+            document.getElementById('dashboard-view').classList.add('hidden'); document.getElementById('reader-view').classList.remove('hidden');
+            document.getElementById('reader-placeholder').classList.remove('hidden'); document.getElementById('content-container').classList.add('hidden');
+            if(!isSidebarOpen) toggleSidebar();
+            renderTOC();
+        }
+
+        function renderTOC() {
+            const toc = document.getElementById('toc-list'); toc.innerHTML = '';
+            const cVideos = videos.filter(v => v.id_course === currentCourseId).sort((a,b)=> a.order - b.order);
+            cVideos.forEach(v => {
+                const isActive = currentVideoId === v.id_video;
+                const bgClass = isActive ? 'bg-amber-200 text-amber-900 font-bold border-l-4 border-amber-500 shadow-sm' : 'bg-white text-slate-700 hover:bg-amber-100 font-medium shadow-sm';
+                const isRead = studentProgress.includes(v.id_video);
+                const icon = isRead ? '<i class="fa-solid fa-circle-check text-green-500 text-sm"></i>' : '<i class="fa-solid fa-play-circle text-gray-300 text-sm"></i>';
+                
+                toc.innerHTML += `
+                <div class="p-3 rounded-r-xl cursor-pointer transition mb-2 flex items-center ${bgClass}" onclick="selectVideo('${v.id_video}')">
+                    <span class="mr-3">${icon}</span> <span class="flex-1 truncate">${v.title}</span>
+                </div>`;
+            });
+        }
+
+        function selectVideo(vid) {
+            currentVideoId = vid;
+            const v = videos.find(x => x.id_video === vid);
+            
+            if (!studentProgress.includes(vid)) {
+                studentProgress.push(vid);
+                fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'saveProgress', data: { id_hocsinh: STUDENT_UID, id_course: currentCourseId, id_video: vid } }) });
+            }
+            
+            document.getElementById('reader-placeholder').classList.add('hidden');
+            document.getElementById('content-container').classList.remove('hidden');
+            document.getElementById('content-title').innerText = v.title;
+            let embedUrl = '';
+            let ytMatch = v.drive_id.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+            if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+            else {
+                let driveMatch = v.drive_id.match(/[-\w]{25,}/);
+                embedUrl = `https://drive.google.com/file/d/${driveMatch ? driveMatch[0] : v.drive_id}/preview`;
+            }
+            document.getElementById('videoPlayer').src = embedUrl;
+            
+            const tlBox = document.getElementById('student-timeline'); tlBox.innerHTML = '';
+            try {
+                const tlData = JSON.parse(v.timeline || "[]");
+                if(tlData.length === 0) tlBox.innerHTML = '<span class="text-gray-400 italic font-medium block p-4 bg-gray-50 rounded-xl">Giáo viên chưa tạo ghi chú thời gian cho video này.</span>';
+                
+                tlData.forEach(item => {
+                    tlBox.innerHTML += `
+                    <div class="p-3 bg-amber-50/50 rounded-xl flex gap-4 items-start border border-amber-100 hover:bg-amber-50 transition overflow-x-auto">
+                        <span class="font-mono font-bold text-amber-700 bg-white px-3 py-1.5 border border-amber-200 rounded-lg shadow-sm shrink-0">${item.time}</span> 
+                        <span class="font-medium text-slate-700 flex-1 mt-1 leading-relaxed">${item.note}</span>
+                    </div>`;
+                });
+
+                // GỌI MATHJAX RENDER SAU KHI ĐÃ ĐỔ TEXT RA GIAO DIỆN
+                if (window.MathJax) {
+                    MathJax.typesetPromise([tlBox]).catch(err => console.log('MathJax error:', err));
+                }
+
+            } catch(e) {}
+
+            document.getElementById('personal-note').value = studentNotes[vid] || '';
+            renderTOC();
+        }
+
+        function openNoteModal() { if(currentVideoId) document.getElementById('note-modal').classList.remove('hidden'); }
+        function closeNoteModal() { 
+            document.getElementById('note-modal').classList.add('hidden'); 
+            document.getElementById('note-save-status').classList.add('hidden');
+        }
+        
+        async function saveNote(isManual = false) {
+            if (!currentVideoId) return;
+            const content = document.getElementById('personal-note').value; 
+            studentNotes[currentVideoId] = content;
+            
+            const status = document.getElementById('note-save-status');
+            status.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+            status.classList.remove('hidden', 'text-green-600', 'text-red-600');
+            status.classList.add('text-amber-600');
+
+            try {
+                await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'saveNote', data: { id_hocsinh: STUDENT_UID, id_video: currentVideoId, noi_dung_ghichu: content } }) });
+                status.innerHTML = '<i class="fa-solid fa-check-circle"></i> Đã lưu ' + (isManual ? 'thành công' : 'tự động');
+                status.classList.replace('text-amber-600', 'text-green-600');
+                if (isManual) setTimeout(closeNoteModal, 800);
+            } catch(e) {
+                status.innerHTML = '<i class="fa-solid fa-check-circle"></i> Đã lưu (Local)';
+                status.classList.replace('text-amber-600', 'text-green-600');
+                if (isManual) setTimeout(closeNoteModal, 800);
+            }
+            if (!isManual) setTimeout(() => status.classList.add('hidden'), 3000);
+        }
+        
+        let noteTimeout;
+        document.getElementById('personal-note').addEventListener('input', () => { 
+            clearTimeout(noteTimeout); 
+            noteTimeout = setTimeout(() => saveNote(false), 1500); 
+        });
+    </script>
+</body>
+</html>
