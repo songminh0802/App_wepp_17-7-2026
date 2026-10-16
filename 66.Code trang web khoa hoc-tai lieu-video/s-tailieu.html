@@ -49,13 +49,16 @@
         <div id="login-view" class="absolute inset-0 bg-amber-50 z-50 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
             <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md text-center border-4 border-amber-200">
                 <i class="fa-solid fa-rocket text-6xl text-amber-500 mb-4 animate-bounce"></i>
-                <h2 class="text-3xl font-black text-amber-800 mb-6">Sẵn sàng học chưa?</h2>
+                <h2 class="text-3xl font-black text-amber-800 mb-3">Sẵn sàng học chưa?</h2>
+                <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 text-left font-medium">
+                    <i class="fa-solid fa-circle-info mr-1 text-amber-600"></i> Bạn có thể nhập <b>email & mật khẩu bất kỳ</b> (hoặc giữ nguyên mặc định) rồi bấm nút để vào.
+                </div>
                 <form id="login-form" class="space-y-4 text-left" onsubmit="handleLogin(event)">
                     <div>
-                        <input type="email" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-amber-400 focus:ring-0 outline-none font-medium" required placeholder="Email của bạn">
+                        <input type="email" id="student-email-input" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-amber-400 focus:ring-0 outline-none font-medium" required placeholder="Email của bạn" value="hocsinh@songminh.edu.vn">
                     </div>
                     <div>
-                        <input type="password" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-amber-400 focus:ring-0 outline-none font-medium" required placeholder="Mật khẩu bí mật">
+                        <input type="password" id="student-password-input" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-amber-400 focus:ring-0 outline-none font-medium" required placeholder="Mật khẩu bí mật" value="123456">
                     </div>
                     <button type="submit" class="w-full bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-black text-lg py-3 px-4 rounded-xl shadow-lg transform transition hover:scale-105">VÀO LỚP THÔI!</button>
                 </form>
@@ -216,6 +219,10 @@
 
         async function handleLogin(e) {
             e.preventDefault();
+            const emailInput = document.getElementById('student-email-input');
+            if (emailInput && emailInput.value) {
+                document.getElementById('student-name').innerText = emailInput.value.split('@')[0];
+            }
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-info').classList.remove('hidden');
             
