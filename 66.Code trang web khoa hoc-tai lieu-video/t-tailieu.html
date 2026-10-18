@@ -1262,11 +1262,18 @@
                     status.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã lưu';
                     status.classList.replace('text-blue-600', 'text-green-600');
                     status.classList.replace('bg-blue-50', 'bg-green-50');
-                } else throw new Error();
+                } else throw new Error(result.error || "Máy chủ không trả về kết quả thành công");
             } catch (error) {
                 status.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Lỗi lưu';
                 status.classList.replace('text-blue-600', 'text-red-600');
                 status.classList.replace('bg-blue-50', 'bg-red-50');
+                let reason = error.message || String(error);
+                if (/Failed to fetch|NetworkError|Unexpected token|JSON/i.test(reason)) {
+                    reason = "Không kết nối được Google Apps Script (thường do bản triển khai chưa đặt quyền 'Bất kỳ ai' / Anyone).";
+                } else if (/50000/.test(reason)) {
+                    reason = "Nội dung quá dài (vượt 50.000 ký tự/ô). Hãy chèn ảnh bằng nút Ảnh hoặc dán (Ctrl+V) để ảnh được tải lên Drive thay vì nhúng trực tiếp.";
+                }
+                alert("Không thể lưu: " + reason);
             }
             setTimeout(() => status.classList.add('hidden'), 3000);
             renderTOC();
