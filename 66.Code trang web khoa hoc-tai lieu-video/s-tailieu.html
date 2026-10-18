@@ -35,7 +35,7 @@
                 <div class="bg-white p-1.5 rounded-full text-amber-500 shadow-sm"><i class="fa-solid fa-graduation-cap text-xl"></i></div>
                 <h1 class="text-xl font-black tracking-wider uppercase">Góc Học Tập</h1>
             </div>
-            <div id="user-info" class="hidden flex items-center gap-4">
+            <div id="user-info" class="flex items-center gap-4">
                 <span class="font-bold"><i class="fa-solid fa-face-smile-wink mr-1"></i> <span id="student-name">Học sinh</span></span>
                 <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow transition" onclick="logout()">Đăng xuất</button>
             </div>
@@ -46,7 +46,7 @@
     <main class="flex-1 flex overflow-hidden relative">
         
         <!-- Login View -->
-        <div id="login-view" class="absolute inset-0 bg-amber-50 z-50 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+        <div id="login-view" class="hidden absolute inset-0 bg-amber-50 z-50 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
             <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md text-center border-4 border-amber-200">
                 <i class="fa-solid fa-rocket text-6xl text-amber-500 mb-4 animate-bounce"></i>
                 <h2 class="text-3xl font-black text-amber-800 mb-3">Sẵn sàng học chưa?</h2>
@@ -222,20 +222,31 @@
         });
 
         async function checkAutoLogin() {
-            const savedSession = localStorage.getItem('edtech_student_session') || localStorage.getItem('edtech_user');
+            // Đảm bảo ẩn màn hình đăng nhập và vào thẳng thư viện
+            const loginEl = document.getElementById('login-view');
+            if (loginEl) loginEl.classList.add('hidden');
+            
+            const userInfoEl = document.getElementById('user-info');
+            if (userInfoEl) userInfoEl.classList.remove('hidden');
+
+            let savedSession = localStorage.getItem('edtech_student_session') || localStorage.getItem('edtech_user');
+            let sName = "Học sinh";
+            let sEmail = "hocsinh@songminh.edu.vn";
+
             if (savedSession) {
                 try {
                     const data = JSON.parse(savedSession);
-                    const sName = data.name || (data.email ? data.email.split('@')[0] : 'Học sinh');
-                    document.getElementById('student-name').innerText = sName;
-                    document.getElementById('login-view').classList.add('hidden');
-                    document.getElementById('user-info').classList.remove('hidden');
-                    showDashboard();
-                    await fetchAllData();
-                } catch(e) {
-                    console.error("Auto login error:", e);
-                }
+                    sName = data.name || (data.email ? data.email.split('@')[0] : sName);
+                    sEmail = data.email || sEmail;
+                } catch(e) {}
             }
+            
+            localStorage.setItem('edtech_student_session', JSON.stringify({ email: sEmail, name: sName, role: 'STUDENT', uid: STUDENT_UID }));
+            localStorage.setItem('edtech_user', JSON.stringify({ email: sEmail, name: sName, role: 'STUDENT', uid: STUDENT_UID }));
+
+            document.getElementById('student-name').innerText = sName;
+            showDashboard();
+            await fetchAllData();
         }
 
         async function handleLogin(e) {

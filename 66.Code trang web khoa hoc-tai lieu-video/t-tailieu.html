@@ -48,8 +48,8 @@
                 <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><i class="fa-solid fa-chalkboard-user text-xl"></i></div>
                 <h1 class="text-xl font-bold tracking-wide">EdTech Teacher</h1>
             </div>
-            <div id="user-info" class="hidden flex items-center gap-4">
-                <span class="text-sm font-medium"><i class="fa-solid fa-user-circle mr-1"></i> <span id="teacher-name">Giáo viên</span></span>
+            <div id="user-info" class="flex items-center gap-4">
+                <span class="text-sm font-medium"><i class="fa-solid fa-user-circle mr-1"></i> <span id="teacher-name">Thầy Cường</span></span>
                 <button class="bg-indigo-700 hover:bg-indigo-800 border border-indigo-500 px-4 py-1.5 rounded-lg text-sm transition font-medium shadow-sm" onclick="logout()">Đăng xuất</button>
             </div>
         </div>
@@ -59,7 +59,7 @@
     <main class="flex-1 flex overflow-hidden relative">
         
         <!-- Login View -->
-        <div id="login-view" class="absolute inset-0 bg-slate-50 z-50 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+        <div id="login-view" class="hidden absolute inset-0 bg-slate-50 z-50 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
             <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center border border-indigo-100 relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                 <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -469,20 +469,32 @@
         }
 
         async function checkAutoLogin() {
-            const savedSession = localStorage.getItem('edtech_teacher_session') || localStorage.getItem('edtech_user');
+            // Đảm bảo ẩn màn hình đăng nhập và vào thẳng Dashboard
+            const loginEl = document.getElementById('login-view');
+            if (loginEl) loginEl.classList.add('hidden');
+            
+            const userInfoEl = document.getElementById('user-info');
+            if (userInfoEl) userInfoEl.classList.remove('hidden');
+
+            let savedSession = localStorage.getItem('edtech_teacher_session') || localStorage.getItem('edtech_user');
+            let tName = "Thầy Cường";
+            let tEmail = "songminh138@gmail.com";
+
             if (savedSession) {
                 try {
                     const data = JSON.parse(savedSession);
-                    const tName = data.name || (data.email ? data.email.split('@')[0] : 'Giáo viên');
-                    document.getElementById('teacher-name').innerText = tName;
-                    document.getElementById('login-view').classList.add('hidden');
-                    document.getElementById('user-info').classList.remove('hidden');
-                    showDashboard();
-                    await loadTeacherData();
-                } catch(e) {
-                    console.error("Auto login error:", e);
-                }
+                    tName = data.name || (data.email ? data.email.split('@')[0] : tName);
+                    tEmail = data.email || tEmail;
+                } catch(e) {}
             }
+            
+            // Tự động lưu session
+            localStorage.setItem('edtech_teacher_session', JSON.stringify({ email: tEmail, name: tName, role: 'TEACHER' }));
+            localStorage.setItem('edtech_user', JSON.stringify({ email: tEmail, name: tName, role: 'TEACHER' }));
+
+            document.getElementById('teacher-name').innerText = tName;
+            showDashboard();
+            await loadTeacherData();
         }
 
         async function handleLogin(e) {
