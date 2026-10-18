@@ -493,6 +493,7 @@
                 if (result.sections) {
                     sections = result.sections.map((s, index) => {
                         s.order = (s.order !== undefined && s.order !== "") ? Number(s.order) : index + 1;
+                        s.trang_thai_hien = (s.trang_thai_hien === true || String(s.trang_thai_hien).toUpperCase() === 'TRUE');
                         return s;
                     });
                     sections.sort((a, b) => a.order - b.order);
@@ -717,6 +718,8 @@
                 if (!currentSectionId) return;
                 sections.find(s => s.id_phan === currentSectionId).trang_thai_hien = isVisible;
                 renderTOC();
+                // Lưu ngay trạng thái hiển thị lên Google Sheet để học sinh thấy được
+                await saveCurrentSection();
             }
         }
 
