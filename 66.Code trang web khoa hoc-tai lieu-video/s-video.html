@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Góc Học Tập - Video Khóa Học</title>
+    <title>Học sinh & Giáo viên - Khóa học Video</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>window.ALLOWED_ROLES = ['STUDENT', 'TEACHER'];</script>
-    <script type="module" src="./auth-guard.js"></script>
     <script>
         MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
@@ -16,7 +14,6 @@
     </script>
     <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
     <style>
-        body { user-select: none; } /* CHỐNG BÔI ĐEN SAO CHÉP */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-thumb { background: #fcd34d; border-radius: 4px; }
         
@@ -36,23 +33,28 @@
     <header id="main-header" class="bg-amber-400 text-amber-950 shadow-md z-10 flex-shrink-0 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showDashboard()">
-                <div class="bg-white p-1.5 rounded-full text-amber-500 shadow-sm"><i class="fa-solid fa-graduation-cap text-xl"></i></div>
-                <h1 class="text-xl font-black uppercase tracking-wider">Góc Học Tập</h1>
+                <div class="bg-white p-1.5 rounded-full text-amber-500 shadow-sm"><i class="fa-solid fa-film text-xl"></i></div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xl font-black uppercase tracking-wider">Video Khóa Học</h1>
+                    <span class="hidden sm:inline-block text-xs bg-amber-500/80 text-amber-950 font-bold px-2 py-0.5 rounded-full">Học sinh & Giáo viên</span>
+                </div>
             </div>
             <div class="flex items-center gap-3 sm:gap-4">
-                <span class="font-bold hidden sm:inline"><i class="fa-solid fa-face-smile-wink mr-1"></i> <span id="user-name-display">Học viên</span></span>
-                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow transition" onclick="window.logout()">Đăng xuất</button>
+                <span class="font-bold hidden sm:inline"><i class="fa-solid fa-user-graduate mr-1"></i> <span id="user-name-display">Học sinh & Giáo viên</span></span>
+                <a href="index.html" class="bg-amber-500 hover:bg-amber-600 text-amber-950 px-3 py-1.5 rounded-lg text-sm font-bold shadow transition flex items-center gap-1">
+                    <i class="fa-solid fa-house"></i> Trang chủ
+                </a>
             </div>
         </div>
     </header>
 
-    <main id="protected-content" class="hidden flex-1 flex overflow-hidden relative">
-        <div id="dashboard-view" class="hidden w-full h-full overflow-y-auto bg-amber-50 relative pb-20">
+    <main id="protected-content" class="flex-1 flex overflow-hidden relative">
+        <div id="dashboard-view" class="w-full h-full overflow-y-auto bg-amber-50 relative pb-20">
             <div class="bg-amber-400 text-amber-950 pt-10 pb-20 px-6 lg:px-10 relative overflow-hidden">
                 <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 <div class="max-w-7xl mx-auto relative z-10">
-                    <h2 class="text-3xl lg:text-4xl font-black mb-2 flex items-center gap-3">Các khóa học Video của bạn 📺</h2>
-                    <p class="font-medium text-amber-800">Cùng tiếp tục theo dõi các bài giảng thật thú vị nhé.</p>
+                    <h2 class="text-3xl lg:text-4xl font-black mb-2 flex items-center gap-3">Kho Video Bài Giảng Trực Tuyến 📺</h2>
+                    <p class="font-medium text-amber-800">Không gian học tập và nghiên cứu video bài giảng dành cho Học sinh & Giáo viên.</p>
                 </div>
             </div>
             <div id="doc-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto px-6 lg:px-10 -mt-10 relative z-20"></div>

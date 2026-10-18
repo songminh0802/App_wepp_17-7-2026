@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Học sinh - Đọc Tài liệu & Ghi chú</title>
+    <title>Học sinh & Giáo viên - Thư viện Tài liệu</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -28,16 +28,21 @@
 </head>
 <body class="bg-amber-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
 
-    <!-- Header (Đã thêm id để dễ dàng ẩn/hiện) -->
+    <!-- Header -->
     <header id="main-header" class="bg-amber-400 text-amber-950 shadow-md z-10 flex-shrink-0 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showDashboard()">
-                <div class="bg-white p-1.5 rounded-full text-amber-500 shadow-sm"><i class="fa-solid fa-graduation-cap text-xl"></i></div>
-                <h1 class="text-xl font-black tracking-wider uppercase">Góc Học Tập</h1>
+                <div class="bg-white p-1.5 rounded-full text-amber-500 shadow-sm"><i class="fa-solid fa-book-open text-xl"></i></div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xl font-black tracking-wider uppercase">Tài Liệu Học Tập</h1>
+                    <span class="hidden sm:inline-block text-xs bg-amber-500/80 text-amber-950 font-bold px-2 py-0.5 rounded-full">Học sinh & Giáo viên</span>
+                </div>
             </div>
             <div id="user-info" class="flex items-center gap-4">
-                <span class="font-bold"><i class="fa-solid fa-face-smile-wink mr-1"></i> <span id="student-name">Học sinh</span></span>
-                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow transition" onclick="logout()">Đăng xuất</button>
+                <span class="font-bold"><i class="fa-solid fa-user-graduate mr-1"></i> <span id="student-name">Học sinh & Giáo viên</span></span>
+                <a href="index.html" class="bg-amber-500 hover:bg-amber-600 text-amber-950 px-3 py-1.5 rounded-lg text-sm font-bold shadow transition flex items-center gap-1">
+                    <i class="fa-solid fa-house"></i> Trang chủ
+                </a>
             </div>
         </div>
     </header>
@@ -230,8 +235,8 @@
             if (userInfoEl) userInfoEl.classList.remove('hidden');
 
             let savedSession = localStorage.getItem('edtech_student_session') || localStorage.getItem('edtech_user');
-            let sName = "Học sinh";
-            let sEmail = "hocsinh@songminh.edu.vn";
+            let sName = "Học sinh & Giáo viên";
+            let sEmail = "user@songminh.edu.vn";
 
             if (savedSession) {
                 try {

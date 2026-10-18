@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giáo viên - Quản lý Khóa Học Video</title>
+    <title>Quản trị viên - Quản lý Khóa Video</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <script>window.ALLOWED_ROLES = ['TEACHER'];</script>
     <script type="module" src="./auth-guard.js"></script>
     
     <style>
@@ -37,15 +36,46 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden">
     
+    <!-- Admin Guard Modal (Hiển thị nếu không phải Admin) -->
+    <div id="admin-auth-guard" class="hidden fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl text-center border border-slate-100">
+            <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-tr from-rose-500 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-500/30 text-white text-3xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">Khu Vực Quản Trị Viên</h2>
+            <p class="text-slate-500 text-sm mb-6">Trang này dành riêng cho Quản trị viên (Admin: songminh138@gmail.com). Học sinh và Giáo viên vui lòng sử dụng trang xem video khóa học.</p>
+            
+            <div class="space-y-3">
+                <a href="s-video.html" class="w-full py-3.5 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> Sang Trang Dành Cho Học Sinh & Giáo Viên
+                </a>
+                
+                <button onclick="handleAdminLogin()" class="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-shield-halved"></i> Đăng Nhập Quản Trị (Google Admin)
+                </button>
+
+                <a href="index.html" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-semibold text-xs transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left"></i> Về Trang Chủ
+                </a>
+            </div>
+        </div>
+    </div>
+
     <header id="main-header" class="bg-indigo-600 text-white shadow-md z-10 flex-shrink-0 transition-all duration-300">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showDashboard()">
-                <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><i class="fa-solid fa-video text-xl"></i></div>
-                <h1 class="text-xl font-bold tracking-wide">EdTech Video</h1>
+                <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><i class="fa-solid fa-shield-halved text-xl"></i></div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xl font-bold tracking-wide">Quản lý Khóa Video</h1>
+                    <span class="text-xs bg-indigo-800 text-indigo-200 px-2 py-0.5 rounded-full font-bold">Admin</span>
+                </div>
             </div>
             <div id="user-info" class="flex items-center gap-3">
-                <span class="font-medium"><i class="fa-solid fa-user-circle mr-1"></i> <span id="user-name-display">Giáo viên</span></span>
-                <button class="bg-indigo-700 hover:bg-indigo-800 border border-indigo-500 px-4 py-1.5 rounded-lg text-sm transition shadow-sm" onclick="window.logout()">Đăng xuất</button>
+                <span class="font-medium"><i class="fa-solid fa-user-circle mr-1"></i> <span id="user-name-display">Thầy Cường (Admin)</span></span>
+                <a href="index.html" class="bg-indigo-700 hover:bg-indigo-800 border border-indigo-500 px-3 py-1.5 rounded-lg text-sm transition font-medium shadow-sm flex items-center gap-1">
+                    <i class="fa-solid fa-house"></i> Trang chủ
+                </a>
+                <button class="bg-indigo-800 hover:bg-indigo-900 border border-indigo-600 px-3 py-1.5 rounded-lg text-sm transition shadow-sm" onclick="window.logout()">Đăng xuất</button>
             </div>
         </div>
     </header>
@@ -219,19 +249,71 @@
 
         function hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); }
 
+        function checkAdminAccess() {
+            const adminUser = window.getSavedAdminUser ? window.getSavedAdminUser() : null;
+            const guardEl = document.getElementById('admin-auth-guard');
+            const mainAppEl = document.getElementById('protected-content');
+            const mainHeaderEl = document.getElementById('main-header');
+
+            if (adminUser) {
+                if (guardEl) guardEl.classList.add('hidden');
+                if (mainAppEl) mainAppEl.classList.remove('hidden');
+                if (mainHeaderEl) mainHeaderEl.classList.remove('hidden');
+                return adminUser;
+            } else {
+                if (guardEl) guardEl.classList.remove('hidden');
+                if (mainAppEl) mainAppEl.classList.add('hidden');
+                if (mainHeaderEl) mainHeaderEl.classList.add('hidden');
+                return null;
+            }
+        }
+
+        async function handleAdminLogin() {
+            if (window.loginAdminWithGoogle) {
+                const res = await window.loginAdminWithGoogle();
+                if (res.success) {
+                    const adminUser = checkAdminAccess();
+                    if (adminUser) {
+                        const el = document.getElementById('user-name-display');
+                        if (el) el.innerText = adminUser.name || 'Thầy Cường (Admin)';
+                        showDashboard();
+                        await loadTeacherData();
+                    }
+                } else if (res.error) {
+                    alert(res.error);
+                }
+            }
+        }
+        window.handleAdminLogin = handleAdminLogin;
+
         document.addEventListener("DOMContentLoaded", () => { 
             initResizer(); 
-            const protectedEl = document.getElementById('protected-content');
-            if (protectedEl) protectedEl.classList.remove('hidden');
-            showDashboard();
-            loadTeacherData();
+            const adminUser = checkAdminAccess();
+            if (adminUser) {
+                const el = document.getElementById('user-name-display');
+                if (el) el.innerText = adminUser.name || 'Thầy Cường (Admin)';
+                showDashboard();
+                loadTeacherData();
+            } else {
+                setTimeout(() => {
+                    const retryUser = checkAdminAccess();
+                    if (retryUser) {
+                        const el = document.getElementById('user-name-display');
+                        if (el) el.innerText = retryUser.name || 'Thầy Cường (Admin)';
+                        showDashboard();
+                        loadTeacherData();
+                    }
+                }, 500);
+            }
         });
 
-        window.addEventListener('auth-success', async () => { 
-            showDashboard(); loadTeacherData(); 
-            if (window.CURRENT_USER_EMAIL) {
+        window.addEventListener('auth-admin-changed', (e) => {
+            const adminUser = checkAdminAccess();
+            if (adminUser) {
                 const el = document.getElementById('user-name-display');
-                if (el) el.innerText = window.CURRENT_USER_EMAIL.split('@')[0];
+                if (el) el.innerText = adminUser.name || 'Thầy Cường (Admin)';
+                showDashboard();
+                loadTeacherData();
             }
         });
 

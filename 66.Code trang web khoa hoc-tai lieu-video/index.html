@@ -47,10 +47,17 @@
 
             <div class="flex items-center gap-3">
                 <div id="auth-status-container" class="flex items-center gap-3">
-                    <span id="user-name-display" class="hidden text-sm font-semibold text-slate-300 sm:inline"></span>
-                    <button onclick="window.logout()" id="btn-logout" class="hidden px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition">
-                        <i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i>Đăng xuất
+                    <button id="btn-admin-login" onclick="handlePortalAdminLogin()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-shield-halved"></i> <span>Đăng nhập Quản trị</span>
                     </button>
+                    <div id="admin-info-badge" class="hidden flex items-center gap-2">
+                        <span class="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-crown text-amber-400"></i> <span id="admin-name-display">Quản trị viên</span>
+                        </span>
+                        <button onclick="window.logout()" id="btn-logout" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold rounded-xl border border-slate-700 transition cursor-pointer flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,113 +74,115 @@
                 Không gian học tập <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-amber-300 to-rose-400">toàn diện</span>
             </h2>
             <p class="text-slate-400 text-base sm:text-lg">
-                Chọn cổng truy cập phù hợp với bạn để bắt đầu khám phá kho tài liệu và video khóa học chất lượng cao.
+                Dành cho Học sinh & Giáo viên tra cứu tài liệu số và theo dõi video bài giảng chất lượng cao.
             </p>
         </div>
 
         <!-- Portal Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto w-full">
-            
-            <!-- SECTION 1: DÀNH CHO HỌC SINH -->
-            <div class="bg-gradient-to-b from-slate-800/80 to-slate-800/40 p-6 sm:p-8 rounded-3xl border border-slate-700/60 shadow-xl flex flex-col justify-between relative overflow-hidden group">
-                <div class="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none transition-all group-hover:bg-amber-500/20"></div>
+        <div id="portal-container" class="flex flex-col items-center max-w-5xl mx-auto w-full">
+            <div id="portal-grid" class="grid grid-cols-1 gap-8 w-full max-w-xl transition-all duration-300">
                 
-                <div>
-                    <div class="flex items-center justify-between mb-6">
-                        <span class="px-3.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
-                            Dành cho Học sinh
-                        </span>
-                        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl">
-                            🎓
+                <!-- SECTION 1: DÀNH CHO HỌC SINH & GIÁO VIÊN -->
+                <div id="section-student" class="bg-gradient-to-b from-slate-800/80 to-slate-800/40 p-6 sm:p-8 rounded-3xl border border-slate-700/60 shadow-xl flex flex-col justify-between relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none transition-all group-hover:bg-amber-500/20"></div>
+                    
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="px-3.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                                Dành cho Học sinh & Giáo viên
+                            </span>
+                            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl">
+                                🎓
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-2">Góc Học Tập & Nghiên Cứu</h3>
+                        <p class="text-slate-400 text-sm mb-6">Tra cứu tài liệu tự học, bài giảng điện tử và theo dõi video khóa học tương tác.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <a href="s-tailieu.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-amber-400/50 transition-all group/item">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center text-lg">
+                                        <i class="fa-solid fa-book-open"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="font-bold text-white group-hover/item:text-amber-400 transition">Thư viện Tài liệu</div>
+                                        <div class="text-xs text-slate-400">Đọc bài, công thức MathJax & ghi chú</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-amber-400 group-hover/item:translate-x-1 transition"></i>
+                            </a>
+
+                            <a href="s-video.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-amber-400/50 transition-all group/item">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-rose-400/10 text-rose-400 flex items-center justify-center text-lg">
+                                        <i class="fa-solid fa-play"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="font-bold text-white group-hover/item:text-amber-400 transition">Video Khóa Học</div>
+                                        <div class="text-xs text-slate-400">Xem video bài giảng & theo dõi tiến độ</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-amber-400 group-hover/item:translate-x-1 transition"></i>
+                            </a>
                         </div>
                     </div>
-                    <h3 class="text-2xl font-black text-white mb-2">Góc Học Tập Trực Tuyến</h3>
-                    <p class="text-slate-400 text-sm mb-6">Tra cứu tài liệu tự học, bài tập thực hành và theo dõi video bài giảng tương tác.</p>
 
-                    <div class="space-y-3 mb-6">
-                        <a href="s-tailieu.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-amber-400/50 transition-all group/item">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-amber-400/10 text-amber-400 flex items-center justify-center text-lg">
-                                    <i class="fa-solid fa-book-open"></i>
-                                </div>
-                                <div class="text-left">
-                                    <div class="font-bold text-white group-hover/item:text-amber-400 transition">Thư viện Tài liệu</div>
-                                    <div class="text-xs text-slate-400">Đọc bài, ghi chú và bài tập</div>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-amber-400 group-hover/item:translate-x-1 transition"></i>
-                        </a>
-
-                        <a href="s-video.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-amber-400/50 transition-all group/item">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-rose-400/10 text-rose-400 flex items-center justify-center text-lg">
-                                    <i class="fa-solid fa-play"></i>
-                                </div>
-                                <div class="text-left">
-                                    <div class="font-bold text-white group-hover/item:text-amber-400 transition">Video Khóa Học</div>
-                                    <div class="text-xs text-slate-400">Xem bài giảng & làm ghi chú</div>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-amber-400 group-hover/item:translate-x-1 transition"></i>
-                        </a>
+                    <div class="pt-4 border-t border-slate-700/40 text-xs text-slate-400 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-amber-400"></i> Mở rộng rãi cho tất cả học sinh và giáo viên
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-700/40 text-xs text-slate-400 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-check text-amber-400"></i> Hỗ trợ MathJax công thức Toán & lưu tiến độ
-                </div>
-            </div>
+                <!-- SECTION 2: DÀNH CHO QUẢN TRỊ VIÊN (CHỈ HIỂN THỊ KHI LÀ ADMIN) -->
+                <div id="section-admin" class="hidden bg-gradient-to-b from-slate-800/80 to-slate-800/40 p-6 sm:p-8 rounded-3xl border border-indigo-500/40 shadow-xl flex flex-col justify-between relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none transition-all group-hover:bg-indigo-500/25"></div>
 
-            <!-- SECTION 2: DÀNH CHO GIÁO VIÊN -->
-            <div class="bg-gradient-to-b from-slate-800/80 to-slate-800/40 p-6 sm:p-8 rounded-3xl border border-slate-700/60 shadow-xl flex flex-col justify-between relative overflow-hidden group">
-                <div class="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none transition-all group-hover:bg-indigo-500/20"></div>
+                    <div>
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="px-3.5 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-shield-halved"></i> Dành cho Quản trị viên
+                            </span>
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-2xl">
+                                🛡️
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-2">Cổng Quản Trị Hệ Thống</h3>
+                        <p class="text-slate-400 text-sm mb-6">Biên soạn nội dung bài học, tải ảnh tài liệu, đăng video và theo dõi thống kê người dùng.</p>
 
-                <div>
-                    <div class="flex items-center justify-between mb-6">
-                        <span class="px-3.5 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-                            Dành cho Giáo viên
-                        </span>
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-2xl">
-                            👨‍🏫
+                        <div class="space-y-3 mb-6">
+                            <a href="t-tailieu.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-indigo-400/50 transition-all group/item">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-400/10 text-indigo-400 flex items-center justify-center text-lg">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="font-bold text-white group-hover/item:text-indigo-400 transition">Quản trị Tài liệu</div>
+                                        <div class="text-xs text-slate-400">Biên soạn nội dung, tải ảnh & thống kê</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-indigo-400 group-hover/item:translate-x-1 transition"></i>
+                            </a>
+
+                            <a href="t-video.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-indigo-400/50 transition-all group/item">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-teal-400/10 text-teal-400 flex items-center justify-center text-lg">
+                                        <i class="fa-solid fa-film"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="font-bold text-white group-hover/item:text-indigo-400 transition">Quản lý Khóa Video</div>
+                                        <div class="text-xs text-slate-400">Đăng video bảo mật, theo dõi lượt học</div>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-indigo-400 group-hover/item:translate-x-1 transition"></i>
+                            </a>
                         </div>
                     </div>
-                    <h3 class="text-2xl font-black text-white mb-2">Trung Tâm Quản Trị</h3>
-                    <p class="text-slate-400 text-sm mb-6">Soạn thảo bài học với Quill Editor, tổ chức chương mục và theo dõi tiến độ của học sinh.</p>
 
-                    <div class="space-y-3 mb-6">
-                        <a href="t-tailieu.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-indigo-400/50 transition-all group/item">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-400/10 text-indigo-400 flex items-center justify-center text-lg">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </div>
-                                <div class="text-left">
-                                    <div class="font-bold text-white group-hover/item:text-indigo-400 transition">Quản trị Tài liệu</div>
-                                    <div class="text-xs text-slate-400">Biên soạn, tải ảnh & thống kê học viên</div>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-indigo-400 group-hover/item:translate-x-1 transition"></i>
-                        </a>
-
-                        <a href="t-video.html" class="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 hover:bg-slate-900 border border-slate-700/50 hover:border-indigo-400/50 transition-all group/item">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-teal-400/10 text-teal-400 flex items-center justify-center text-lg">
-                                    <i class="fa-solid fa-film"></i>
-                                </div>
-                                <div class="text-left">
-                                    <div class="font-bold text-white group-hover/item:text-indigo-400 transition">Quản lý Khóa Video</div>
-                                    <div class="text-xs text-slate-400">Đăng video bảo mật, theo dõi xem bài</div>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-arrow-right text-slate-500 group-hover/item:text-indigo-400 group-hover/item:translate-x-1 transition"></i>
-                        </a>
+                    <div class="pt-4 border-t border-slate-700/40 text-xs text-indigo-300 flex items-center gap-2">
+                        <i class="fa-solid fa-lock text-indigo-400"></i> Quyền Quản trị viên (Admin: songminh138@gmail.com)
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-700/40 text-xs text-slate-400 flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-indigo-400"></i> Phân quyền theo email Admin & Tài khoản Google
-                </div>
             </div>
-
         </div>
     </main>
 
@@ -183,31 +192,54 @@
     </footer>
 
     <script>
-        function updateUI(user) {
-            const nameEl = document.getElementById('user-name-display');
-            const logoutBtn = document.getElementById('btn-logout');
-            if (nameEl && user) {
-                const displayName = user.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Bạn');
-                nameEl.textContent = `Xin chào, ${displayName}`;
-                nameEl.classList.remove('hidden');
-            }
-            if (logoutBtn) {
-                logoutBtn.classList.remove('hidden');
+        function updatePortalUI() {
+            const adminUser = window.getSavedAdminUser ? window.getSavedAdminUser() : null;
+            const adminSection = document.getElementById('section-admin');
+            const adminBtn = document.getElementById('btn-admin-login');
+            const adminBadge = document.getElementById('admin-info-badge');
+            const adminName = document.getElementById('admin-name-display');
+            const portalGrid = document.getElementById('portal-grid');
+
+            if (adminUser) {
+                if (adminSection) adminSection.classList.remove('hidden');
+                if (adminBtn) adminBtn.classList.add('hidden');
+                if (adminBadge) adminBadge.classList.remove('hidden');
+                if (adminName) adminName.textContent = adminUser.name || 'Thầy Cường (Admin)';
+                if (portalGrid) {
+                    portalGrid.classList.remove('max-w-xl');
+                    portalGrid.classList.add('md:grid-cols-2', 'max-w-5xl');
+                }
+            } else {
+                if (adminSection) adminSection.classList.add('hidden');
+                if (adminBtn) adminBtn.classList.remove('hidden');
+                if (adminBadge) adminBadge.classList.add('hidden');
+                if (portalGrid) {
+                    portalGrid.classList.remove('md:grid-cols-2', 'max-w-5xl');
+                    portalGrid.classList.add('max-w-xl');
+                }
             }
         }
 
-        // Kiểm tra ngay trong localStorage
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedStr = localStorage.getItem('edtech_user') || localStorage.getItem('edtech_teacher_session') || localStorage.getItem('edtech_student_session');
-            if (savedStr) {
-                try {
-                    updateUI(JSON.parse(savedStr));
-                } catch(e) {}
+        async function handlePortalAdminLogin() {
+            if (window.loginAdminWithGoogle) {
+                const res = await window.loginAdminWithGoogle();
+                if (res.success) {
+                    updatePortalUI();
+                } else if (res.error) {
+                    alert(res.error);
+                }
             }
+        }
+        window.handlePortalAdminLogin = handlePortalAdminLogin;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePortalUI();
+            setTimeout(updatePortalUI, 300);
+            setTimeout(updatePortalUI, 1000);
         });
 
-        window.addEventListener('auth-success', (e) => {
-            updateUI(e.detail);
+        window.addEventListener('auth-admin-changed', () => {
+            updatePortalUI();
         });
     </script>
 </body>
