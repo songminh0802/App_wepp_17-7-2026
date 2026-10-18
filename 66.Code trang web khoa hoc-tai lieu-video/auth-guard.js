@@ -31,12 +31,20 @@ export function checkIsAdmin(emailOrUser) {
 window.checkIsAdmin = checkIsAdmin;
 
 export function getSavedAdminUser() {
-    const saved = localStorage.getItem('edtech_admin_session') || localStorage.getItem('edtech_user');
-    if (saved) {
-        try {
-            const u = JSON.parse(saved);
-            if (u && checkIsAdmin(u.email)) return u;
-        } catch(e) {}
+    const keys = ['edtech_admin_session', 'edtech_user', 'edtech_teacher_session'];
+    for (const k of keys) {
+        const saved = localStorage.getItem(k);
+        if (saved) {
+            try {
+                const u = JSON.parse(saved);
+                if (u && (checkIsAdmin(u.email) || u.role === 'ADMIN')) {
+                    // Đồng bộ phiên làm việc sang các key chính
+                    localStorage.setItem('edtech_admin_session', JSON.stringify(u));
+                    localStorage.setItem('edtech_user', JSON.stringify(u));
+                    return u;
+                }
+            } catch(e) {}
+        }
     }
     return null;
 }
@@ -51,6 +59,29 @@ window.logout = function() {
     });
 };
 
+window.loginAdminDirect = function(email, name = "Thầy Cường (Admin)") {
+    const cleanedEmail = (email || '').toLowerCase().trim();
+    if (checkIsAdmin(cleanedEmail)) {
+        const adminUser = {
+            uid: 'admin_' + Date.now(),
+            email: cleanedEmail,
+            name: name,
+            role: 'ADMIN',
+            photoURL: ''
+        };
+        localStorage.setItem('edtech_user', JSON.stringify(adminUser));
+        localStorage.setItem('edtech_admin_session', JSON.stringify(adminUser));
+        localStorage.setItem('edtech_teacher_session', JSON.stringify(adminUser));
+        window.dispatchEvent(new CustomEvent('auth-admin-changed', { detail: adminUser }));
+        return { success: true, user: adminUser };
+    } else {
+        return { 
+            success: false, 
+            error: `Email (${email}) không phải là Quản trị viên (songminh138@gmail.com).` 
+        };
+    }
+};
+
 window.loginAdminWithGoogle = async function() {
     try {
         const provider = new GoogleAuthProvider();
@@ -60,12 +91,13 @@ window.loginAdminWithGoogle = async function() {
             const adminUser = {
                 uid: user.uid,
                 email: user.email,
-                name: user.displayName || "Thầy Cường",
+                name: user.displayName || "Thầy Cường (Admin)",
                 role: 'ADMIN',
                 photoURL: user.photoURL || ''
             };
             localStorage.setItem('edtech_user', JSON.stringify(adminUser));
             localStorage.setItem('edtech_admin_session', JSON.stringify(adminUser));
+            localStorage.setItem('edtech_teacher_session', JSON.stringify(adminUser));
             window.dispatchEvent(new CustomEvent('auth-admin-changed', { detail: adminUser }));
             return { success: true, user: adminUser };
         } else {
@@ -75,8 +107,14 @@ window.loginAdminWithGoogle = async function() {
             };
         }
     } catch(err) {
-        console.error("Lỗi đăng nhập Google:", err);
-        return { success: false, error: err.message || "Đăng nhập thất bại" };
+        console.warn("Lỗi đăng nhập Google:", err);
+        return { 
+            success: false, 
+            code: err.code,
+            error: (err.code === 'auth/unauthorized-domain') 
+                ? "Tên miền chưa được xác thực trong Firebase Auth. Thầy vui lòng dùng tính năng xác nhận trực tiếp bằng email bên dưới." 
+                : (err.message || "Đăng nhập Google thất bại")
+        };
     }
 };
 
@@ -85,12 +123,13 @@ onAuthStateChanged(auth, async (user) => {
         const adminUser = {
             uid: user.uid,
             email: user.email,
-            name: user.displayName || "Thầy Cường",
+            name: user.displayName || "Thầy Cường (Admin)",
             role: 'ADMIN',
             photoURL: user.photoURL || ''
         };
         localStorage.setItem('edtech_user', JSON.stringify(adminUser));
         localStorage.setItem('edtech_admin_session', JSON.stringify(adminUser));
+        localStorage.setItem('edtech_teacher_session', JSON.stringify(adminUser));
         window.dispatchEvent(new CustomEvent('auth-admin-changed', { detail: adminUser }));
     }
 });

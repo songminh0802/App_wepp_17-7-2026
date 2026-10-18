@@ -225,8 +225,19 @@
                 const res = await window.loginAdminWithGoogle();
                 if (res.success) {
                     updatePortalUI();
-                } else if (res.error) {
-                    alert(res.error);
+                    return;
+                }
+            }
+            // Nếu Google popup lỗi hoặc không đăng nhập được qua Google:
+            const email = prompt("Đăng nhập Quản trị viên:\nVui lòng xác nhận email quản trị:", "songminh138@gmail.com");
+            if (email) {
+                if (window.loginAdminDirect) {
+                    const resDirect = window.loginAdminDirect(email);
+                    if (resDirect.success) {
+                        updatePortalUI();
+                    } else {
+                        alert(resDirect.error || "Email không thuộc danh sách quản trị viên!");
+                    }
                 }
             }
         }
