@@ -679,10 +679,31 @@
                         throw new Error(result.error || "Lỗi upload");
                     }
                 } catch (err) {
-                    status.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Lỗi tải ảnh';
+                    status.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Lỗi tải ảnh lên Drive';
                     status.classList.replace('text-blue-600', 'text-red-600');
                     status.classList.replace('bg-blue-50', 'bg-red-50');
-                    alert("Không thể tải ảnh: " + err.message);
+                    
+                    const insertDirectly = confirm(
+                        "Lỗi tải ảnh lên Google Drive: " + err.message + "\n\n" +
+                        "💡 Bạn có muốn chèn ảnh trực tiếp vào bài soạn ngay bây giờ không?"
+                    );
+                    
+                    if (insertDirectly) {
+                        const range = quill.getSelection(true);
+                        const index = range ? range.index : quill.getLength();
+                        quill.insertEmbed(index, 'image', e.target.result);
+                        setTimeout(() => {
+                            const images = document.querySelectorAll('.ql-editor img');
+                            const insertedImg = images[images.length - 1];
+                            if (insertedImg) {
+                                insertedImg.style.width = '100%';
+                                insertedImg.style.height = 'auto';
+                            }
+                        }, 100);
+                        status.innerHTML = '<i class="fa-solid fa-check"></i> Đã chèn ảnh';
+                        status.classList.replace('text-red-600', 'text-amber-600');
+                        status.classList.replace('bg-red-50', 'bg-amber-50');
+                    }
                 }
                 setTimeout(() => status.classList.add('hidden'), 3000);
             };

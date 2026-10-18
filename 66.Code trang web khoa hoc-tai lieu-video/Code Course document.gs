@@ -319,25 +319,49 @@ function uploadImageToDrive(data) {
   if (folders.hasNext()) {
     folder = folders.next();
   } else {
-    // Nếu chưa có thư mục, tự động tạo thư mục nằm cùng cấp với file Google Sheet
-    let sheetFileId = SpreadsheetApp.getActiveSpreadsheet().getId();
-    let parents = DriveApp.getFileById(sheetFileId).getParents();
-    if (parents.hasNext()) {
-        folder = parents.next().createFolder(folderName);
-    } else {
+    // Nếu chưa có thư mục, tự động tạo thư mục nằm cùng cấp với file Google Sheet hoặc Root Drive
+    try {
+      let sheetFileId = (typeof SHEET_ID !== 'undefined' && SHEET_ID) ? SHEET_ID : null;
+      if (!sheetFileId) {
+        let activeSs = SpreadsheetApp.getActiveSpreadsheet();
+        if (activeSs) sheetFileId = activeSs.getId();
+      }
+      
+      if (sheetFileId) {
+        let file = DriveApp.getFileById(sheetFileId);
+        let parents = file.getParents();
+        if (parents.hasNext()) {
+          folder = parents.next().createFolder(folderName);
+        } else {
+          folder = DriveApp.createFolder(folderName);
+        }
+      } else {
         folder = DriveApp.createFolder(folderName);
+      }
+    } catch (err) {
+      folder = DriveApp.createFolder(folderName);
     }
   }
   
+  // Đảm bảo thư mục được chia sẻ quyền xem công khai để học sinh & giáo viên đều xem được ảnh
+  try {
+    folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch(e) {}
+  
   // Giải mã Base64 thành File Blob và lưu vào thư mục
-  let blob = Utilities.newBlob(Utilities.base64Decode(data.base64Data), data.mimeType, data.filename);
+  let mimeType = data.mimeType || 'image/png';
+  let filename = data.filename || ('img_' + new Date().getTime() + '.png');
+  let blob = Utilities.newBlob(Utilities.base64Decode(data.base64Data), mimeType, filename);
   let file = folder.createFile(blob);
   
   // Quan Trọng: Chia sẻ file quyền "Bất kỳ ai có liên kết đều có thể xem" thì người khác mới thấy được ảnh
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   
   // Sử dụng định dạng link lh3.googleusercontent.com để vượt qua chính sách chặn nhúng ảnh của Google
-  return { url: "https://lh3.googleusercontent.com/d/" + file.getId() };
+  return { 
+    url: "https://lh3.googleusercontent.com/d/" + file.getId(),
+    fileId: file.getId()
+  };
 }
 
 /**
