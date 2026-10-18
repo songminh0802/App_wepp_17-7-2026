@@ -217,12 +217,46 @@
             return Math.abs(hash);
         }
 
-        async function handleLogin(e) {
-            e.preventDefault();
-            const emailInput = document.getElementById('student-email-input');
-            if (emailInput && emailInput.value) {
-                document.getElementById('student-name').innerText = emailInput.value.split('@')[0];
+        document.addEventListener("DOMContentLoaded", () => {
+            checkAutoLogin();
+        });
+
+        async function checkAutoLogin() {
+            const savedSession = localStorage.getItem('edtech_student_session') || localStorage.getItem('edtech_user');
+            if (savedSession) {
+                try {
+                    const data = JSON.parse(savedSession);
+                    const sName = data.name || (data.email ? data.email.split('@')[0] : 'Học sinh');
+                    document.getElementById('student-name').innerText = sName;
+                    document.getElementById('login-view').classList.add('hidden');
+                    document.getElementById('user-info').classList.remove('hidden');
+                    showDashboard();
+                    await fetchAllData();
+                } catch(e) {
+                    console.error("Auto login error:", e);
+                }
             }
+        }
+
+        async function handleLogin(e) {
+            if (e) e.preventDefault();
+            const emailInput = document.getElementById('student-email-input');
+            const studentName = (emailInput && emailInput.value) ? emailInput.value.split('@')[0] : "Học sinh";
+            document.getElementById('student-name').innerText = studentName;
+            
+            // Lưu phiên đăng nhập để lần sau không cần đăng nhập lại
+            localStorage.setItem('edtech_student_session', JSON.stringify({
+                email: emailInput ? emailInput.value : 'hocsinh@songminh.edu.vn',
+                name: studentName,
+                role: 'STUDENT',
+                loggedInAt: Date.now()
+            }));
+            localStorage.setItem('edtech_user', JSON.stringify({
+                email: emailInput ? emailInput.value : 'hocsinh@songminh.edu.vn',
+                name: studentName,
+                role: 'STUDENT'
+            }));
+
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-info').classList.remove('hidden');
             
@@ -298,6 +332,8 @@
         }
 
         function logout() {
+            localStorage.removeItem('edtech_student_session');
+            localStorage.removeItem('edtech_user');
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('reader-view').classList.add('hidden');

@@ -532,7 +532,7 @@
             const t = prompt("Tên bài giảng video mới:");
             if(t) {
                 const maxOrder = videos.length > 0 ? Math.max(...videos.map(s => s.order || 0)) : 0;
-                const nv = { id_video: 'vid_' + Date.now(), id_course: currentCourseId, title: t, drive_id: '', timeline: '[]', trang_thai_hien: false, order: maxOrder + 1 };
+                const nv = { id_video: 'vid_' + Date.now(), id_course: currentCourseId, title: t, drive_id: '', timeline: '[]', trang_thai_hien: true, order: maxOrder + 1 };
                 videos.push(nv); renderTOC(); selectVideo(nv.id_video);
             }
         }

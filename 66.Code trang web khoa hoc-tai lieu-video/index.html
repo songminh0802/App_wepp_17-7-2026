@@ -183,17 +183,31 @@
     </footer>
 
     <script>
-        window.addEventListener('auth-success', (e) => {
-            const user = e.detail;
+        function updateUI(user) {
             const nameEl = document.getElementById('user-name-display');
             const logoutBtn = document.getElementById('btn-logout');
-            if (nameEl) {
-                nameEl.textContent = `Xin chào, ${user.displayName || user.email.split('@')[0]}`;
+            if (nameEl && user) {
+                const displayName = user.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Bạn');
+                nameEl.textContent = `Xin chào, ${displayName}`;
                 nameEl.classList.remove('hidden');
             }
             if (logoutBtn) {
                 logoutBtn.classList.remove('hidden');
             }
+        }
+
+        // Kiểm tra ngay trong localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedStr = localStorage.getItem('edtech_user') || localStorage.getItem('edtech_teacher_session') || localStorage.getItem('edtech_student_session');
+            if (savedStr) {
+                try {
+                    updateUI(JSON.parse(savedStr));
+                } catch(e) {}
+            }
+        });
+
+        window.addEventListener('auth-success', (e) => {
+            updateUI(e.detail);
         });
     </script>
 </body>
