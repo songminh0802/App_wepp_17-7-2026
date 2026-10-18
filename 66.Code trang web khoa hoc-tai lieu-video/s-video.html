@@ -141,12 +141,15 @@
 
         function hashCode(str) { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); }
 
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        document.onkeydown = function(e) { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false; };
-        setInterval(function() { debugger; }, 100);
+        document.addEventListener("DOMContentLoaded", () => {
+            const protectedEl = document.getElementById('protected-content');
+            if (protectedEl) protectedEl.classList.remove('hidden');
+            showDashboard();
+            fetchAllData();
+        });
 
-        window.addEventListener('auth-success', async () => { 
-            STUDENT_UID = window.CURRENT_USER_UID; 
+        window.addEventListener('auth-success', async (e) => { 
+            if (window.CURRENT_USER_UID) STUDENT_UID = window.CURRENT_USER_UID;
             showDashboard(); 
             
             // Đồng bộ User lên Google Sheet
@@ -247,16 +250,29 @@
 
         function openCourse(cid) {
             currentCourseId = cid; currentVideoId = null;
-            document.getElementById('reader-doc-title').innerText = courses.find(c => c.id_course === cid).title;
-            document.getElementById('dashboard-view').classList.add('hidden'); document.getElementById('reader-view').classList.remove('hidden');
-            document.getElementById('reader-placeholder').classList.remove('hidden'); document.getElementById('content-container').classList.add('hidden');
+            const c = courses.find(x => x.id_course === cid);
+            document.getElementById('reader-doc-title').innerText = c ? c.title : 'Khóa học';
+            document.getElementById('dashboard-view').classList.add('hidden'); 
+            document.getElementById('reader-view').classList.remove('hidden');
             if(!isSidebarOpen) toggleSidebar();
             renderTOC();
+
+            const cVideos = videos.filter(v => v.id_course === currentCourseId).sort((a,b)=> a.order - b.order);
+            if (cVideos.length > 0) {
+                selectVideo(cVideos[0].id_video);
+            } else {
+                document.getElementById('reader-placeholder').classList.remove('hidden'); 
+                document.getElementById('content-container').classList.add('hidden');
+            }
         }
 
         function renderTOC() {
             const toc = document.getElementById('toc-list'); toc.innerHTML = '';
             const cVideos = videos.filter(v => v.id_course === currentCourseId).sort((a,b)=> a.order - b.order);
+            if (cVideos.length === 0) {
+                toc.innerHTML = '<div class="text-center text-amber-700 py-4 italic text-sm">Chưa có video bài học nào được mở.</div>';
+                return;
+            }
             cVideos.forEach(v => {
                 const isActive = currentVideoId === v.id_video;
                 const bgClass = isActive ? 'bg-amber-200 text-amber-900 font-bold border-l-4 border-amber-500 shadow-sm' : 'bg-white text-slate-700 hover:bg-amber-100 font-medium shadow-sm';

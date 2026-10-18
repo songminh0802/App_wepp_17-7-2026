@@ -423,19 +423,29 @@
         function openDocument(docId) {
             currentDocId = docId;
             const doc = documents.find(d => d.id_tailieu === docId);
-            document.getElementById('reader-doc-title').innerText = doc.title;
+            document.getElementById('reader-doc-title').innerText = doc ? doc.title : 'Tài liệu';
             
             // ẨN HEADER CHO RỘNG MÀN HÌNH ĐỌC
             document.getElementById('main-header').classList.add('hidden');
             
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('reader-view').classList.remove('hidden');
-            document.getElementById('reader-placeholder').classList.remove('hidden');
-            document.getElementById('content-container').classList.add('hidden');
             
             if(!isSidebarOpen) toggleSidebar(); 
-            currentSectionId = null;
             renderTOC();
+
+            // Tự động mở bài học đầu tiên nếu có để học sinh thấy ngay nội dung
+            const docSections = sections.filter(s => s.id_tailieu === currentDocId);
+            if (docSections.length > 0) {
+                const sectionIdSet = new Set(docSections.map(s => s.id_phan));
+                const roots = docSections.filter(s => !s.id_cha || !sectionIdSet.has(s.id_cha));
+                const firstSec = (roots.length > 0 ? roots[0] : docSections[0]);
+                selectSection(firstSec.id_phan);
+            } else {
+                currentSectionId = null;
+                document.getElementById('reader-placeholder').classList.remove('hidden');
+                document.getElementById('content-container').classList.add('hidden');
+            }
         }
 
         function renderTOC() {
@@ -444,8 +454,12 @@
             // Data trả về từ Server MỚI NHẤT luôn đảm bảo thứ tự do Giáo viên đã kéo
             const docSections = sections.filter(s => s.id_tailieu === currentDocId);
             
-            const roots = docSections.filter(s => !s.id_cha);
-            roots.forEach(root => {
+            const sectionIdSet = new Set(docSections.map(s => s.id_phan));
+            // Một mục được coi là root nếu: không có id_cha HOẶC id_cha không tồn tại trong danh sách
+            const roots = docSections.filter(s => !s.id_cha || !sectionIdSet.has(s.id_cha));
+            const effectiveRoots = roots.length > 0 ? roots : docSections;
+
+            effectiveRoots.forEach(root => {
                 toc.appendChild(createTOCItem(root, 0));
                 const level1 = docSections.filter(s => s.id_cha === root.id_phan);
                 level1.forEach(child1 => {
@@ -457,7 +471,7 @@
                 });
             });
             
-            if (roots.length === 0) {
+            if (effectiveRoots.length === 0) {
                 toc.innerHTML = '<div class="text-center text-amber-700 py-4 italic text-sm">Chưa có bài học nào được mở.</div>';
             }
         }
@@ -486,6 +500,7 @@
         function selectSection(secId) {
             currentSectionId = secId;
             const section = sections.find(s => s.id_phan === secId);
+            if (!section) return;
             
             if (!studentProgress.includes(secId)) {
                 studentProgress.push(secId);

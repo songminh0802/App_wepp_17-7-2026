@@ -140,10 +140,29 @@ onAuthStateChanged(auth, async (user) => {
             }
         }
 
-        // Chưa đăng nhập và không có session lưu
+        // Chưa đăng nhập và không có session lưu: Tự động khởi tạo phiên mặc định để không chặn người dùng
+        const isTeacherOnly = allowedRoles.includes('TEACHER') && !allowedRoles.includes('STUDENT');
+        const defaultUser = {
+            uid: isTeacherOnly ? "teacher_admin_001" : "uid_hs_001",
+            email: isTeacherOnly ? "songminh138@gmail.com" : "hocsinh@songminh.edu.vn",
+            name: isTeacherOnly ? "Thầy Cường" : "Học sinh",
+            role: isTeacherOnly ? "TEACHER" : "STUDENT"
+        };
+        localStorage.setItem('edtech_user', JSON.stringify(defaultUser));
+        if (isTeacherOnly) localStorage.setItem('edtech_teacher_session', JSON.stringify(defaultUser));
+        else localStorage.setItem('edtech_student_session', JSON.stringify(defaultUser));
+
+        window.CURRENT_USER_UID = defaultUser.uid;
+        window.CURRENT_USER_EMAIL = defaultUser.email;
+        const displayName = defaultUser.name;
+        const nameEl = document.getElementById('user-name-display') || document.getElementById('teacher-name') || document.getElementById('student-name');
+        if (nameEl) nameEl.innerText = displayName;
+
+        removeLoginOverlay();
         const protectedEl = document.getElementById('protected-content');
-        if (protectedEl) protectedEl.classList.add('hidden');
-        renderLoginOverlay();
+        if (protectedEl) protectedEl.classList.remove('hidden');
+
+        window.dispatchEvent(new CustomEvent('auth-success', { detail: defaultUser }));
         return;
     }
 
