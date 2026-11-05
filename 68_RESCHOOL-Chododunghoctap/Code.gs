@@ -83,7 +83,27 @@ function doGet(e) {
   var sp = (e && e.parameter && e.parameter.sp) || '';
   if (!/^RS\d{3,6}$/.test(sp)) sp = '';
   var init = JSON.stringify({ sp: sp }).replace(/</g, '\\u003c');
-  var t = HtmlService.createTemplateFromFile('Index');
+  var t;
+  try {
+    t = HtmlService.createTemplateFromFile('Index');
+  } catch (e1) {
+    try {
+      t = HtmlService.createTemplateFromFile('index');
+    } catch (e2) {
+      return HtmlService.createHtmlOutput(
+        '<div style="font-family:sans-serif;padding:30px;max-width:600px;margin:40px auto;border:1px solid #ddd;border-radius:12px;background:#fff8e7;color:#333;">' +
+        '<h2 style="color:#c62828;">⚠️ Chưa tạo tệp HTML "Index"</h2>' +
+        '<p>Để mở được giao diện trên đường link này, bạn cần thêm tệp giao diện vào dự án Apps Script:</p>' +
+        '<ol>' +
+        '<li>Trong Apps Script, bấm dấu <b>[+]</b> cạnh chữ Tệp &gt; Chọn <b>HTML</b>.</li>' +
+        '<li>Đặt tên là: <b>Index</b> (hoặc <b>index</b>).</li>' +
+        '<li>Copy toàn bộ nội dung file <b>index.html</b> trong máy tính và dán vào đó.</li>' +
+        '<li>Lưu lại và tải lại trang này.</li>' +
+        '</ol>' +
+        '</div>'
+      ).setTitle('ReSchool – Cần thêm tệp Index');
+    }
+  }
   t.initJson = init;
   return t.evaluate()
     .setTitle('ReSchool – Chợ đồ dùng học tập tuần hoàn')
