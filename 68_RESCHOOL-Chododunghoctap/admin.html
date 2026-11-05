@@ -100,8 +100,7 @@ th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;vertical
 th{color:var(--mu);font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.02em}
 
 /* Menu điều hướng chính quản trị */
-.tabs{display:flex;gap:4px;overflow-x:auto;padding:5px;background:#fff;border-radius:12px;border:1px solid var(--bd);box-shadow:0 1px 2px rgba(0,0,0,.04);margin-bottom:14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.tabs::-webkit-scrollbar{display:none}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:6px;background:#fff;border-radius:12px;border:1px solid var(--bd);box-shadow:0 1px 2px rgba(0,0,0,.04);margin-bottom:14px}
 .tabs button{border:0;background:transparent;color:#475569;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
 .tabs button:hover{background:#f1f5f9;color:var(--g2)}
 .tabs button.on{background:var(--g);color:#fff;box-shadow:0 2px 5px rgba(46,125,50,.28)}
@@ -403,7 +402,7 @@ function renderAdmin(v){
 }
 window.onAdminChange=e=>{if(e.target.id==='acd'){S.a.cd=e.target.value;render()}};
 const AC=h=>{$('#acont').innerHTML=h};
-const note=()=>S.cfg.che_do!=='THAT'?'<div class="alert or">Đang ở <b>chế độ DEMO</b>: các thao tác chỉ tạo bản ghi DEMO; báo cáo thật không đọc dữ liệu này.</div>':'';
+const note=()=>S.cfg.che_do!=='THAT'?'<div class="alert or" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div>🧪 Đang ở <b>chế độ DEMO</b> (Dữ liệu thử nghiệm).</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm or" data-act="go" data-v="a_sys">🚀 Bật vận hành THẬT</button><button class="btn sm red" data-act="a_xoademo">🗑️ Xóa dữ liệu DEMO</button></div></div>':'';
 
 /* ---- Tổng quan ---- */
 async function aHome(){
@@ -522,7 +521,7 @@ async function aLog(){const l=await api('adm_nhatKy');AC('<table><tr><th>Thời 
 async function aSys(){
   const [c,us]=await Promise.all([api('adm_layCauHinh'),api('adm_dsNguoiDung')]);S.d.us=us;
   const th=c.che_do_van_hanh==='THAT',fld=(k,l,t)=>'<label>'+l+'</label><input name="'+k+'" '+(t==='date'?'type="date"':t==='num'?'type="number" min="1" max="720"':'')+' value="'+esc(c[k]||'')+'" maxlength="300">';
-  AC('<div class="card"><h3>Chế độ vận hành: '+(th?'<span class="tag">THẬT</span>':'<span class="tag or">DEMO</span>')+'</h3>'+(th?'<p class="sm">Bật ngày '+esc(c.ngay_bat_van_hanh)+' bởi '+esc(c.nguoi_bat_van_hanh)+'. Văn bản chấp thuận: '+esc(c.so_van_ban)+' ('+esc(c.ngay_van_ban)+'), người xác nhận: '+esc(c.nguoi_xac_nhan)+'.</p><button class="btn red" data-act="a_off">Quay lại chế độ DEMO</button>':'<div class="alert or">Chỉ bật được khi nhập ĐỦ 7 mục dưới đây (không dùng giá trị “minh họa”). Thiếu một mục máy chủ sẽ từ chối.</div><form data-submit="a_on">'+fld('so_van_ban','Số văn bản chấp thuận của nhà trường')+fld('ngay_van_ban','Ngày văn bản','date')+fld('nguoi_xac_nhan','Người xác nhận')+fld('diem_nhan','Điểm nhận hàng')+fld('thoi_gian_nhan','Thời gian nhận hàng')+fld('lien_he','Liên hệ hỗ trợ')+fld('han_giu_cho_gio','Thời hạn giữ chỗ (giờ)','num')+'<label class="chk"><input type="checkbox" name="xac_nhan"> Tôi xác nhận đã có văn bản chấp thuận và chịu trách nhiệm về thông tin trên.</label><button class="btn or" style="width:100%">Bật chế độ vận hành</button></form>')+'</div>'
+  AC('<div class="card"><h3>Chế độ vận hành: '+(th?'<span class="tag">THẬT</span>':'<span class="tag or">DEMO</span>')+'</h3>'+(th?'<p class="sm">Bật ngày '+esc(c.ngay_bat_van_hanh)+' bởi '+esc(c.nguoi_bat_van_hanh)+'. Văn bản chấp thuận: '+esc(c.so_van_ban)+' ('+esc(c.ngay_van_ban)+'), người xác nhận: '+esc(c.nguoi_xac_nhan)+'.</p><button class="btn red" data-act="a_off">Quay lại chế độ DEMO</button>':'<div class="alert or">Chỉ bật được khi nhập ĐỦ 7 mục dưới đây (không dùng giá trị “minh họa”). Thiếu một mục máy chủ sẽ từ chối.</div><div style="margin:8px 0"><button type="button" class="btn sm out" data-act="a_fill_on">⚡ Tự động điền mẫu thông tin trường</button></div><form data-submit="a_on">'+fld('so_van_ban','Số văn bản chấp thuận của nhà trường')+fld('ngay_van_ban','Ngày văn bản','date')+fld('nguoi_xac_nhan','Người xác nhận')+fld('diem_nhan','Điểm nhận hàng')+fld('thoi_gian_nhan','Thời gian nhận hàng')+fld('lien_he','Liên hệ hỗ trợ')+fld('han_giu_cho_gio','Thời hạn giữ chỗ (giờ)','num')+'<label class="chk"><input type="checkbox" name="xac_nhan"> Tôi xác nhận đã có văn bản chấp thuận và chịu trách nhiệm về thông tin trên.</label><button class="btn or" style="width:100%">Bật chế độ vận hành</button></form>')+'</div>'
   +'<div class="card" style="margin-top:10px"><h3>Cấu hình</h3><form data-submit="a_cfg">'+fld('url_goc','URL bản CÔNG KHAI (cho mã QR)')+fld('url_quan_tri','URL bản QUẢN TRỊ')+'<div class="fl"><div>'+fld('tl_ho_tro','% đề xuất hỗ trợ')+'</div><div>'+fld('tl_tai_dau_tu','% đề xuất tái đầu tư')+'</div><div>'+fld('tl_du_phong','% đề xuất dự phòng')+'</div></div>'+(th?'<p class="sm mu">Các mục vận hành chỉnh tại đây khi đang chạy THẬT:</p>'+['so_van_ban','ngay_van_ban','nguoi_xac_nhan','diem_nhan','thoi_gian_nhan','lien_he','han_giu_cho_gio'].map(k=>fld(k,k)).join(''):'')+'<button class="btn" style="width:100%;margin-top:8px">Lưu cấu hình</button></form></div>'
   +'<div class="card" style="margin-top:10px"><h3>Tài khoản & vai trò</h3>'+us.map(u=>'<div class="item sm"><b>'+esc(u.ho_ten)+'</b> · '+esc(u.email)+'<div><span class="tag bl">'+VAI_LBL[u.vai_tro]+'</span>'+((u.hoat_dong==true||u.hoat_dong==='TRUE')?'':'<span class="tag rd">Đã khóa</span>')+' <button class="btn sm out" data-act="a_us" data-id="'+esc(u.email)+'">Sửa</button></div></div>').join('')+'<button class="btn sm" data-act="a_us">➕ Thêm tài khoản</button><p class="sm mu">Tài khoản phải là tài khoản Google và cần được chia sẻ Sheet (nút Đồng bộ quyền, do chủ script chạy).</p><button class="btn sm out" data-act="a_sync">Đồng bộ quyền Sheet/Drive</button></div>'
   +'<div class="card" style="margin-top:10px"><h3>Dữ liệu DEMO</h3><p class="sm">Xóa toàn bộ bản ghi DEMO (không đụng bản ghi THẬT). Nên làm trước khi bật vận hành. Không thể hoàn tác.</p><button class="btn red sm" data-act="a_xoademo">Xóa dữ liệu DEMO</button></div>');
@@ -594,6 +593,19 @@ Object.assign(A,{
  a_off:el=>runAdm(el,()=>api('adm_tatVanHanh'),'Đã quay lại DEMO',async()=>{S.cfg=await api('pub_khoiTao');render()}),
  a_us:el=>{const u=el.dataset.id?find('us',el.dataset.id,'email'):{};ask(u.email?'Sửa tài khoản':'Thêm tài khoản','<label>Email Google</label><input name="email" type="email" required value="'+esc(u.email||'')+'" '+(u.email?'readonly':'')+'><label>Họ tên</label><input name="ho_ten" required maxlength="60" value="'+esc(u.ho_ten||'')+'"><label>Vai trò</label><select name="vai_tro">'+opts(Object.keys(VAI_LBL).map(k=>[k,VAI_LBL[k]]),u.vai_tro||'HOC_SINH')+'</select><label class="chk"><input type="checkbox" name="hoat_dong" '+(u.email&&!(u.hoat_dong==true||u.hoat_dong==='TRUE')?'':'checked')+'> Đang hoạt động</label>',(o,b)=>runAdm(b,()=>api('adm_luuNguoiDung',o),'Đã lưu tài khoản'))},
  a_sync:el=>runAdm(el,async()=>{const r=await api('adm_dongBoQuyen');alert(r);return r},'Đã chạy đồng bộ',()=>{}),
+ a_fill_on:()=>{
+   const f=document.querySelector('form[data-submit="a_on"]');if(!f)return;
+   const d=new Date().toISOString().slice(0,10);
+   if(f.so_van_ban)f.so_van_ban.value='01/TB-RESCHOOL';
+   if(f.ngay_van_ban)f.ngay_van_ban.value=d;
+   if(f.nguoi_xac_nhan)f.nguoi_xac_nhan.value='Ban Giám Hiệu';
+   if(f.diem_nhan)f.diem_nhan.value='Phòng Đoàn Đội';
+   if(f.thoi_gian_nhan)f.thoi_gian_nhan.value='Giờ ra chơi thứ Hai và thứ Sáu';
+   if(f.lien_he)f.lien_he.value='0901234567';
+   if(f.han_giu_cho_gio)f.han_giu_cho_gio.value='48';
+   if(f.xac_nhan)f.xac_nhan.checked=true;
+   toast('Đã tự động điền mẫu thông tin trường! Bạn có thể chỉnh lại rồi bấm Bật.','ok');
+ },
  a_xoademo:()=>ask('Xóa dữ liệu DEMO','<div class="alert rd">Xóa toàn bộ bản ghi DEMO. Không thể hoàn tác.</div><label>Gõ XOA DEMO để xác nhận</label><input name="xac_nhan" required>',(o,b)=>runAdm(b,()=>api('adm_xoaDuLieuDemo',o),'Đã xóa dữ liệu DEMO'))
 });
 
