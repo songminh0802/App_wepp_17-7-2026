@@ -78,34 +78,19 @@ var NHAN_DEMO = {
 /* ===================== WEB APP & API ===================== */
 function doGet(e) {
   if (e && e.parameter && e.parameter.api === 'ping') {
-    return outJson_({ ok: true, phien_ban: PHIEN_BAN, ten: TEN_DU_AN });
+    return outJson_({ ok: true, phien_ban: PHIEN_BAN, ten: TEN_DU_AN, thoi_gian: bayGio_() });
   }
-  var sp = (e && e.parameter && e.parameter.sp) || '';
-  if (!/^RS\d{3,6}$/.test(sp)) sp = '';
-  var init = JSON.stringify({ sp: sp }).replace(/</g, '\\u003c');
-  var t;
-  try {
-    t = HtmlService.createTemplateFromFile('Index');
-  } catch (e1) {
-    try {
-      t = HtmlService.createTemplateFromFile('index');
-    } catch (e2) {
-      return HtmlService.createHtmlOutput(
-        '<div style="font-family:sans-serif;padding:30px;max-width:600px;margin:40px auto;border:1px solid #ddd;border-radius:12px;background:#fff8e7;color:#333;">' +
-        '<h2 style="color:#c62828;">⚠️ Chưa tạo tệp HTML "Index"</h2>' +
-        '<p>Để mở được giao diện trên đường link này, bạn cần thêm tệp giao diện vào dự án Apps Script:</p>' +
-        '<ol>' +
-        '<li>Trong Apps Script, bấm dấu <b>[+]</b> cạnh chữ Tệp &gt; Chọn <b>HTML</b>.</li>' +
-        '<li>Đặt tên là: <b>Index</b> (hoặc <b>index</b>).</li>' +
-        '<li>Copy toàn bộ nội dung file <b>index.html</b> trong máy tính và dán vào đó.</li>' +
-        '<li>Lưu lại và tải lại trang này.</li>' +
-        '</ol>' +
-        '</div>'
-      ).setTitle('ReSchool – Cần thêm tệp Index');
-    }
-  }
-  t.initJson = init;
-  return t.evaluate()
+  // Tự động chuyển hướng về trang web chính trên Vercel
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta http-equiv="refresh" content="0; url=https://reschool-chododunghoctaptuanhoan.vercel.app/">' +
+    '<script>window.location.href="https://reschool-chododunghoctaptuanhoan.vercel.app/";</script>' +
+    '<style>body{font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:50px;background:#f8f9fa;color:#333;line-height:1.6} .btn{display:inline-block;padding:12px 24px;background:#2e7d32;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;margin-top:16px}</style>' +
+    '</head><body>' +
+    '<h2>♻️ ReSchool – Chợ đồ dùng học tập tuần hoàn</h2>' +
+    '<p>Đang chuyển hướng tới giao diện website chính...</p>' +
+    '<p><a class="btn" href="https://reschool-chododunghoctaptuanhoan.vercel.app/">Bấm vào đây để mở ReSchool</a></p>' +
+    '</body></html>';
+  return HtmlService.createHtmlOutput(html)
     .setTitle('ReSchool – Chợ đồ dùng học tập tuần hoàn')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -131,11 +116,14 @@ function doPost(e) {
       return outJson_({ ok: false, loi: 'Hàm không hợp lệ hoặc bị từ chối truy cập.' });
     }
 
-    if (typeof this[fn] !== 'function') {
+    var targetFn = (typeof globalThis !== 'undefined' && typeof globalThis[fn] === 'function') ? globalThis[fn] :
+                   (typeof this !== 'undefined' && this && typeof this[fn] === 'function' ? this[fn] : null);
+
+    if (!targetFn) {
       return outJson_({ ok: false, loi: 'Không tìm thấy hàm: ' + fn });
     }
 
-    var kq = this[fn].apply(null, args);
+    var kq = targetFn.apply(null, args);
     return outJson_(kq);
   } catch (err) {
     console.error('Lỗi API doPost:', err);
