@@ -214,7 +214,35 @@ function render(){
 async function loadSp(force){if(S.sp&&!force)return S.sp;S.sp=await api('pub_danhSachSanPham');return S.sp}
 const stLbl=p=>p.trang_thai==='SAN_SANG'?(p.dat_duoc?'Còn hàng':'Tạm hết'):TT_SP[p.trang_thai];
 function stTag(p){const t=p.trang_thai;return '<span class="tag '+(t==='SAN_SANG'&&p.dat_duoc?'':t==='GIU_CHO'?'or':'gr')+'">'+esc(stLbl(p))+'</span>'}
-function imgBox(p){const c=dm(p.danh_muc);return '<div class="im">'+(isDemo()?'<span class="demo-tag">Dữ liệu minh họa</span>':'')+'<span>'+c.icon+'</span>'+(p.anh_id?'<img loading="lazy" alt="" src="https://drive.google.com/thumbnail?id='+encodeURIComponent(p.anh_id)+'&sz=w600" onerror="this.remove()">':'')+'</div>'}
+function imgBox(p){
+  const c=dm(p.danh_muc);
+  const ids=String(p.anh_id||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const firstId=ids[0]||'';
+  return '<div class="im" style="position:relative">'+(isDemo()?'<span class="demo-tag">Dữ liệu minh họa</span>':'')+'<span>'+c.icon+'</span>'+(firstId?'<img loading="lazy" alt="" src="https://drive.google.com/thumbnail?id='+encodeURIComponent(firstId)+'&sz=w600" onerror="this.remove()">':'')+(ids.length>1?'<span style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.65);color:#fff;font-size:11px;padding:2px 6px;border-radius:12px;font-weight:600">📷 '+ids.length+'</span>':'')+'</div>';
+}
+function renderGallery(p){
+  const ids=String(p.anh_id||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const c=dm(p.danh_muc);
+  if(!ids.length)return '<div class="im" style="height:260px;border-radius:12px;overflow:hidden"><span>'+c.icon+'</span></div>';
+  const mainUrl='https://drive.google.com/thumbnail?id='+encodeURIComponent(ids[0])+'&sz=w800';
+  let h='<div class="sp-gallery" style="margin-bottom:12px">';
+  h+='<div class="im" id="galleryMain" style="height:320px;border-radius:12px;overflow:hidden;position:relative;background:#f8fafc;display:flex;align-items:center;justify-content:center">';
+  h+='<img id="galleryMainImg" src="'+mainUrl+'" alt="'+esc(p.ten)+'" style="max-height:100%;max-width:100%;object-fit:contain" onerror="this.src=\'\'">';
+  if(isDemo())h+='<span class="demo-tag">Dữ liệu minh họa</span>';
+  h+='</div>';
+  if(ids.length>1){
+    h+='<div class="gallery-thumbs" style="display:flex;gap:8px;margin-top:8px;overflow-x:auto;padding-bottom:4px">';
+    ids.forEach((id,idx)=>{
+      const thUrl='https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w200';
+      h+='<button type="button" class="gallery-thumb-btn" data-act="view_photo" data-id="'+encodeURIComponent(id)+'" style="border:2px solid '+(idx===0?'var(--pr,#2e7d32)':'#e2e8f0')+';border-radius:8px;padding:2px;background:#fff;cursor:pointer;flex-shrink:0;width:64px;height:64px;overflow:hidden;outline:none">';
+      h+='<img src="'+thUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:5px" alt="Ảnh '+(idx+1)+'">';
+      h+='</button>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  return h;
+}
 function pCard(p){return '<div class="card pc" data-act="go" data-v="product" data-p="'+esc(p.ma)+'">'+imgBox(p)+'<div class="bd"><div class="mu sm">'+esc(p.ma)+'</div><div class="nm">'+esc(p.ten)+'</div><div class="price">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span></div></div></div>'}
 
 /* ---------- Trang chủ ---------- */
@@ -251,7 +279,7 @@ async function vProduct(){
   const ma=S.param;$('#app').innerHTML='<div class="wrap">'+loading()+'</div>';
   try{
     const p=await api('pub_chiTietSanPham',ma);
-    $('#app').innerHTML='<div class="wrap"><button class="btn out sm" data-act="go" data-v="catalog">← Sản phẩm</button><div class="card" style="margin-top:10px"><div class="pc" style="border-radius:12px;overflow:hidden">'+imgBox(p)+'</div><h2>'+esc(p.ten)+'</h2><div class="mu sm">Mã: <b>'+esc(p.ma)+'</b> · '+(p.nguon==='KY_GUI'?'Hàng ký gửi':'Hàng tặng')+'</div><div class="price" style="font-size:1.4rem;margin:6px 0">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span><span class="tag">✔ Đã kiểm tra</span><span class="tag">'+esc(dm(p.danh_muc).ten)+'</span></div>'+(isDemo()?'<div class="alert or">Dữ liệu minh họa – giá và hình ảnh chỉ để minh họa.</div>':'')+'<h3>Mô tả</h3><p>'+esc(p.mo_ta||'Chưa có mô tả.')+'</p><h3>Tình trạng và lỗi đã ghi nhận</h3><p>'+esc(p.loi_ghi_nhan||'Chưa ghi nhận lỗi nào.')+'</p>'
+    $('#app').innerHTML='<div class="wrap"><button class="btn out sm" data-act="go" data-v="catalog">← Sản phẩm</button><div class="card" style="margin-top:10px">'+renderGallery(p)+'<h2>'+esc(p.ten)+'</h2><div class="mu sm">Mã: <b>'+esc(p.ma)+'</b> · '+(p.nguon==='KY_GUI'?'Hàng ký gửi':'Hàng tặng')+'</div><div class="price" style="font-size:1.4rem;margin:6px 0">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span><span class="tag">✔ Đã kiểm tra</span><span class="tag">'+esc(dm(p.danh_muc).ten)+'</span></div>'+(isDemo()?'<div class="alert or">Dữ liệu minh họa – giá và hình ảnh chỉ để minh họa.</div>':'')+'<h3>Mô tả</h3><p>'+esc(p.mo_ta||'Chưa có mô tả.')+'</p><h3>Tình trạng và lỗi đã ghi nhận</h3><p>'+esc(p.loi_ghi_nhan||'Chưa ghi nhận lỗi nào.')+'</p>'
     +(p.dat_duoc?'<div class="row" style="margin-top:10px;align-items:center"><select id="pq" style="width:90px">'+Array.from({length:Math.min(p.ton_kho,10)},(_,i)=>'<option>'+(i+1)+'</option>').join('')+'</select><button class="btn or" data-act="addcart" data-p="'+esc(p.ma)+'">🛒 Thêm vào giỏ</button></div><p class="sm mu">Còn '+p.ton_kho+' món. Nhận tại điểm nhận, thanh toán khi nhận.</p>':'<div class="alert gr">'+(p.trang_thai==='DA_BAN'?'Sản phẩm này đã bán.':p.trang_thai==='GIU_CHO'?'Sản phẩm đang được giữ chỗ cho người khác.':'Sản phẩm hiện không thể đặt.')+'</div>')
     +'<h3>Mã QR của sản phẩm</h3><div class="qr" id="qr"></div><p class="sm mu">Quét để mở lại đúng trang sản phẩm này.</p></div></div>';
     drawQR($('#qr'),qrUrl(p.ma));
@@ -294,7 +322,7 @@ function vForm(loai){
   +(tang?'<label>Loại hàng</label><select name="loai_hang">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),'')+'</select>':'')
   +'<label>Mô tả món đồ (tối thiểu 10 ký tự)</label><textarea name="mo_ta" required maxlength="1000"></textarea><label>Tình trạng</label><select name="tinh_trang">'+opts(S.cfg.tinh_trang,'')+'</select>'
   +(tang?'':'<label>Giá mong muốn (đ)</label><input name="gia_mong_muon" type="number" min="1000" step="500" required>')
-  +'<label>Ảnh món đồ (JPG/PNG/WEBP, tối đa 2 MB) <b style="color:var(--rd)">* Bắt buộc</b></label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="1" required><input type="hidden" name="anh_token"><div id="photoSt" class="sm mu"></div>'
+  +'<label>Ảnh món đồ (Tối đa 5 ảnh JPG/PNG/WEBP ≤ 2 MB) <b style="color:var(--rd)">* Bắt buộc</b></label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="1" multiple required><input type="hidden" name="anh_token"><div id="photoSt" class="sm mu"></div>'
   +'<label class="chk"><input type="checkbox" name="la_hoc_sinh"> Người gửi là học sinh</label><label class="chk hide" id="phh"><input type="checkbox" name="phu_huynh_dong_y"> Phụ huynh/người giám hộ đã đồng ý cho em gửi món đồ này. (bắt buộc với học sinh)</label>'
   +(tang?'<label class="chk"><input type="checkbox" name="tu_nguyen"> Tôi xác nhận việc tặng là hoàn toàn tự nguyện.</label>':'')
   +'<label class="chk"><input type="checkbox" name="khong_thuoc_loai_tu_choi"> Món đồ không thuộc nhóm không nhận ở trên.</label>'
@@ -303,28 +331,64 @@ function vForm(loai){
 }
 function policy(){openModal('Chính sách thông tin cá nhân','<p>ReSchool chỉ thu thông tin tối thiểu (tên gọi, cách liên hệ) để xử lý đơn/yêu cầu của bạn.</p><ul><li>Không công khai thông tin người mua, người tặng, chủ ký gửi.</li><li>Không dùng tên, hình ảnh, số điện thoại học sinh để quảng bá.</li><li>Không công khai hoàn cảnh hay danh tính người được hỗ trợ.</li><li>Học sinh gửi đồ cần có sự đồng ý của phụ huynh hoặc người giám hộ.</li><li>Dữ liệu chỉ giáo viên và thành viên được phân quyền xem; bạn có thể đề nghị xóa thông tin qua liên hệ của dự án.</li></ul>')}
 function photoHandler(inp,admin){
-  const st=$('#photoSt'),f=inp.files[0],tk=inp.form?inp.form.querySelector('[name=anh_token]'):null;
-  const btn=inp.form?inp.form.querySelector('button[type=submit], button:not([type=button])'):null;
+  const form=inp.form||inp.closest('form');
+  const st=form?form.querySelector('#photoSt'):$('#photoSt');
+  const tk=form?form.querySelector('[name=anh_token]'):null;
+  const btn=form?form.querySelector('button[type=submit], button:not([type=button])'):null;
   if(tk)tk.value='';
-  if(!f){if(st)st.textContent='';return}
-  if(!['image/jpeg','image/png','image/webp'].includes(f.type)){if(st)st.textContent='❌ Chỉ nhận JPG, PNG, WEBP.';inp.value='';return}
-  if(f.size>2*1024*1024){if(st)st.textContent='❌ Ảnh vượt quá 2 MB.';inp.value='';return}
-  if(st)st.innerHTML='<span class="spin"></span> Đang tải ảnh lên…';
+  const files=Array.from(inp.files||[]);
+  if(!files.length){if(st)st.innerHTML='';return}
+  if(files.length>5){
+    if(st)st.innerHTML='<span style="color:var(--rd,#d32f2f);font-weight:600">❌ Chỉ được chọn tối đa 5 ảnh. Bạn đã chọn '+files.length+' ảnh. Vui lòng chọn lại!</span>';
+    inp.value='';return;
+  }
+  const allowed=['image/jpeg','image/png','image/webp'];
+  for(let i=0;i<files.length;i++){
+    const f=files[i];
+    if(!allowed.includes(f.type)){
+      if(st)st.innerHTML='<span style="color:var(--rd,#d32f2f);font-weight:600">❌ Tệp "'+esc(f.name)+'" không đúng định dạng. Chỉ nhận JPG, PNG, WEBP.</span>';
+      inp.value='';return;
+    }
+    if(f.size>2*1024*1024){
+      if(st)st.innerHTML='<span style="color:var(--rd,#d32f2f);font-weight:600">❌ Tệp "'+esc(f.name)+'" vượt quá dung lượng 2 MB.</span>';
+      inp.value='';return;
+    }
+  }
   if(btn)btn.disabled=true;
-  const r=new FileReader();
-  r.onload=async()=>{
+  if(st)st.innerHTML='<span class="spin"></span> Đang tải ảnh (0/'+files.length+') lên Google Drive…';
+  (async()=>{
+    const tokens=[];
+    const previews=[];
     try{
-      const d=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:f.type,b64:String(r.result).split(',')[1]});
-      if(tk)tk.value=d.token;
-      if(st)st.innerHTML='<span style="color:#2e7d32;font-weight:600">✅ Đã tải ảnh lên.</span><br><img src="'+r.result+'" style="max-height:80px;border-radius:8px;margin-top:6px;border:1px solid #cbd5e1">';
+      for(let i=0;i<files.length;i++){
+        const f=files[i];
+        if(st)st.innerHTML='<span class="spin"></span> Đang tải ảnh '+(i+1)+'/'+files.length+' lên Google Drive…';
+        const dataUrl=await new Promise((resolve,reject)=>{
+          const r=new FileReader();
+          r.onload=()=>resolve(r.result);
+          r.onerror=()=>reject(new Error('Không đọc được tệp '+f.name));
+          r.readAsDataURL(f);
+        });
+        const b64=String(dataUrl).split(',')[1];
+        const res=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:f.type,b64:b64});
+        tokens.push(res.token);
+        previews.push(dataUrl);
+      }
+      if(tk)tk.value=tokens.join(',');
+      if(st){
+        st.innerHTML='<div style="color:#2e7d32;font-weight:600;margin-bottom:6px">✅ Đã tải lên '+tokens.length+' ảnh thành công!</div>'
+          +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'
+          +previews.map((src,idx)=>'<div style="position:relative;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;width:68px;height:68px;background:#f8fafc"><img src="'+src+'" style="width:100%;height:100%;object-fit:cover">'+(idx===0?'<span style="position:absolute;bottom:0;left:0;right:0;background:rgba(46,125,50,0.85);color:#fff;font-size:9px;text-align:center;padding:1px 0;line-height:1.2;font-weight:600">Ảnh chính</span>':'')+'</div>').join('')
+          +'</div>';
+      }
     }catch(e){
-      if(st)st.textContent='❌ '+e.message;
+      if(st)st.innerHTML='<div style="color:var(--rd,#d32f2f);font-weight:600">❌ '+esc(e.message)+'</div>';
       inp.value='';
+      if(tk)tk.value='';
     }finally{
       if(btn)btn.disabled=false;
     }
-  };
-  r.readAsDataURL(f);
+  })();
 }
 
 /* ---------- Giới thiệu & phản hồi (BM06) ---------- */
@@ -338,6 +402,12 @@ const A={
  cat:el=>{S.f={q:'',dm:el.dataset.p,min:'',max:'',tt:'',con:false,sort:'moi'};go('catalog')},
  close:()=>closeModal(),
  policy:()=>policy(),
+ view_photo:el=>{
+   const id=el.dataset.id,img=$('#galleryMainImg');
+   if(img&&id)img.src='https://drive.google.com/thumbnail?id='+id+'&sz=w800';
+   $$('.gallery-thumb-btn').forEach(b=>b.style.borderColor='#e2e8f0');
+   el.style.borderColor='var(--pr,#2e7d32)';
+ },
  addcart:el=>{const ma=el.dataset.p,sl=+($('#pq')||{value:1}).value,x=S.cart.find(i=>i.ma===ma);if(x)x.sl=Math.min(10,x.sl+sl);else S.cart.push({ma,sl});saveCart();toast('Đã thêm vào giỏ hàng','ok')},
  qty:el=>{const i=S.cart.find(x=>x.ma===el.dataset.p),p=S.sp.find(x=>x.ma===i.ma);i.sl=Math.max(1,Math.min(i.sl+(+el.dataset.d),p.ton_kho,10));saveCart();vCart()},
  rm:el=>{S.cart=S.cart.filter(i=>i.ma!==el.dataset.p);saveCart();vCart()}

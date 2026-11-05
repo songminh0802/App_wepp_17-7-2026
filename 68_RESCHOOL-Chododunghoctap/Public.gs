@@ -176,6 +176,7 @@ function kiemTraBieuMau_(p, cd) {
   if (p.khong_thuoc_loai_tu_choi !== true) throw loi_('Hãy xác nhận món đồ không thuộc nhóm không nhận.');
   if (!p.dong_y_chinh_sach) throw loi_('Cần đồng ý chính sách thông tin cá nhân.');
   if (cd !== 'THAT' && p.xac_nhan_demo !== true) throw loi_('Hãy xác nhận bạn hiểu đây là chế độ demo (không nhập thông tin thật).');
+  if (!p.anh_token) throw loi_('Vui lòng chụp hoặc tải ảnh món đồ (bắt buộc, tối đa 5 ảnh).');
   o.anh_rieng_id = anhRiengHopLe_(p.anh_token);
   return o;
 }

@@ -55,9 +55,19 @@ function adm_taiAnh(p) { return chay_(function () { batBuoc_('HOC_SINH'); return
 function adm_layAnhRieng(id) {
   return chay_(function () {
     batBuoc_('HOC_SINH');
-    anhRiengHopLe_(id);
-    var f = DriveApp.getFileById(String(id)), b = f.getBlob();
-    return 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes());
+    var ids = String(id || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    if (ids.length === 0) throw loi_('Không tìm thấy ảnh.');
+    var res = [];
+    for (var i = 0; i < ids.length; i++) {
+      try {
+        var f = DriveApp.getFileById(ids[i]), b = f.getBlob();
+        res.push('data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()));
+      } catch (e) {
+        console.warn('Lỗi đọc ảnh ' + ids[i] + ': ' + e);
+      }
+    }
+    if (res.length === 0) throw loi_('Không thể mở tệp ảnh từ Drive.');
+    return res;
   });
 }
 
@@ -104,7 +114,13 @@ function adm_luuSanPham(p) {
           s.ma_nguon = kg.ma; kg.ma_san_pham = s.ma; capNhat_('KyGui', kg);
         } else s.ma_nguon = String(p.ma_nguon || '').slice(0, 20);
       }
-      if (p.anh_token) s.anh_rieng_id = anhRiengHopLe_(p.anh_token);
+      if (p.anh_token) {
+        s.anh_rieng_id = anhRiengHopLe_(p.anh_token);
+        s.anh_id = '';
+        if (NHOM_BAN.indexOf(s.trang_thai) >= 0) congKhaiAnh_(s);
+      } else if (moi || (!s.anh_rieng_id && !s.anh_id)) {
+        throw loi_('Vui lòng tải ảnh cho sản phẩm (bắt buộc, tối đa 5 ảnh).');
+      }
       if (moi) them_('SanPham', s); else capNhat_('SanPham', s);
       xoaCache_();
       nhatKy_(u, moi ? 'THEM_SAN_PHAM' : 'SUA_SAN_PHAM', s.ma, s.ten);
@@ -116,10 +132,22 @@ function adm_luuSanPham(p) {
 function congKhaiAnh_(s) {
   if (s.anh_id || !s.anh_rieng_id) return;
   try {
-    var f = DriveApp.getFileById(String(s.anh_rieng_id));
-    var c = f.makeCopy('sp_' + s.ma + '_' + f.getName(), thuMuc_('FOLDER_CONG_KHAI'));
-    try { c.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { }
-    s.anh_id = c.getId();
+    var rawIds = String(s.anh_rieng_id).split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var pubIds = [];
+    var fPublic = thuMuc_('FOLDER_CONG_KHAI');
+    for (var i = 0; i < rawIds.length; i++) {
+      try {
+        var f = DriveApp.getFileById(rawIds[i]);
+        var c = f.makeCopy('sp_' + s.ma + '_' + (i + 1) + '_' + f.getName(), fPublic);
+        try { c.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { }
+        pubIds.push(c.getId());
+      } catch (errOne) {
+        console.warn('Không sao chép được ảnh ' + rawIds[i] + ': ' + errOne);
+      }
+    }
+    if (pubIds.length > 0) {
+      s.anh_id = pubIds.join(',');
+    }
   } catch (e) { console.warn('Không công khai được ảnh ' + s.ma + ': ' + e); }
 }
 

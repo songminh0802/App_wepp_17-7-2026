@@ -332,8 +332,25 @@ function xoaCache_() {
 /* ===================== THƯ MỤC DRIVE ===================== */
 function thuMuc_(khoa) {
   var p = PropertiesService.getScriptProperties(), id = p.getProperty(khoa);
-  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { } }
-  var f = DriveApp.createFolder(khoa === 'FOLDER_CONG_KHAI' ? 'ReSchool_AnhCongKhai' : 'ReSchool_AnhRieng');
+  if (id) {
+    try {
+      var fExist = DriveApp.getFolderById(id);
+      if (fExist && !fExist.isTrashed()) return fExist;
+    } catch (e) { }
+  }
+  var tenTm = khoa === 'FOLDER_CONG_KHAI' ? 'ReSchool_AnhCongKhai' : 'ReSchool_AnhRieng';
+  var it = DriveApp.getFoldersByName(tenTm);
+  var f = null;
+  while (it.hasNext()) {
+    var candidate = it.next();
+    if (!candidate.isTrashed()) {
+      f = candidate;
+      break;
+    }
+  }
+  if (!f) {
+    f = DriveApp.createFolder(tenTm);
+  }
   if (khoa === 'FOLDER_CONG_KHAI') {
     try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { console.warn('Không đặt được chia sẻ công khai: ' + e); }
   }
@@ -512,23 +529,38 @@ function luuAnh_(p) {
   var ok = (mime === 'image/jpeg' && jpg) || (mime === 'image/png' && png) || (mime === 'image/webp' && webp);
   if (!ok) throw loi_('Nội dung tệp không khớp định dạng ảnh.');
 
-  // giới hạn số ảnh/ngày để tránh làm đầy Drive
+  // giới hạn số ảnh/ngày để tránh làm đầy Drive (hỗ trợ tối đa 5 ảnh/sản phẩm)
   var pr = PropertiesService.getScriptProperties(), hn = homNay_(), v = (pr.getProperty('ANH_NGAY') || '').split('|');
   var dem = v[0] === hn ? Number(v[1]) : 0;
-  if (dem >= 150) throw loi_('Hôm nay đã đạt giới hạn tải ảnh. Vui lòng thử lại ngày mai.');
+  if (dem >= 300) throw loi_('Hôm nay đã đạt giới hạn tải ảnh (300 ảnh/ngày). Vui lòng thử lại ngày mai.');
   pr.setProperty('ANH_NGAY', hn + '|' + (dem + 1));
 
   // Utilities.newBlob nhận trực tiếp mảng bytes (Byte[]) từ Utilities.base64Decode
   var blob = Utilities.newBlob(bytes, mime, 'rs_' + Utilities.getUuid().slice(0, 8) + '.' + cho[mime]);
   return thuMuc_('FOLDER_RIENG').createFile(blob).getId();
 }
-function anhRiengHopLe_(id) {
-  if (!id) return '';
-  try {
-    var f = DriveApp.getFileById(String(id)), rid = thuMuc_('FOLDER_RIENG').getId(), it = f.getParents();
-    while (it.hasNext()) if (it.next().getId() === rid) return String(id);
-  } catch (e) { }
-  throw loi_('Ảnh đính kèm không hợp lệ, vui lòng tải lại.');
+function anhRiengHopLe_(idsStr) {
+  if (!idsStr) return '';
+  var list = String(idsStr).split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  if (list.length === 0) return '';
+  if (list.length > 5) throw loi_('Chỉ được tải lên tối đa 5 ảnh.');
+  var rid = thuMuc_('FOLDER_RIENG').getId();
+  var validIds = [];
+  for (var i = 0; i < list.length; i++) {
+    var id = list[i];
+    try {
+      var f = DriveApp.getFileById(id), it = f.getParents();
+      var ok = false;
+      while (it.hasNext()) {
+        if (it.next().getId() === rid) { ok = true; break; }
+      }
+      if (ok) validIds.push(id);
+    } catch (e) {
+      console.warn('Lỗi kiểm tra ảnh ' + id + ': ' + e);
+    }
+  }
+  if (validIds.length === 0) throw loi_('Ảnh đính kèm không hợp lệ hoặc không tìm thấy, vui lòng tải lại.');
+  return validIds.join(',');
 }
 
 
@@ -714,7 +746,7 @@ function kiemTraBieuMau_(p, cd) {
   if (p.khong_thuoc_loai_tu_choi !== true) throw loi_('Hãy xác nhận món đồ không thuộc nhóm không nhận.');
   if (!p.dong_y_chinh_sach) throw loi_('Cần đồng ý chính sách thông tin cá nhân.');
   if (cd !== 'THAT' && p.xac_nhan_demo !== true) throw loi_('Hãy xác nhận bạn hiểu đây là chế độ demo (không nhập thông tin thật).');
-  if (!p.anh_token) throw loi_('Vui lòng chụp hoặc tải ảnh món đồ (bắt buộc).');
+  if (!p.anh_token) throw loi_('Vui lòng chụp hoặc tải ảnh món đồ (bắt buộc, tối đa 5 ảnh).');
   o.anh_rieng_id = anhRiengHopLe_(p.anh_token);
   return o;
 }
@@ -834,9 +866,19 @@ function adm_taiAnh(p) { return chay_(function () { batBuoc_('HOC_SINH'); return
 function adm_layAnhRieng(id) {
   return chay_(function () {
     batBuoc_('HOC_SINH');
-    anhRiengHopLe_(id);
-    var f = DriveApp.getFileById(String(id)), b = f.getBlob();
-    return 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes());
+    var ids = String(id || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    if (ids.length === 0) throw loi_('Không tìm thấy ảnh.');
+    var res = [];
+    for (var i = 0; i < ids.length; i++) {
+      try {
+        var f = DriveApp.getFileById(ids[i]), b = f.getBlob();
+        res.push('data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()));
+      } catch (e) {
+        console.warn('Lỗi đọc ảnh ' + ids[i] + ': ' + e);
+      }
+    }
+    if (res.length === 0) throw loi_('Không thể mở tệp ảnh từ Drive.');
+    return res;
   });
 }
 
@@ -885,8 +927,10 @@ function adm_luuSanPham(p) {
       }
       if (p.anh_token) {
         s.anh_rieng_id = anhRiengHopLe_(p.anh_token);
+        s.anh_id = '';
+        if (NHOM_BAN.indexOf(s.trang_thai) >= 0) congKhaiAnh_(s);
       } else if (moi || (!s.anh_rieng_id && !s.anh_id)) {
-        throw loi_('Vui lòng tải ảnh cho sản phẩm (bắt buộc).');
+        throw loi_('Vui lòng tải ảnh cho sản phẩm (bắt buộc, tối đa 5 ảnh).');
       }
       if (moi) them_('SanPham', s); else capNhat_('SanPham', s);
       xoaCache_();
@@ -899,10 +943,22 @@ function adm_luuSanPham(p) {
 function congKhaiAnh_(s) {
   if (s.anh_id || !s.anh_rieng_id) return;
   try {
-    var f = DriveApp.getFileById(String(s.anh_rieng_id));
-    var c = f.makeCopy('sp_' + s.ma + '_' + f.getName(), thuMuc_('FOLDER_CONG_KHAI'));
-    try { c.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { }
-    s.anh_id = c.getId();
+    var rawIds = String(s.anh_rieng_id).split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+    var pubIds = [];
+    var fPublic = thuMuc_('FOLDER_CONG_KHAI');
+    for (var i = 0; i < rawIds.length; i++) {
+      try {
+        var f = DriveApp.getFileById(rawIds[i]);
+        var c = f.makeCopy('sp_' + s.ma + '_' + (i + 1) + '_' + f.getName(), fPublic);
+        try { c.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) { }
+        pubIds.push(c.getId());
+      } catch (errOne) {
+        console.warn('Không sao chép được ảnh ' + rawIds[i] + ': ' + errOne);
+      }
+    }
+    if (pubIds.length > 0) {
+      s.anh_id = pubIds.join(',');
+    }
   } catch (e) { console.warn('Không công khai được ảnh ' + s.ma + ': ' + e); }
 }
 
