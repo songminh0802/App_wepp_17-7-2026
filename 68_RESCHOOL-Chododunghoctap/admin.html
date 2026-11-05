@@ -11,10 +11,10 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <style>
-  :root{--g:#2E7D32;--g2:#1B5E20;--gl:#E8F5E9;--cream:#FFF8E7;--cream2:#FDF0CF;--or:#F57C00;--or2:#E65100;--tx:#1f2a1f;--mu:#667066;--bd:#dfe6d6;--rd:#c62828;--bl:#1565c0;--w:#fff}
+  :root{--g:#2E7D32;--g2:#1B5E20;--gl:#E8F5E9;--cream:#FFF8E7;--cream2:#FDF0CF;--or:#F57C00;--or2:#E65100;--tx:#1e293b;--mu:#64748b;--bd:#e2e8f0;--rd:#c62828;--bl:#1565c0;--w:#fff}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--cream);color:var(--tx);font-size:15px;line-height:1.5}
+body{margin:0;font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#F8FAF8;color:var(--tx);font-size:14.5px;line-height:1.5}
 h1,h2,h3{margin:.2em 0 .4em;line-height:1.25;color:var(--g2)}
 h1{font-size:1.6rem}h2{font-size:1.25rem}h3{font-size:1.05rem}
 a{color:var(--g)}
@@ -22,22 +22,25 @@ p{margin:.4em 0}
 .hide{display:none!important}
 .center{text-align:center}.pad{padding:28px 16px}
 .mu{color:var(--mu)}.sm{font-size:.85rem}.b{font-weight:700}
-.wrap{max-width:1040px;margin:0 auto;padding:12px}
-#banner .demo{background:var(--or);color:#fff;text-align:center;padding:7px 10px;font-weight:600;font-size:.88rem}
-#banner .that{background:var(--g2);color:#fff;text-align:center;padding:5px 10px;font-size:.8rem}
-#hdr{background:var(--g);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.15)}
-#hdr .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 12px}
-#hdr .brand{flex:1;cursor:pointer}
-#hdr .brand b{font-size:1.15rem;display:block}
-#hdr .brand span{font-size:.72rem;opacity:.92}
-.btn{border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--g);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;min-height:42px}
+.wrap{max-width:1060px;margin:0 auto;padding:14px 16px}
+#banner .demo{background:var(--or);color:#fff;text-align:center;padding:7px 10px;font-weight:600;font-size:.85rem;letter-spacing:0.01em}
+#banner .that{background:var(--g2);color:#fff;text-align:center;padding:6px 10px;font-size:.82rem;font-weight:500}
+#hdr{background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+#hdr .in{max-width:1060px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px}
+#hdr .brand{cursor:pointer}
+#hdr .brand b{font-size:1.15rem;display:block;font-weight:700}
+#hdr .brand span{font-size:.72rem;opacity:.9}
+.badge-role{font-size:.68rem;font-weight:700;background:rgba(255,255,255,.22);color:#fff;padding:2px 8px;border-radius:12px;text-transform:uppercase;letter-spacing:.04em}
+.hdr-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);color:#fff!important;border:1px solid rgba(255,255,255,.35);padding:6px 14px;border-radius:20px;font-size:.84rem;font-weight:600;text-decoration:none;transition:all .2s;white-space:nowrap}
+.hdr-btn:hover{background:rgba(255,255,255,.28);border-color:#fff;transform:translateY(-1px)}
+.btn{border:0;border-radius:10px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--g);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;min-height:38px;transition:background .15s}
 .btn:hover{background:var(--g2)}
 .btn.or{background:var(--or)}.btn.or:hover{background:var(--or2)}
-.btn.out{background:#fff;color:var(--g);border:2px solid var(--g)}
+.btn.out{background:#fff;color:var(--g);border:1.5px solid var(--g)}
 .btn.out:hover{background:var(--gl)}
 .btn.red{background:var(--rd)}
 .btn.gray{background:#8a928a}
-.btn.sm{padding:6px 10px;min-height:34px;font-size:.85rem}
+.btn.sm{padding:5px 10px;min-height:30px;font-size:.82rem}
 .btn:disabled{opacity:.55;cursor:not-allowed}
 .cartb{background:#fff;color:var(--g);border-radius:20px;padding:6px 12px;font-weight:700;cursor:pointer;border:0;font:inherit;font-weight:700}
 .cartb i{background:var(--or);color:#fff;border-radius:10px;padding:0 7px;font-style:normal;margin-left:4px}
@@ -50,7 +53,7 @@ p{margin:.4em 0}
 .row{display:flex;flex-wrap:wrap;gap:10px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
-.card{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .card.cat{text-align:center;cursor:pointer;transition:.15s}
 .card.cat:hover{transform:translateY(-2px);border-color:var(--g)}
 .card.cat .ic{font-size:2.2rem}
@@ -66,15 +69,17 @@ p{margin:.4em 0}
 .steps{counter-reset:s;display:grid;gap:8px}
 .step{background:#fff;border-left:5px solid var(--or);padding:10px 12px;border-radius:10px;border:1px solid var(--bd);border-left:5px solid var(--or)}
 .step:before{counter-increment:s;content:counter(s);background:var(--or);color:#fff;border-radius:50%;display:inline-block;width:24px;height:24px;text-align:center;margin-right:8px;font-weight:700}
-.stat{text-align:center}.stat .n{font-size:1.5rem;font-weight:700;color:var(--g)}
+.stat{text-align:center;padding:16px 10px;transition:transform .15s,box-shadow .15s}
+.stat:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.06);border-color:var(--g)}
+.stat .n{font-size:1.7rem;font-weight:700;color:var(--g)}
 label{display:block;font-weight:600;margin:10px 0 3px;font-size:.9rem}
-input,select,textarea{width:100%;font:inherit;padding:10px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;color:var(--tx)}
+input,select,textarea{width:100%;font:inherit;padding:9px 12px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;color:var(--tx)}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--g)}
 input[type=checkbox],input[type=radio]{width:auto;margin-right:6px}
 .chk{display:flex;align-items:flex-start;gap:6px;font-weight:500;margin:8px 0}
 .chk input{margin-top:4px}
 textarea{min-height:80px;resize:vertical}
-.alert{padding:10px 12px;border-radius:10px;margin:10px 0;font-size:.9rem}
+.alert{padding:10px 14px;border-radius:10px;margin:10px 0;font-size:.88rem;line-height:1.45}
 .alert.or{background:#FFF3E0;border:1px solid #FFB74D;color:#7a4300}
 .alert.rd{background:#FFEBEE;border:1px solid #EF9A9A;color:#8e1a1a}
 .alert.gr{background:var(--gl);border:1px solid #A5D6A7;color:var(--g2)}
@@ -82,7 +87,7 @@ textarea{min-height:80px;resize:vertical}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
 .spin.big{width:34px;height:34px;border:4px solid var(--gl);border-top-color:var(--g)}
 @keyframes sp{to{transform:rotate(360deg)}}
-.empty{text-align:center;color:var(--mu);padding:30px 10px;background:#fff;border:2px dashed var(--bd);border-radius:14px}
+.empty{text-align:center;color:var(--mu);padding:36px 16px;background:#fff;border:2px dashed #cbd5e1;border-radius:14px;margin:12px 0}
 #toasts{position:fixed;left:0;right:0;bottom:14px;z-index:99;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 .toast{background:#333;color:#fff;padding:10px 16px;border-radius:10px;max-width:92vw;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:auto}
 .toast.ok{background:var(--g2)}.toast.err{background:var(--rd)}
@@ -91,11 +96,25 @@ textarea{min-height:80px;resize:vertical}
 .modal .x{position:absolute;right:10px;top:8px;background:none;border:0;font-size:1.6rem;cursor:pointer;color:var(--mu)}
 .qr{display:inline-block;padding:8px;background:#fff;border:1px solid var(--bd);border-radius:10px}
 table{width:100%;border-collapse:collapse;font-size:.88rem}
-th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical-align:top}
-.tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0}
-.tabs button{border:1.5px solid var(--g);background:#fff;color:var(--g);border-radius:20px;padding:6px 12px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
-.tabs button.on{background:var(--g);color:#fff}
-.item{border:1px solid var(--bd);background:#fff;border-radius:12px;padding:10px;margin:8px 0}
+th,td{border-bottom:1px solid var(--bd);padding:8px 6px;text-align:left;vertical-align:top}
+th{color:var(--mu);font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.02em}
+
+/* Menu điều hướng chính quản trị */
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:5px;background:#fff;border-radius:12px;border:1px solid var(--bd);box-shadow:0 1px 2px rgba(0,0,0,.04);margin-bottom:14px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:0;background:transparent;color:#475569;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;font-size:.88rem;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
+.tabs button:hover{background:#f1f5f9;color:var(--g2)}
+.tabs button.on{background:var(--g);color:#fff;box-shadow:0 2px 5px rgba(46,125,50,.28)}
+
+/* Bộ lọc phân loại trạng thái */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chips button{border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:20px;padding:5px 12px;font:inherit;font-size:.82rem;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s ease}
+.chips button:hover{background:#f8fafc;border-color:#94a3b8}
+.chips button.on{background:#e8f5e9;border-color:var(--g);color:var(--g2);font-weight:700;box-shadow:0 1px 3px rgba(46,125,50,.15)}
+
+.item{border:1px solid var(--bd);background:#fff;border-radius:12px;padding:12px 14px;margin:8px 0;box-shadow:0 1px 2px rgba(0,0,0,.03);transition:box-shadow .15s,border-color .15s}
+.item:hover{box-shadow:0 3px 8px rgba(0,0,0,.06);border-color:#cbd5e1}
 .item .hd{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start}
 .kv{display:grid;grid-template-columns:130px 1fr;gap:2px 8px;font-size:.88rem}
 .kv span:nth-child(odd){color:var(--mu)}
@@ -117,10 +136,23 @@ th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical
     .google-btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#444;border:1.5px solid #ddd;border-radius:12px;padding:12px 24px;font-size:1rem;font-weight:600;cursor:pointer;width:100%;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.05)}
     .google-btn:hover{background:#f8f9fa;border-color:#ccc;box-shadow:0 4px 10px rgba(0,0,0,.1)}
     .google-btn svg{width:22px;height:22px}
-    .user-badge{display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(255,255,255,.15);border-radius:24px;font-size:.85rem}
-    .user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1.5px solid #fff}
-    .logout-btn{background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:.82rem}
-    .logout-btn:hover{background:rgba(255,255,255,.35)}
+    .user-badge{display:inline-flex;align-items:center;gap:10px;padding:4px 10px 4px 6px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.2);border-radius:24px;color:#fff}
+    .user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.85)}
+    .user-avatar-initial{width:32px;height:32px;border-radius:50%;background:#43a047;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.88rem;border:1.5px solid rgba(255,255,255,.85)}
+    .user-meta{display:flex;flex-direction:column;text-align:left;line-height:1.2}
+    .user-name{font-weight:600;font-size:.84rem;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-role{font-size:.7rem;opacity:.85;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .logout-btn{background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:14px;padding:5px 10px;cursor:pointer;font-weight:600;font-size:.78rem;transition:background .2s;white-space:nowrap}
+    .logout-btn:hover{background:#d32f2f}
+
+    /* Thanh điều khiển trên cùng của trang quản trị */
+    .admin-toolbar{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:12px 18px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+    .toolbar-title h2{margin:0;font-size:1.2rem;color:var(--g2);display:flex;align-items:center;gap:8px}
+    .toolbar-desc{font-size:.82rem;color:var(--mu);margin-top:2px}
+    .toolbar-filter{display:flex;align-items:center;gap:8px}
+    .toolbar-filter label{margin:0;font-size:.85rem;color:var(--mu);font-weight:600;white-space:nowrap}
+    .filter-select{padding:6px 12px;border-radius:18px;border:1.5px solid var(--bd);background:#fff;font-size:.85rem;font-weight:500;color:var(--tx);outline:none;cursor:pointer}
+    .filter-select:focus{border-color:var(--g)}
   </style>
 </head>
 <body>
@@ -201,15 +233,40 @@ th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical
     // Giao diện khung đầu trang Quản trị
     function renderAdminHeader() {
       const c = S.cfg;
-      $('#banner').innerHTML = isDemo() ? '<div class="demo">🧪 Chế độ demo, chưa mở giao dịch thực tế · <b>Dữ liệu minh họa</b></div>' : '<div class="that">Đang vận hành theo văn bản chấp thuận của nhà trường</div>';
-      $('#hdr').innerHTML = '<div class="in"><div class="brand" onclick="location.href=\'/admin.html\'"><b>⚙️ ReSchool Quản Trị</b><span>' + esc(c.slogan) + '</span></div>' +
-        '<div style="display:flex;align-items:center;gap:12px">' +
-        '<a href="/" class="btn out sm" style="color:#fff;border-color:#fff">🏠 Ra chợ</a>' +
-        '<div class="user-badge">' +
-        (currentUser && currentUser.photoURL ? '<img class="user-avatar" src="' + esc(currentUser.photoURL) + '">' : '') +
-        '<span><b>' + esc(S.me.ho_ten || currentUser.displayName || currentUser.email) + '</b> (' + esc(VAI_LBL[S.me.vai_tro] || S.me.vai_tro) + ')</span>' +
-        '<button class="logout-btn" onclick="doLogout()">Đăng xuất</button>' +
-        '</div></div></div>';
+      $('#banner').innerHTML = isDemo() ? 
+        '<div class="demo">🧪 Chế độ demo, chưa mở giao dịch thực tế · Dữ liệu minh họa</div>' : 
+        '<div class="that">✅ Đang vận hành THẬT theo văn bản chấp thuận của nhà trường</div>';
+
+      const userPhoto = currentUser && currentUser.photoURL ? 
+        '<img class="user-avatar" src="' + esc(currentUser.photoURL) + '" alt="Avatar">' : 
+        '<div class="user-avatar-initial">' + esc((S.me.ho_ten || currentUser.displayName || currentUser.email || 'A')[0].toUpperCase()) + '</div>';
+
+      // Làm sạch tên hiển thị, tránh lặp lại "(chủ script)" và "(Quản trị viên)"
+      let cleanName = String(S.me.ho_ten || currentUser.displayName || currentUser.email).replace(/\s*\(chủ script\)/gi, '').trim();
+      const roleName = VAI_LBL[S.me.vai_tro] || S.me.vai_tro;
+
+      $('#hdr').innerHTML = '<div class="in">' +
+        '<div class="brand" onclick="location.href=\'/admin.html\'">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<b>⚙️ ReSchool Quản Trị</b>' +
+            '<span class="badge-role">' + (S.me.vai_tro === 'QUAN_TRI' ? 'Quản trị' : (S.me.vai_tro === 'GIAO_VIEN' ? 'Giáo viên' : 'Học sinh')) + '</span>' +
+          '</div>' +
+          '<span>' + esc(c.slogan) + '</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          '<a href="/" class="hdr-btn" title="Xem trang chợ dành cho phụ huynh và học sinh">' +
+            '<span>🛒</span><span>Xem Chợ</span>' +
+          '</a>' +
+          '<div class="user-badge">' +
+            userPhoto +
+            '<div class="user-meta">' +
+              '<span class="user-name" title="' + esc(currentUser.email) + '">' + esc(cleanName) + '</span>' +
+              '<span class="user-role">' + esc(roleName) + '</span>' +
+            '</div>' +
+            '<button class="logout-btn" onclick="doLogout()" title="Đăng xuất khỏi Cổng Quản trị">Đăng xuất</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }
 
     function renderLoginScreen() {
@@ -304,7 +361,17 @@ const RANK={HOC_SINH:1,GIAO_VIEN:2,QUAN_TRI:3};
 const isGV=()=>S.me&&RANK[S.me.vai_tro]>=2, isQT=()=>S.me&&S.me.vai_tro==='QUAN_TRI';
 S.a={cd:'',spf:'',donf:''};S.d={};
 const aloc=()=>S.a.cd?{che_do:S.a.cd}:{};
-const ATABS=[['a_home','Tổng quan',1],['a_sp','Sản phẩm',1],['a_yc','Yêu cầu tặng',1],['a_kg','Ký gửi',2],['a_don','Đơn hàng',1],['a_tc','Thu chi',1],['a_bc','Báo cáo & biểu mẫu',1],['a_log','Nhật ký',2],['a_sys','Hệ thống',3]];
+const ATABS=[
+  ['a_home','📊 Tổng quan',1,'Bảng điều khiển và trạng thái vận hành'],
+  ['a_sp','📦 Sản phẩm',1,'Quản lý kiểm duyệt, định giá và đăng bán đồ dùng'],
+  ['a_yc','🎁 Yêu cầu tặng',1,'Tiếp nhận và phân loại đồ dùng học tập quyên góp'],
+  ['a_kg','🤝 Ký gửi',2,'Quản lý đồ dùng ký gửi và thanh toán chủ hàng'],
+  ['a_don','🛍️ Đơn hàng',1,'Theo dõi, xác nhận và xử lý bàn giao đơn hàng'],
+  ['a_tc','💰 Thu chi',1,'Sổ sách tài chính, chi phí và các quỹ phân bổ'],
+  ['a_bc','📑 Báo cáo',1,'Biểu mẫu BM01–BM05 và thống kê tuần hoàn'],
+  ['a_log','📋 Nhật ký',2,'Lịch sử thao tác của các thành viên ban quản trị'],
+  ['a_sys','⚙️ Hệ thống',3,'Cấu hình phân quyền, danh mục và dữ liệu']
+];
 const cdTag=c=>'<span class="tag '+(c==='THAT'?'':'or')+'">'+(c==='THAT'?'THẬT':'DEMO')+'</span>';
 const ttSpTag=t=>'<span class="tag '+(['SAN_SANG'].includes(t)?'':['KHONG_DAT','TRA_LAI','LOAI_BO'].includes(t)?'rd':'bl')+'">'+esc(TT_SP[t]||t)+'</span>';
 const val=(o,k)=>esc(o&&o[k]!=null?o[k]:'');
@@ -312,7 +379,23 @@ const val=(o,k)=>esc(o&&o[k]!=null?o[k]:'');
 function renderAdmin(v){
   const cur=S.cfg.che_do;
   const tabs=ATABS.filter(t=>RANK[S.me.vai_tro]>=t[2]).map(t=>'<button data-act="go" data-v="'+t[0]+'" class="'+(v===t[0]?'on':'')+'">'+t[1]+'</button>').join('');
-  $('#app').innerHTML='<div class="wrap"><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><div><b>⚙️ Quản trị</b> · '+esc(S.me.ho_ten||S.me.email)+'<div class="sm mu">'+esc(VAI_LBL[S.me.vai_tro])+' · '+esc(S.me.email)+'</div></div><div><label class="sm" style="margin:0">Xem dữ liệu</label><select id="acd" style="width:auto">'+opts([['','Chế độ hiện tại ('+(cur==='THAT'?'THẬT':'DEMO')+')'],['DEMO','Chỉ DEMO'],['THAT','Chỉ THẬT'],['TAT_CA','Tất cả']],S.a.cd)+'</select></div></div></div><div class="tabs">'+tabs+'</div><div id="acont">'+loading()+'</div></div>';
+  const curTab=ATABS.find(x=>x[0]===v)||ATABS[0];
+
+  $('#app').innerHTML='<div class="wrap">' +
+    '<div class="admin-toolbar">' +
+      '<div class="toolbar-title">' +
+        '<h2>'+curTab[1]+'</h2>' +
+        '<div class="toolbar-desc">'+curTab[3]+'</div>' +
+      '</div>' +
+      '<div class="toolbar-filter">' +
+        '<label for="acd">Dữ liệu:</label>' +
+        '<select id="acd" class="filter-select">'+opts([['','Chế độ hiện tại ('+(cur==='THAT'?'THẬT':'DEMO')+')'],['DEMO','Chỉ DEMO (mẫu)'],['THAT','Chỉ THẬT'],['TAT_CA','Tất cả']],S.a.cd)+'</select>' +
+      '</div>' +
+    '</div>' +
+    '<nav class="tabs" aria-label="Menu quản trị">'+tabs+'</nav>' +
+    '<div id="acont">'+loading()+'</div>' +
+  '</div>';
+
   const F={a_home:aHome,a_sp:aSp,a_yc:aYc,a_kg:aKg,a_don:aDon,a_tc:aTc,a_bc:aBc,a_log:aLog,a_sys:aSys};
   const t=ATABS.find(x=>x[0]===v);
   if(!t||RANK[S.me.vai_tro]<t[2]){$('#acont').innerHTML=errBox('Bạn không có quyền xem mục này.');return}
@@ -326,7 +409,7 @@ const note=()=>S.cfg.che_do!=='THAT'?'<div class="alert or">Đang ở <b>chế �
 async function aHome(){
   const t=await api('adm_tongQuan');
   const c=(n,l,v)=>'<div class="card stat" data-act="go" data-v="'+v+'" style="cursor:pointer"><div class="n">'+n+'</div><div class="sm">'+l+'</div></div>';
-  AC(note()+'<div class="grid">'+c(t.cho_tiep_nhan,'Chờ tiếp nhận','a_sp')+c(t.cho_kiem_tra,'Chờ kiểm tra','a_sp')+c(t.cho_duyet_gia,'Chờ duyệt giá','a_sp')+c(t.dang_ban,'Đang đăng bán','a_sp')+c(t.don_cho_xac_nhan,'Đơn chờ xác nhận','a_don')+c(t.don_dang_xu_ly,'Đơn đang xử lý','a_don')+c(t.yc_tang_moi,'Yêu cầu tặng mới','a_yc')+c(t.kg_moi,'Ký gửi mới',isGV()?'a_kg':'a_home')+c(t.thu_chi_cho_duyet,'Khoản chi chờ duyệt','a_tc')+'</div><div class="card" style="margin-top:12px"><h3>Quy trình sản phẩm</h3><p class="sm">Chờ tiếp nhận → Chờ kiểm tra (BM04) → Đạt/Không đạt → Chờ duyệt giá → Sẵn sàng đăng bán → Giữ chỗ → Đã bán. Có thể Trả lại / Loại bỏ kèm lý do.</p><p class="sm"><b>Phân quyền:</b> học sinh nhập liệu và chuẩn bị hồ sơ; giáo viên duyệt hàng, giá, đơn, thu chi; quản trị viên quản lý tài khoản và cấu hình. Máy chủ từ chối thao tác vượt quyền.</p></div>');
+  AC(note()+'<div class="grid">'+c(t.cho_tiep_nhan,'Chờ tiếp nhận','a_sp')+c(t.cho_kiem_tra,'Chờ kiểm tra','a_sp')+c(t.cho_duyet_gia,'Chờ duyệt giá','a_sp')+c(t.dang_ban,'Đang đăng bán','a_sp')+c(t.don_cho_xac_nhan,'Đơn chờ xác nhận','a_don')+c(t.don_dang_xu_ly,'Đơn đang xử lý','a_don')+c(t.yc_tang_moi,'Yêu cầu tặng mới','a_yc')+c(t.kg_moi,'Ký gửi mới',isGV()?'a_kg':'a_home')+c(t.thu_chi_cho_duyet,'Khoản chi chờ duyệt','a_tc')+'</div><div class="card" style="margin-top:14px"><h3>Quy trình sản phẩm</h3><p class="sm">Chờ tiếp nhận → Chờ kiểm tra (BM04) → Đạt/Không đạt → Chờ duyệt giá → Sẵn sàng đăng bán → Giữ chỗ → Đã bán. Có thể Trả lại / Loại bỏ kèm lý do.</p><p class="sm"><b>Phân quyền:</b> học sinh nhập liệu và chuẩn bị hồ sơ; giáo viên duyệt hàng, giá, đơn, thu chi; quản trị viên quản lý tài khoản và cấu hình. Máy chủ từ chối thao tác vượt quyền.</p></div>');
 }
 
 /* ---- Sản phẩm ---- */
@@ -334,8 +417,8 @@ async function aSp(){
   const l=S.d.sp=await api('adm_dsSanPham',aloc()),f=S.a.spf;
   const ds=l.filter(p=>!f||p.trang_thai===f).reverse();
   const chips=[['','Tất cả']].concat(Object.keys(TT_SP).map(k=>[k,TT_SP[k]]));
-  AC(note()+'<div class="row"><button class="btn" data-act="a_sp_new">➕ Thêm sản phẩm</button></div><div class="tabs">'+chips.map(c=>'<button data-act="a_spf" data-p="'+c[0]+'" class="'+(f===c[0]?'on':'')+'">'+c[1]+'</button>').join('')+'</div>'
-   +(ds.length?ds.map(spItem).join(''):'<div class="empty">Chưa có sản phẩm.</div>'));
+  AC(note()+'<div class="row" style="margin-bottom:12px"><button class="btn" data-act="a_sp_new">➕ Thêm sản phẩm</button></div><div class="chips">'+chips.map(c=>'<button data-act="a_spf" data-p="'+c[0]+'" class="'+(f===c[0]?'on':'')+'">'+c[1]+'</button>').join('')+'</div>'
+   +(ds.length?ds.map(spItem).join(''):'<div class="empty"><div style="font-size:2.2rem;margin-bottom:6px">📦</div><div style="font-weight:600;font-size:1rem;color:#475569">Chưa có sản phẩm nào</div><div style="font-size:0.84rem;color:#94a3b8;margin-top:4px">Đang lọc theo bộ lọc hiện tại. Bấm “➕ Thêm sản phẩm” để tạo mới hoặc đổi lọc dữ liệu sang “Chỉ DEMO” để xem mẫu.</div></div>'));
 }
 function spItem(p){
   const t=p.trang_thai,gv=isGV(),b=[];
@@ -394,7 +477,7 @@ async function aDon(){
   const l=S.d.don=await api('adm_dsDonHang',aloc()),f=S.a.donf;
   const chips=[['','Tất cả']].concat(Object.keys(TT_DON).map(k=>[k,TT_DON[k]]));
   const ds=l.filter(d=>!f||d.trang_thai===f);
-  AC(note()+'<div class="tabs">'+chips.map(c=>'<button data-act="a_donf" data-p="'+c[0]+'" class="'+(f===c[0]?'on':'')+'">'+c[1]+'</button>').join('')+'</div>'+(ds.length?ds.map(d=>'<div class="item" data-act="a_don_ct" data-id="'+d.ma_don+'" style="cursor:pointer"><div class="hd"><div><b>'+d.ma_don+'</b> · '+esc(d.ten_khach)+' · '+esc(d.lien_he)+'<div><span class="tag '+(d.trang_thai==='HUY'?'rd':'')+'">'+TT_DON[d.trang_thai]+'</span><span class="tag bl">'+TT_TT[d.thanh_toan]+'</span>'+cdTag(d.che_do)+'</div></div><div><b class="price">'+vnd(d.tong_tien)+'</b><div class="sm mu">'+d.so_mon+' món</div></div></div><div class="sm mu">Tạo '+esc(fmtT(d.ngay_tao))+(['CHO_XAC_NHAN','DA_XAC_NHAN','CHO_NHAN'].includes(d.trang_thai)?' · giữ đến '+esc(fmtT(d.han_giu_cho)):'')+'</div></div>').join(''):'<div class="empty">Chưa có đơn.</div>'));
+  AC(note()+'<div class="chips">'+chips.map(c=>'<button data-act="a_donf" data-p="'+c[0]+'" class="'+(f===c[0]?'on':'')+'">'+c[1]+'</button>').join('')+'</div>'+(ds.length?ds.map(d=>'<div class="item" data-act="a_don_ct" data-id="'+d.ma_don+'" style="cursor:pointer"><div class="hd"><div><b>'+d.ma_don+'</b> · '+esc(d.ten_khach)+' · '+esc(d.lien_he)+'<div><span class="tag '+(d.trang_thai==='HUY'?'rd':'')+'">'+TT_DON[d.trang_thai]+'</span><span class="tag bl">'+TT_TT[d.thanh_toan]+'</span>'+cdTag(d.che_do)+'</div></div><div><b class="price">'+vnd(d.tong_tien)+'</b><div class="sm mu">'+d.so_mon+' món</div></div></div><div class="sm mu">Tạo '+esc(fmtT(d.ngay_tao))+(['CHO_XAC_NHAN','DA_XAC_NHAN','CHO_NHAN'].includes(d.trang_thai)?' · giữ đến '+esc(fmtT(d.han_giu_cho)):'')+'</div></div>').join(''):'<div class="empty"><div style="font-size:2.2rem;margin-bottom:6px">🛍️</div><div style="font-weight:600;font-size:1rem;color:#475569">Chưa có đơn hàng nào</div><div style="font-size:0.84rem;color:#94a3b8;margin-top:4px">Đơn hàng mới từ khách đặt trên ReSchool sẽ hiển thị tại đây.</div></div>'));
 }
 async function donModal(ma){
   const d=await api('adm_chiTietDon',ma);S.d.cur=d;const gv=isGV(),t=d.trang_thai,fin=['HOAN_TAT','HUY'].includes(t),b=[];
