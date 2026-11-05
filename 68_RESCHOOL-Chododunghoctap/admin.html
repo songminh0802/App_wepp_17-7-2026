@@ -440,9 +440,15 @@ function spItem(p){
 }
 function spForm(p){
   p=p||{};const nw=!p.ma,pub=['SAN_SANG','GIU_CHO','DA_BAN'].includes(p.trang_thai);
-  openModal(nw?'Thêm sản phẩm':'Sửa '+p.ma,'<form data-submit="a_sp_save"><input type="hidden" name="ma" value="'+val(p,'ma')+'"><label>Tên sản phẩm</label><input name="ten" required maxlength="100" value="'+val(p,'ten')+'"><label>Danh mục</label><select name="danh_muc">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),p.danh_muc)+'</select><label>Tình trạng</label><select name="tinh_trang">'+opts(S.cfg.tinh_trang,p.tinh_trang)+'</select><label>Mô tả</label><textarea name="mo_ta" maxlength="1000">'+val(p,'mo_ta')+'</textarea><label>Lỗi đã ghi nhận</label><input name="loi_ghi_nhan" maxlength="300" value="'+val(p,'loi_ghi_nhan')+'"><div class="fl"><div><label>Giá đề xuất (đ)</label><input name="gia_de_xuat" type="number" min="0" value="'+val(p,'gia_de_xuat')+'"></div>'+(pub?'':'<div><label>Số lượng</label><input name="tong_nhap" type="number" min="1" max="100" value="'+esc(p.tong_nhap||1)+'"></div>')+'</div>'
+  const hasImg = p.anh_rieng_id || p.anh_id;
+  openModal(nw?'Thêm sản phẩm':'Sửa '+p.ma,'<form data-submit="a_sp_save"><input type="hidden" name="ma" value="'+val(p,'ma')+'"><label>Tên sản phẩm <b style="color:var(--rd)">*</b></label><input name="ten" required maxlength="100" value="'+val(p,'ten')+'"><label>Danh mục <b style="color:var(--rd)">*</b></label><select name="danh_muc">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),p.danh_muc)+'</select><label>Tình trạng <b style="color:var(--rd)">*</b></label><select name="tinh_trang">'+opts(S.cfg.tinh_trang,p.tinh_trang)+'</select><label>Mô tả</label><textarea name="mo_ta" maxlength="1000">'+val(p,'mo_ta')+'</textarea><label>Lỗi đã ghi nhận</label><input name="loi_ghi_nhan" maxlength="300" value="'+val(p,'loi_ghi_nhan')+'"><div class="fl"><div><label>Giá đề xuất (đ)</label><input name="gia_de_xuat" type="number" min="0" value="'+val(p,'gia_de_xuat')+'"></div>'+(pub?'':'<div><label>Số lượng</label><input name="tong_nhap" type="number" min="1" max="100" value="'+esc(p.tong_nhap||1)+'"></div>')+'</div>'
   +(nw?'<div class="fl"><div><label>Nguồn</label><select name="nguon">'+opts([['TANG','Hàng tặng'],['KY_GUI','Ký gửi']],'TANG')+'</select></div><div><label>Mã nguồn (YTxxx / KGxxx)</label><input name="ma_nguon" maxlength="20"></div></div><p class="sm mu">Hàng ký gửi cần mã KGxxx đã có trong mục Ký gửi.</p>':'')
-  +'<label>Ảnh (JPG/PNG/WEBP ≤ 2 MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="admin"><input type="hidden" name="anh_token"><div id="photoSt" class="sm mu"></div><button class="btn" style="width:100%;margin-top:10px">Lưu</button></form>');
+  +'<label>Ảnh sản phẩm (JPG/PNG/WEBP ≤ 2 MB) <b style="color:var(--rd)">* Bắt buộc</b></label>'
+  +(hasImg?'<div class="sm mu" style="margin-bottom:6px">✔ Đã có ảnh trên hệ thống. Chọn tệp mới bên dưới nếu muốn thay đổi ảnh:</div>':'')
+  +'<input type="file" accept="image/jpeg,image/png,image/webp" data-photo="admin"'+(!hasImg?' required':'')+'>'
+  +'<input type="hidden" name="anh_token">'
+  +'<div id="photoSt" class="sm mu"></div>'
+  +'<button class="btn" style="width:100%;margin-top:10px">Lưu</button></form>');
 }
 function kiemTraModal(p){
   let kt={};try{kt=JSON.parse(p.kiem_tra||'{}')}catch(e){}
@@ -648,7 +654,17 @@ Object.assign(A,{
 /* ---- Gửi biểu mẫu quản trị ---- */
 window.onAdminSubmit=async(k,form,o,btn)=>{
   if(k==='a_ask'){const cb=S.askCb;if(cb)await cb(o,btn);return}
-  if(k==='a_sp_save'){const num=['gia_de_xuat'];num.forEach(x=>{if(o[x]==='')o[x]=''});return runAdm(btn,()=>api('adm_luuSanPham',o),'Đã lưu sản phẩm')}
+  if(k==='a_sp_save'){
+    const isNew=!o.ma;
+    const p=find('sp',o.ma);
+    const hasImg=p&&(p.anh_rieng_id||p.anh_id);
+    if(!o.anh_token&&(isNew||!hasImg)){
+      toast('Vui lòng chọn và tải ảnh sản phẩm lên trước khi lưu (Bắt buộc)!','err');
+      return;
+    }
+    const num=['gia_de_xuat'];num.forEach(x=>{if(o[x]==='')o[x]=''});
+    return runAdm(btn,()=>api('adm_luuSanPham',o),'Đã lưu sản phẩm');
+  }
   if(k==='a_kt_save'){return runAdm(btn,()=>api('adm_hanhDongSanPham',o.ma,'luu_kiem_tra',o),'Đã lưu phiếu kiểm tra')}
   if(k==='a_on'){return runAdm(btn,()=>api('adm_batVanHanh',Object.assign({},o,{xac_nhan:o.xac_nhan===true})),'Đã bật chế độ vận hành THẬT',async()=>{S.cfg=await api('pub_khoiTao');S.sp=null;render()})}
   if(k==='a_cfg'){return runAdm(btn,()=>api('adm_luuCauHinh',o),'Đã lưu cấu hình',async()=>{S.cfg=await api('pub_khoiTao');render()})}

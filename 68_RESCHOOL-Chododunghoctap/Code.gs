@@ -709,6 +709,7 @@ function kiemTraBieuMau_(p, cd) {
   if (p.khong_thuoc_loai_tu_choi !== true) throw loi_('Hãy xác nhận món đồ không thuộc nhóm không nhận.');
   if (!p.dong_y_chinh_sach) throw loi_('Cần đồng ý chính sách thông tin cá nhân.');
   if (cd !== 'THAT' && p.xac_nhan_demo !== true) throw loi_('Hãy xác nhận bạn hiểu đây là chế độ demo (không nhập thông tin thật).');
+  if (!p.anh_token) throw loi_('Vui lòng chụp hoặc tải ảnh món đồ (bắt buộc).');
   o.anh_rieng_id = anhRiengHopLe_(p.anh_token);
   return o;
 }
@@ -877,7 +878,11 @@ function adm_luuSanPham(p) {
           s.ma_nguon = kg.ma; kg.ma_san_pham = s.ma; capNhat_('KyGui', kg);
         } else s.ma_nguon = String(p.ma_nguon || '').slice(0, 20);
       }
-      if (p.anh_token) s.anh_rieng_id = anhRiengHopLe_(p.anh_token);
+      if (p.anh_token) {
+        s.anh_rieng_id = anhRiengHopLe_(p.anh_token);
+      } else if (moi || (!s.anh_rieng_id && !s.anh_id)) {
+        throw loi_('Vui lòng tải ảnh cho sản phẩm (bắt buộc).');
+      }
       if (moi) them_('SanPham', s); else capNhat_('SanPham', s);
       xoaCache_();
       nhatKy_(u, moi ? 'THEM_SAN_PHAM' : 'SUA_SAN_PHAM', s.ma, s.ten);

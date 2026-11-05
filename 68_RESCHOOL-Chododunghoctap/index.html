@@ -294,7 +294,7 @@ function vForm(loai){
   +(tang?'<label>Loại hàng</label><select name="loai_hang">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),'')+'</select>':'')
   +'<label>Mô tả món đồ (tối thiểu 10 ký tự)</label><textarea name="mo_ta" required maxlength="1000"></textarea><label>Tình trạng</label><select name="tinh_trang">'+opts(S.cfg.tinh_trang,'')+'</select>'
   +(tang?'':'<label>Giá mong muốn (đ)</label><input name="gia_mong_muon" type="number" min="1000" step="500" required>')
-  +'<label>Ảnh (JPG/PNG/WEBP, tối đa 2 MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="1"><input type="hidden" name="anh_token"><div id="photoSt" class="sm mu"></div>'
+  +'<label>Ảnh món đồ (JPG/PNG/WEBP, tối đa 2 MB) <b style="color:var(--rd)">* Bắt buộc</b></label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="1" required><input type="hidden" name="anh_token"><div id="photoSt" class="sm mu"></div>'
   +'<label class="chk"><input type="checkbox" name="la_hoc_sinh"> Người gửi là học sinh</label><label class="chk hide" id="phh"><input type="checkbox" name="phu_huynh_dong_y"> Phụ huynh/người giám hộ đã đồng ý cho em gửi món đồ này. (bắt buộc với học sinh)</label>'
   +(tang?'<label class="chk"><input type="checkbox" name="tu_nguyen"> Tôi xác nhận việc tặng là hoàn toàn tự nguyện.</label>':'')
   +'<label class="chk"><input type="checkbox" name="khong_thuoc_loai_tu_choi"> Món đồ không thuộc nhóm không nhận ở trên.</label>'
@@ -356,8 +356,8 @@ document.addEventListener('submit',async e=>{
   const H={
    order:async()=>{o.items=S.cart.map(i=>({ma:i.ma,sl:i.sl}));const r=await api('pub_datHang',o);S.nhan=r.nhan;showOrderResult(r);toast('Đơn đã được ghi vào hệ thống','ok')},
    track:async()=>{const d=await api('pub_traCuuDon',o.ma,o.code);$('#trk').innerHTML=trackView(d)},
-   tang:async()=>{const r=await api('pub_guiTang',o);done(r,'Yêu cầu tặng đồ')},
-   kygui:async()=>{const r=await api('pub_guiKyGui',o);done(r,'Yêu cầu ký gửi')},
+   tang:async()=>{if(!o.anh_token){toast('Vui lòng chọn và tải ảnh món đồ lên trước khi gửi (Bắt buộc)!','err');return};const r=await api('pub_guiTang',o);done(r,'Yêu cầu tặng đồ')},
+   kygui:async()=>{if(!o.anh_token){toast('Vui lòng chọn và tải ảnh món đồ lên trước khi gửi (Bắt buộc)!','err');return};const r=await api('pub_guiKyGui',o);done(r,'Yêu cầu ký gửi')},
    feedback:async()=>{const r=await api('pub_guiPhanHoi',o);form.reset();toast('Đã ghi phản hồi '+r.ma+(r.che_do!=='THAT'?' (mô phỏng)':''),'ok')}
   };
   function done(r,ten){$('#app').innerHTML='<div class="wrap"><div class="card"><h2>'+(r.che_do!=='THAT'?'🧪 ':'✅ ')+'Đã ghi '+ten.toLowerCase()+' '+esc(r.ma)+'</h2>'+(r.che_do!=='THAT'?'<div class="alert or">Chế độ demo: chỉ mô phỏng, không có hàng thật được nhận.</div>':'')+'<div class="alert bl"><b>Lưu ý:</b> gửi yêu cầu chưa có nghĩa là đã được tiếp nhận. Giáo viên sẽ kiểm tra và liên hệ nếu chấp nhận.</div><button class="btn" data-act="go" data-v="home">Về trang chủ</button></div></div>'}
