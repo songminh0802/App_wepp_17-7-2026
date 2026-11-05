@@ -134,56 +134,56 @@ th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
     // ==================== CẤU HÌNH HỆ THỐNG ====================
-    window.GAS_API_URL = "https://script.google.com/macros/s/AKfycbzSwTorEJF0iqwhxQTXTd5vtc2Gxox3wvGKIs4I2Vexxzwr1ogBqDHQTdukb0GFiCqE/exec";
+    window.GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzSwTorEJF0iqwhxQTXTd5vtc2Gxox3wvGKIs4I2Vexxzwr1ogBqDHQTdukb0GFiCqE/exec';
     const firebaseConfig = {
-      apiKey: "AIzaSyBVueYYokJdqm_uCMqBL24d6YCtMTamCM8",
-      authDomain: "csdlsongminh.firebaseapp.com",
-      databaseURL: "https://csdlsongminh-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "csdlsongminh",
-      storageBucket: "csdlsongminh.firebasestorage.app",
-      messagingSenderId: "319501136448",
-      appId: "1:319501136448:web:1c2a9a1b5582d3a9f725a5",
-      measurementId: "G-VPPH1RXD7H"
+      apiKey: 'AIzaSyBVueYYokJdqm_uCMqBL24d6YCtMTamCM8',
+      authDomain: 'csdlsongminh.firebaseapp.com',
+      databaseURL: 'https://csdlsongminh-default-rtdb.asia-southeast1.firebasedatabase.app',
+      projectId: 'csdlsongminh',
+      storageBucket: 'csdlsongminh.firebasestorage.app',
+      messagingSenderId: '319501136448',
+      appId: '1:319501136448:web:1c2a9a1b5582d3a9f725a5',
+      measurementId: 'G-VPPH1RXD7H'
     };
-    const ADMIN_EMAIL = "songminh138@gmail.com";
+    const ADMIN_EMAIL = 'songminh138@gmail.com';
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     let currentUser = null;
 
     // Hằng số nghiệp vụ
-    const TT_SP={CHO_TIEP_NHAN:"Chờ tiếp nhận",CHO_KIEM_TRA:"Chờ kiểm tra",KHONG_DAT:"Không đạt",CHO_DUYET_GIA:"Chờ duyệt giá",SAN_SANG:"Sẵn sàng đăng bán",GIU_CHO:"Giữ chỗ",DA_BAN:"Đã bán",TRA_LAI:"Trả lại",LOAI_BO:"Loại bỏ"};
-    const TT_DON={CHO_XAC_NHAN:"Chờ xác nhận",DA_XAC_NHAN:"Đã xác nhận",CHO_NHAN:"Chờ nhận",HOAN_TAT:"Hoàn tất",HUY:"Hủy"};
-    const TT_TT={CHUA_THU:"Chưa thu tiền",DA_THU:"Đã thu tiền"};
-    const TT_KG={MOI:"Mới gửi",DA_TIEP_NHAN:"Đã tiếp nhận",DA_THOA_THUAN:"Đã thỏa thuận",TU_CHOI:"Từ chối",HET_HAN:"Hết hạn",KET_THUC:"Kết thúc"};
-    const TT_YC={MOI:"Mới gửi (chưa tiếp nhận)",DA_TIEP_NHAN:"Đã tiếp nhận",TU_CHOI:"Từ chối"};
-    const LOAI_TC={DOANH_THU_TANG:"Doanh thu hàng tặng",PHI_KY_GUI:"Phí ký gửi",THU_HO:"Tiền thu hộ (không phải doanh thu)",TRA_CHU_HANG:"Trả chủ hàng",CHI_PHI:"Chi phí",DIEU_CHINH:"Điều chỉnh",CHI_PHAN_BO:"Chi từ quỹ phân bổ"};
-    const TT_TC={CHO_DUYET:"Chờ duyệt",DA_XAC_NHAN:"Đã xác nhận",TU_CHOI:"Từ chối"};
-    const CHECK_LBL={ve_sinh:"Vệ sinh sạch sẽ",hu_hong:"Không hư hỏng nặng",an_toan:"An toàn khi sử dụng",noi_dung:"Nội dung phù hợp lứa tuổi",ban_quyen:"Không vi phạm bản quyền (không sao chép trái phép)"};
-    const VAI_LBL={HOC_SINH:"Thành viên học sinh",GIAO_VIEN:"Giáo viên giám sát",QUAN_TRI:"Quản trị viên"};
-    const S={cfg:null,sp:null,cart:[],view:"a_home",param:null,me:null,f:{},nhan:null,a:{cd:"",spf:"",donf:""},d:{}};
+    const TT_SP={CHO_TIEP_NHAN:'Chờ tiếp nhận',CHO_KIEM_TRA:'Chờ kiểm tra',KHONG_DAT:'Không đạt',CHO_DUYET_GIA:'Chờ duyệt giá',SAN_SANG:'Sẵn sàng đăng bán',GIU_CHO:'Giữ chỗ',DA_BAN:'Đã bán',TRA_LAI:'Trả lại',LOAI_BO:'Loại bỏ'};
+    const TT_DON={CHO_XAC_NHAN:'Chờ xác nhận',DA_XAC_NHAN:'Đã xác nhận',CHO_NHAN:'Chờ nhận',HOAN_TAT:'Hoàn tất',HUY:'Hủy'};
+    const TT_TT={CHUA_THU:'Chưa thu tiền',DA_THU:'Đã thu tiền'};
+    const TT_KG={MOI:'Mới gửi',DA_TIEP_NHAN:'Đã tiếp nhận',DA_THOA_THUAN:'Đã thỏa thuận',TU_CHOI:'Từ chối',HET_HAN:'Hết hạn',KET_THUC:'Kết thúc'};
+    const TT_YC={MOI:'Mới gửi (chưa tiếp nhận)',DA_TIEP_NHAN:'Đã tiếp nhận',TU_CHOI:'Từ chối'};
+    const LOAI_TC={DOANH_THU_TANG:'Doanh thu hàng tặng',PHI_KY_GUI:'Phí ký gửi',THU_HO:'Tiền thu hộ (không phải doanh thu)',TRA_CHU_HANG:'Trả chủ hàng',CHI_PHI:'Chi phí',DIEU_CHINH:'Điều chỉnh',CHI_PHAN_BO:'Chi từ quỹ phân bổ'};
+    const TT_TC={CHO_DUYET:'Chờ duyệt',DA_XAC_NHAN:'Đã xác nhận',TU_CHOI:'Từ chối'};
+    const CHECK_LBL={ve_sinh:'Vệ sinh sạch sẽ',hu_hong:'Không hư hỏng nặng',an_toan:'An toàn khi sử dụng',noi_dung:'Nội dung phù hợp lứa tuổi',ban_quyen:'Không vi phạm bản quyền (không sao chép trái phép)'};
+    const VAI_LBL={HOC_SINH:'Thành viên học sinh',GIAO_VIEN:'Giáo viên giám sát',QUAN_TRI:'Quản trị viên'};
+    const S={cfg:null,sp:null,cart:[],view:'a_home',param:null,me:null,f:{},nhan:null,a:{cd:'',spf:'',donf:''},d:{}};
     const $=s=>document.querySelector(s);
-    const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-    const vnd=n=>Number(n||0).toLocaleString("vi-VN")+" đ";
-    const bo=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
-    const dm=ma=>(S.cfg.danh_muc.find(x=>x.ma===ma)||{ten:ma,icon:"📦"});
-    const isDemo=()=>S.cfg&&S.cfg.che_do!=="THAT";
-    const fmtT=t=>String(t||"").replace("T"," ").slice(0,16);
-    function toast(m,t){const d=document.createElement("div");d.className="toast "+(t||"");d.textContent=m;$("#toasts").appendChild(d);setTimeout(()=>d.remove(),t==="err"?6000:3500)}
-    async function busy(btn,fn){if(!btn||btn.disabled)return;const h=btn.innerHTML;btn.disabled=true;btn.innerHTML="<span class="spin"></span> Đang xử lý…";try{return await fn()}finally{btn.disabled=false;btn.innerHTML=h}}
-    function openModal(title,html){const m=$("#modal");m.innerHTML="<div class="box"><button class="x" data-act="close" aria-label="Đóng">×</button><h2>"+esc(title)+"</h2>"+html+"</div>";m.classList.remove("hide")}
-    function closeModal(){$("#modal").classList.add("hide");$("#modal").innerHTML=""}
-    const loading=()=>"<div class="center pad"><span class="spin big"></span><p class="mu">Đang tải…</p></div>";
-    const errBox=m=>"<div class="alert rd">⚠️ "+esc(m)+"</div>";
-    function fd(form){const o={};form.querySelectorAll("[name]").forEach(e=>{if(e.type==="checkbox")o[e.name]=e.checked;else if(e.type==="radio"){if(e.checked)o[e.name]=e.value}else o[e.name]=e.value});return o}
-    const opts=(arr,sel,ph)=>(ph!==undefined?"<option value="">"+esc(ph)+"</option>":"")+arr.map(x=>{const v=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return "<option value=""+esc(v)+"""+(String(v)===String(sel)?" selected":"")+">"+esc(l)+"</option>"}).join("");
+    const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const vnd=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
+    const bo=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
+    const dm=ma=>(S.cfg.danh_muc.find(x=>x.ma===ma)||{ten:ma,icon:'📦'});
+    const isDemo=()=>S.cfg&&S.cfg.che_do!=='THAT';
+    const fmtT=t=>String(t||'').replace('T',' ').slice(0,16);
+    function toast(m,t){const d=document.createElement('div');d.className='toast '+(t||'');d.textContent=m;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),t==='err'?6000:3500)}
+    async function busy(btn,fn){if(!btn||btn.disabled)return;const h=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="spin"></span> Đang xử lý…';try{return await fn()}finally{btn.disabled=false;btn.innerHTML=h}}
+    function openModal(title,html){const m=$('#modal');m.innerHTML='<div class="box"><button class="x" data-act="close" aria-label="Đóng">×</button><h2>'+esc(title)+'</h2>'+html+'</div>';m.classList.remove('hide')}
+    function closeModal(){$('#modal').classList.add('hide');$('#modal').innerHTML=''}
+    const loading=()=>'<div class="center pad"><span class="spin big"></span><p class="mu">Đang tải…</p></div>';
+    const errBox=m=>'<div class="alert rd">⚠️ '+esc(m)+'</div>';
+    function fd(form){const o={};form.querySelectorAll('[name]').forEach(e=>{if(e.type==='checkbox')o[e.name]=e.checked;else if(e.type==='radio'){if(e.checked)o[e.name]=e.value}else o[e.name]=e.value});return o}
+    const opts=(arr,sel,ph)=>(ph!==undefined?'<option value="">'+esc(ph)+'</option>':'')+arr.map(x=>{const v=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return '<option value="'+esc(v)+'"'+(String(v)===String(sel)?' selected':'')+'>'+esc(l)+'</option>'}).join('');
 
     // Hàm gọi API kèm thông tin xác thực Google Firebase Auth
     async function api(fn, ...a) {
       const u = window.GAS_API_URL;
       try {
         const res = await fetch(u, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
             fn: fn,
             args: a,
@@ -192,39 +192,39 @@ th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical
         });
         const r = await res.json();
         if (r && r.ok) return r.data;
-        throw new Error((r && r.loi) || "Lỗi không xác định từ máy chủ");
+        throw new Error((r && r.loi) || 'Lỗi không xác định từ máy chủ');
       } catch (e) {
-        throw new Error(e.message || "Mất kết nối máy chủ");
+        throw new Error(e.message || 'Mất kết nối máy chủ');
       }
     }
 
     // Giao diện khung đầu trang Quản trị
     function renderAdminHeader() {
       const c = S.cfg;
-      $("#banner").innerHTML = isDemo() ? "<div class="demo">🧪 Chế độ demo, chưa mở giao dịch thực tế · <b>Dữ liệu minh họa</b></div>" : "<div class="that">Đang vận hành theo văn bản chấp thuận của nhà trường</div>";
-      $("#hdr").innerHTML = "<div class="in"><div class="brand" onclick="location.href='/admin.html'"><b>⚙️ ReSchool Quản Trị</b><span>" + esc(c.slogan) + "</span></div>" +
-        "<div style="display:flex;align-items:center;gap:12px">" +
-        "<a href="/" class="btn out sm" style="color:#fff;border-color:#fff">🏠 Ra chợ</a>" +
-        "<div class="user-badge">" +
-        (currentUser && currentUser.photoURL ? "<img class="user-avatar" src="" + esc(currentUser.photoURL) + "">" : "") +
-        "<span><b>" + esc(S.me.ho_ten || currentUser.displayName || currentUser.email) + "</b> (" + esc(VAI_LBL[S.me.vai_tro] || S.me.vai_tro) + ")</span>" +
-        "<button class="logout-btn" onclick="doLogout()">Đăng xuất</button>" +
-        "</div></div></div>";
+      $('#banner').innerHTML = isDemo() ? '<div class="demo">🧪 Chế độ demo, chưa mở giao dịch thực tế · <b>Dữ liệu minh họa</b></div>' : '<div class="that">Đang vận hành theo văn bản chấp thuận của nhà trường</div>';
+      $('#hdr').innerHTML = '<div class="in"><div class="brand" onclick="location.href=\'/admin.html\'"><b>⚙️ ReSchool Quản Trị</b><span>' + esc(c.slogan) + '</span></div>' +
+        '<div style="display:flex;align-items:center;gap:12px">' +
+        '<a href="/" class="btn out sm" style="color:#fff;border-color:#fff">🏠 Ra chợ</a>' +
+        '<div class="user-badge">' +
+        (currentUser && currentUser.photoURL ? '<img class="user-avatar" src="' + esc(currentUser.photoURL) + '">' : '') +
+        '<span><b>' + esc(S.me.ho_ten || currentUser.displayName || currentUser.email) + '</b> (' + esc(VAI_LBL[S.me.vai_tro] || S.me.vai_tro) + ')</span>' +
+        '<button class="logout-btn" onclick="doLogout()">Đăng xuất</button>' +
+        '</div></div></div>';
     }
 
     function renderLoginScreen() {
-      $("#hdr").innerHTML = "<div class="in"><div class="brand" onclick="location.href='/'"><b>♻️ ReSchool</b><span>Trao một món đồ cũ – Mở thêm một cơ hội mới</span></div><a href="/" class="btn out sm" style="color:#fff;border-color:#fff">🏠 Về trang chủ</a></div>";
-      $("#banner").innerHTML = "";
-      $("#app").innerHTML = "<div class="wrap"><div class="login-box">" +
-        "<div class="login-logo">🔐</div>" +
-        "<h2>Đăng nhập Cổng Quản trị</h2>" +
-        "<p>Dành cho Thầy Cô giám sát và Học sinh trong Ban Quản trị ReSchool</p>" +
-        "<button class="google-btn" onclick="doGoogleLogin()">" +
-        "<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>" +
-        "<span>Đăng nhập bằng Google</span>" +
-        "</button>" +
-        "<div style="margin-top:20px;font-size:.82rem;color:var(--mu)">Hệ thống sẽ đối soát email của bạn với danh sách tài khoản được cấp quyền trong Google Sheets.</div>" +
-        "</div></div>";
+      $('#hdr').innerHTML = '<div class="in"><div class="brand" onclick="location.href=\'/\'"><b>♻️ ReSchool</b><span>Trao một món đồ cũ – Mở thêm một cơ hội mới</span></div><a href="/" class="btn out sm" style="color:#fff;border-color:#fff">🏠 Về trang chủ</a></div>';
+      $('#banner').innerHTML = '';
+      $('#app').innerHTML = '<div class="wrap"><div class="login-box">' +
+        '<div class="login-logo">🔐</div>' +
+        '<h2>Đăng nhập Cổng Quản trị</h2>' +
+        '<p>Dành cho Thầy Cô giám sát và Học sinh trong Ban Quản trị ReSchool</p>' +
+        '<button class="google-btn" onclick="doGoogleLogin()">' +
+        '<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>' +
+        '<span>Đăng nhập bằng Google</span>' +
+        '</button>' +
+        '<div style="margin-top:20px;font-size:.82rem;color:var(--mu)">Hệ thống sẽ đối soát email của bạn với danh sách tài khoản được cấp quyền trong Google Sheets.</div>' +
+        '</div></div>';
     }
 
     async function doGoogleLogin() {
@@ -232,7 +232,7 @@ th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical
       try {
         await auth.signInWithPopup(provider);
       } catch (err) {
-        toast(err.message, "err");
+        toast(err.message, 'err');
       }
     }
 
@@ -257,50 +257,49 @@ th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical
         renderLoginScreen();
         return;
       }
-      $("#app").innerHTML = loading();
+      $('#app').innerHTML = loading();
       try {
-        S.cfg = await api("pub_khoiTao");
-        const me = await api("adm_toi");
+        S.cfg = await api('pub_khoiTao');
+        const me = await api('adm_toi');
         if (me && me.dang_nhap) {
           S.me = me;
           renderAdminHeader();
-          go("a_home");
+          go('a_home');
         } else {
-          $("#app").innerHTML = "<div class="wrap"><div class="card center" style="padding:40px 20px">" +
-            "<div style="font-size:3rem;margin-bottom:12px">⛔</div>" +
-            "<h2>Tài khoản chưa được cấp quyền</h2>" +
-            "<p class="mu">Email <b>" + esc(user.email) + "</b> chưa có trong bảng <b>NguoiDung</b> của hệ thống ReSchool.</p>" +
-            "<div class="alert or">Nếu bạn là Quản trị viên hoặc Giáo viên mới, hãy thêm email này vào sheet <b>NguoiDung</b> trên Google Sheets.</div>" +
-            "<div style="margin-top:20px;display:flex;gap:10px;justify-content:center">" +
-            "<button class="btn red" onclick="doLogout()">Đăng xuất / Đổi tài khoản khác</button>" +
-            "<a href="/" class="btn out">Về chợ đồ dùng</a>" +
-            "</div></div></div>";
+          $('#app').innerHTML = '<div class="wrap"><div class="card center" style="padding:40px 20px">' +
+            '<div style="font-size:3rem;margin-bottom:12px">⛔</div>' +
+            '<h2>Tài khoản chưa được cấp quyền</h2>' +
+            '<p class="mu">Email <b>' + esc(user.email) + '</b> chưa có trong bảng <b>NguoiDung</b> của hệ thống ReSchool.</p>' +
+            '<div class="alert or">Nếu bạn là Quản trị viên hoặc Giáo viên mới, hãy thêm email này vào sheet <b>NguoiDung</b> trên Google Sheets.</div>' +
+            '<div style="margin-top:20px;display:flex;gap:10px;justify-content:center">' +
+            '<button class="btn red" onclick="doLogout()">Đăng xuất / Đổi tài khoản khác</button>' +
+            '<a href="/" class="btn out">Về chợ đồ dùng</a>' +
+            '</div></div></div>';
         }
       } catch (err) {
-        $("#app").innerHTML = "<div class="wrap">" + errBox("Không tải được trang quản trị: " + err.message) + "</div>";
+        $('#app').innerHTML = '<div class="wrap">' + errBox('Không tải được trang quản trị: ' + err.message) + '</div>';
       }
     });
 
     // Xử lý click và submit form chung
-    document.addEventListener("click", e => {
-      const b = e.target.closest("[data-act]");
+    document.addEventListener('click', e => {
+      const b = e.target.closest('[data-act]');
       if (!b) return;
       const act = b.dataset.act;
-      if (act === "go") go(b.dataset.v, b.dataset.p);
-      else if (act === "close") closeModal();
+      if (act === 'go') go(b.dataset.v, b.dataset.p);
+      else if (act === 'close') closeModal();
       else if (window.onAdminClick) window.onAdminClick(act, b);
     });
-    document.addEventListener("change", e => { if (window.onAdminChange) window.onAdminChange(e); });
-    document.addEventListener("submit", async e => {
-      const form = e.target.closest("form[data-submit]");
+    document.addEventListener('change', e => { if (window.onAdminChange) window.onAdminChange(e); });
+    document.addEventListener('submit', async e => {
+      const form = e.target.closest('form[data-submit]');
       if (!form) return;
       e.preventDefault();
-      const k = form.dataset.submit, btn = form.querySelector("button:not([type=button])"), o = fd(form);
+      const k = form.dataset.submit, btn = form.querySelector('button:not([type=button])'), o = fd(form);
       if (window.onAdminSubmit) await window.onAdminSubmit(k, form, o, btn);
     });
-  </script>
-  <script>
-    /* ===== RESCHOOL – CLIENT QUẢN TRỊ (mọi thao tác đều được máy chủ kiểm tra lại vai trò) ===== */
+</script>
+  <script>/* ===== RESCHOOL – CLIENT QUẢN TRỊ (mọi thao tác đều được máy chủ kiểm tra lại vai trò) ===== */
 const RANK={HOC_SINH:1,GIAO_VIEN:2,QUAN_TRI:3};
 const isGV=()=>S.me&&RANK[S.me.vai_tro]>=2, isQT=()=>S.me&&S.me.vai_tro==='QUAN_TRI';
 S.a={cd:'',spf:'',donf:''};S.d={};
@@ -522,7 +521,6 @@ window.onAdminSubmit=async(k,form,o,btn)=>{
   if(k==='a_kt_save'){return runAdm(btn,()=>api('adm_hanhDongSanPham',o.ma,'luu_kiem_tra',o),'Đã lưu phiếu kiểm tra')}
   if(k==='a_on'){return runAdm(btn,()=>api('adm_batVanHanh',Object.assign({},o,{xac_nhan:o.xac_nhan===true})),'Đã bật chế độ vận hành THẬT',async()=>{S.cfg=await api('pub_khoiTao');S.sp=null;render()})}
   if(k==='a_cfg'){return runAdm(btn,()=>api('adm_luuCauHinh',o),'Đã lưu cấu hình',async()=>{S.cfg=await api('pub_khoiTao');render()})}
-};
-  </script>
+};</script>
 </body>
 </html>
