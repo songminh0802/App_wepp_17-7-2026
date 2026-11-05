@@ -15,10 +15,15 @@ var TEN_DU_AN = 'ReSchool – Chợ đồ dùng học tập tuần hoàn';
 var SLOGAN = 'Trao một món đồ cũ – Mở thêm một cơ hội mới';
 var TZ = 'Asia/Ho_Chi_Minh';
 
-/** Hàm hỗ trợ ép Google hiện hộp thoại cấp quyền Google Drive nếu bị thiếu */
+/** Hàm hỗ trợ ép Google hiện hộp thoại cấp quyền Google Drive và tạo sẵn 2 thư mục lưu ảnh */
 function capQuyenDrive() {
   var root = DriveApp.getRootFolder();
+  var f1 = thuMuc_('FOLDER_CONG_KHAI');
+  var f2 = thuMuc_('FOLDER_RIENG');
   console.log('Đã cấp quyền Google Drive thành công! Thư mục gốc: ' + root.getName());
+  console.log('Thư mục ảnh công khai: ' + f1.getName() + ' (' + f1.getId() + ')');
+  console.log('Thư mục ảnh riêng: ' + f2.getName() + ' (' + f2.getId() + ')');
+  return 'Thành công! Đã cấp quyền Drive và tạo sẵn thư mục lưu ảnh.';
 }
 
 /* ===================== SCHEMA (11 sheet) ===================== */
