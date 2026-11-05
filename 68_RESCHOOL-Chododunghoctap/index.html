@@ -303,12 +303,28 @@ function vForm(loai){
 }
 function policy(){openModal('Chính sách thông tin cá nhân','<p>ReSchool chỉ thu thông tin tối thiểu (tên gọi, cách liên hệ) để xử lý đơn/yêu cầu của bạn.</p><ul><li>Không công khai thông tin người mua, người tặng, chủ ký gửi.</li><li>Không dùng tên, hình ảnh, số điện thoại học sinh để quảng bá.</li><li>Không công khai hoàn cảnh hay danh tính người được hỗ trợ.</li><li>Học sinh gửi đồ cần có sự đồng ý của phụ huynh hoặc người giám hộ.</li><li>Dữ liệu chỉ giáo viên và thành viên được phân quyền xem; bạn có thể đề nghị xóa thông tin qua liên hệ của dự án.</li></ul>')}
 function photoHandler(inp,admin){
-  const st=$('#photoSt'),f=inp.files[0],tk=inp.form.querySelector('[name=anh_token]');tk.value='';
-  if(!f){st.textContent='';return}
-  if(!['image/jpeg','image/png','image/webp'].includes(f.type)){st.textContent='❌ Chỉ nhận JPG, PNG, WEBP.';inp.value='';return}
-  if(f.size>2*1024*1024){st.textContent='❌ Ảnh vượt quá 2 MB.';inp.value='';return}
-  st.textContent='Đang tải ảnh lên…';
-  const r=new FileReader();r.onload=async()=>{try{const d=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:f.type,b64:String(r.result).split(',')[1]});tk.value=d.token;st.textContent='✅ Đã tải ảnh lên.'}catch(e){st.textContent='❌ '+e.message;inp.value=''}};r.readAsDataURL(f);
+  const st=$('#photoSt'),f=inp.files[0],tk=inp.form?inp.form.querySelector('[name=anh_token]'):null;
+  const btn=inp.form?inp.form.querySelector('button[type=submit], button:not([type=button])'):null;
+  if(tk)tk.value='';
+  if(!f){if(st)st.textContent='';return}
+  if(!['image/jpeg','image/png','image/webp'].includes(f.type)){if(st)st.textContent='❌ Chỉ nhận JPG, PNG, WEBP.';inp.value='';return}
+  if(f.size>2*1024*1024){if(st)st.textContent='❌ Ảnh vượt quá 2 MB.';inp.value='';return}
+  if(st)st.innerHTML='<span class="spin"></span> Đang tải ảnh lên…';
+  if(btn)btn.disabled=true;
+  const r=new FileReader();
+  r.onload=async()=>{
+    try{
+      const d=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:f.type,b64:String(r.result).split(',')[1]});
+      if(tk)tk.value=d.token;
+      if(st)st.innerHTML='<span style="color:#2e7d32;font-weight:600">✅ Đã tải ảnh lên.</span><br><img src="'+r.result+'" style="max-height:80px;border-radius:8px;margin-top:6px;border:1px solid #cbd5e1">';
+    }catch(e){
+      if(st)st.textContent='❌ '+e.message;
+      inp.value='';
+    }finally{
+      if(btn)btn.disabled=false;
+    }
+  };
+  r.readAsDataURL(f);
 }
 
 /* ---------- Giới thiệu & phản hồi (BM06) ---------- */

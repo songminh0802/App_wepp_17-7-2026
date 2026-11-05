@@ -150,7 +150,8 @@ function chay_(f) {
   catch (e) {
     if (e && e.nghiepVu) return { ok: false, loi: e.message };
     console.error((e && e.stack) || e);
-    return { ok: false, loi: 'Có lỗi hệ thống nên thao tác CHƯA hoàn tất. Vui lòng thử lại; nếu vẫn lỗi hãy báo giáo viên phụ trách.' };
+    var chiTiet = (e && e.message) ? e.message : String(e);
+    return { ok: false, loi: 'Có lỗi hệ thống: ' + chiTiet };
   }
 }
 
@@ -493,20 +494,27 @@ function luuAnh_(p) {
   if (!cho[mime]) throw loi_('Chỉ nhận ảnh JPG, PNG hoặc WEBP.');
   var bytes;
   try { bytes = Utilities.base64Decode(String(p.b64).replace(/^data:[^,]+,/, '')); } catch (e) { throw loi_('Tệp ảnh không hợp lệ.'); }
+  if (!bytes || bytes.length === 0) throw loi_('Tệp ảnh rỗng.');
   if (bytes.length > 2 * 1024 * 1024) throw loi_('Ảnh vượt quá 2 MB.');
   if (bytes.length < 12) throw loi_('Tệp ảnh không hợp lệ.');
-  var u8 = bytes.map(function (x) { return x & 255; });
-  var jpg = u8[0] === 0xFF && u8[1] === 0xD8 && u8[2] === 0xFF;
-  var png = u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4E && u8[3] === 0x47;
-  var webp = u8[0] === 0x52 && u8[1] === 0x49 && u8[2] === 0x46 && u8[3] === 0x46 && u8[8] === 0x57 && u8[9] === 0x45 && u8[10] === 0x42 && u8[11] === 0x50;
+
+  // Kiểm tra magic bytes an toàn trực tiếp trên Byte[] của GAS mà không gọi .map (tránh lỗi 'bytes.map is not a function')
+  var b0 = bytes[0] & 255, b1 = bytes[1] & 255, b2 = bytes[2] & 255, b3 = bytes[3] & 255;
+  var jpg = b0 === 0xFF && b1 === 0xD8 && b2 === 0xFF;
+  var png = b0 === 0x89 && b1 === 0x50 && b2 === 0x4E && b3 === 0x47;
+  var webp = (bytes[0] & 255) === 0x52 && (bytes[1] & 255) === 0x49 && (bytes[2] & 255) === 0x46 && (bytes[3] & 255) === 0x46 &&
+             (bytes[8] & 255) === 0x57 && (bytes[9] & 255) === 0x45 && (bytes[10] & 255) === 0x42 && (bytes[11] & 255) === 0x50;
   var ok = (mime === 'image/jpeg' && jpg) || (mime === 'image/png' && png) || (mime === 'image/webp' && webp);
   if (!ok) throw loi_('Nội dung tệp không khớp định dạng ảnh.');
+
   // giới hạn số ảnh/ngày để tránh làm đầy Drive
   var pr = PropertiesService.getScriptProperties(), hn = homNay_(), v = (pr.getProperty('ANH_NGAY') || '').split('|');
   var dem = v[0] === hn ? Number(v[1]) : 0;
   if (dem >= 150) throw loi_('Hôm nay đã đạt giới hạn tải ảnh. Vui lòng thử lại ngày mai.');
   pr.setProperty('ANH_NGAY', hn + '|' + (dem + 1));
-  var blob = Utilities.newBlob(u8.map(function (x) { return x > 127 ? x - 256 : x; }), mime, 'rs_' + Utilities.getUuid().slice(0, 8) + '.' + cho[mime]);
+
+  // Utilities.newBlob nhận trực tiếp mảng bytes (Byte[]) từ Utilities.base64Decode
+  var blob = Utilities.newBlob(bytes, mime, 'rs_' + Utilities.getUuid().slice(0, 8) + '.' + cho[mime]);
   return thuMuc_('FOLDER_RIENG').createFile(blob).getId();
 }
 function anhRiengHopLe_(id) {

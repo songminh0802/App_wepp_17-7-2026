@@ -554,20 +554,24 @@ function qrUrl(ma){const u=S.cfg.url_goc||'';return u+(u.indexOf('?')<0?'?':'&')
 function drawQR(el,text,size){el.innerHTML='';if(window.QRCode){try{new QRCode(el,{text:text,width:size||150,height:size||150});return}catch(e){}}el.innerHTML='<span class="sm">'+esc(text)+'</span>'}
 function photoHandler(inp,admin){
   const st=$('#photoSt'),f=inp.files[0],tk=inp.form?inp.form.querySelector('[name=anh_token]'):null;
+  const btn=inp.form?inp.form.querySelector('button[type=submit], button:not([type=button])'):null;
   if(tk)tk.value='';
   if(!f){if(st)st.textContent='';return}
   if(!['image/jpeg','image/png','image/webp'].includes(f.type)){if(st)st.textContent='❌ Chỉ nhận JPG, PNG, WEBP.';inp.value='';return}
   if(f.size>2*1024*1024){if(st)st.textContent='❌ Ảnh vượt quá 2 MB.';inp.value='';return}
-  if(st)st.textContent='Đang tải ảnh lên…';
+  if(st)st.innerHTML='<span class="spin"></span> Đang tải ảnh lên Google Drive…';
+  if(btn)btn.disabled=true;
   const r=new FileReader();
   r.onload=async()=>{
     try{
       const d=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:f.type,b64:String(r.result).split(',')[1]});
       if(tk)tk.value=d.token;
-      if(st)st.textContent='✅ Đã tải ảnh lên.';
+      if(st)st.innerHTML='<span style="color:#2e7d32;font-weight:600">✅ Đã tải ảnh lên thành công.</span><br><img src="'+r.result+'" style="max-height:80px;border-radius:8px;margin-top:6px;border:1px solid #cbd5e1">';
     }catch(e){
       if(st)st.textContent='❌ '+e.message;
       inp.value='';
+    }finally{
+      if(btn)btn.disabled=false;
     }
   };
   r.readAsDataURL(f);
