@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReSchool – Chợ đồ dùng học tập tuần hoàn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+:root{--g:#2E7D32;--g2:#1B5E20;--gl:#E8F5E9;--cream:#FFF8E7;--cream2:#FDF0CF;--or:#F57C00;--or2:#E65100;--tx:#1f2a1f;--mu:#667066;--bd:#dfe6d6;--rd:#c62828;--bl:#1565c0;--w:#fff}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--cream);color:var(--tx);font-size:15px;line-height:1.5}
+h1,h2,h3{margin:.2em 0 .4em;line-height:1.25;color:var(--g2)}
+h1{font-size:1.6rem}h2{font-size:1.25rem}h3{font-size:1.05rem}
+a{color:var(--g)}
+p{margin:.4em 0}
+.hide{display:none!important}
+.center{text-align:center}.pad{padding:28px 16px}
+.mu{color:var(--mu)}.sm{font-size:.85rem}.b{font-weight:700}
+.wrap{max-width:1040px;margin:0 auto;padding:12px}
+#banner .demo{background:var(--or);color:#fff;text-align:center;padding:7px 10px;font-weight:600;font-size:.88rem}
+#banner .that{background:var(--g2);color:#fff;text-align:center;padding:5px 10px;font-size:.8rem}
+#hdr{background:var(--g);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+#hdr .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 12px}
+#hdr .brand{flex:1;cursor:pointer}
+#hdr .brand b{font-size:1.15rem;display:block}
+#hdr .brand span{font-size:.72rem;opacity:.92}
+.btn{border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--g);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;min-height:42px}
+.btn:hover{background:var(--g2)}
+.btn.or{background:var(--or)}.btn.or:hover{background:var(--or2)}
+.btn.out{background:#fff;color:var(--g);border:2px solid var(--g)}
+.btn.out:hover{background:var(--gl)}
+.btn.red{background:var(--rd)}
+.btn.gray{background:#8a928a}
+.btn.sm{padding:6px 10px;min-height:34px;font-size:.85rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.cartb{background:#fff;color:var(--g);border-radius:20px;padding:6px 12px;font-weight:700;cursor:pointer;border:0;font:inherit;font-weight:700}
+.cartb i{background:var(--or);color:#fff;border-radius:10px;padding:0 7px;font-style:normal;margin-left:4px}
+#nav{background:var(--g2);overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+#nav a{display:inline-block;color:#dff2e0;padding:10px 14px;font-weight:500;cursor:pointer;text-decoration:none;font-size:.92rem;border-bottom:3px solid transparent}
+#nav a.on{color:#fff;border-color:var(--or);font-weight:700}
+.hero{background:linear-gradient(135deg,var(--g) 0%,#66BB6A 100%);color:#fff;border-radius:16px;padding:24px 18px;margin:12px 0}
+.hero h1{color:#fff;font-size:1.7rem}
+.hero .sl{font-size:1.05rem;opacity:.95;font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.card{background:var(--w);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card.cat{text-align:center;cursor:pointer;transition:.15s}
+.card.cat:hover{transform:translateY(-2px);border-color:var(--g)}
+.card.cat .ic{font-size:2.2rem}
+.pc{padding:0;overflow:hidden;cursor:pointer;position:relative}
+.pc .im{height:120px;background:var(--gl);display:flex;align-items:center;justify-content:center;font-size:2.8rem;position:relative}
+.pc .im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pc .bd{padding:10px}
+.pc .nm{font-weight:600;font-size:.92rem;min-height:2.6em}
+.price{color:var(--or2);font-weight:700;font-size:1.05rem}
+.tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:10px;background:var(--gl);color:var(--g2);font-weight:600;margin:1px 2px 1px 0}
+.tag.or{background:#FFE0B2;color:#8a4b00}.tag.rd{background:#FFCDD2;color:#8e1a1a}.tag.bl{background:#BBDEFB;color:#0d47a1}.tag.gr{background:#e0e0e0;color:#444}
+.demo-tag{position:absolute;top:6px;left:6px;background:var(--or);color:#fff;font-size:.65rem;padding:2px 6px;border-radius:8px;font-weight:700;z-index:2}
+.steps{counter-reset:s;display:grid;gap:8px}
+.step{background:#fff;border-left:5px solid var(--or);padding:10px 12px;border-radius:10px;border:1px solid var(--bd);border-left:5px solid var(--or)}
+.step:before{counter-increment:s;content:counter(s);background:var(--or);color:#fff;border-radius:50%;display:inline-block;width:24px;height:24px;text-align:center;margin-right:8px;font-weight:700}
+.stat{text-align:center}.stat .n{font-size:1.5rem;font-weight:700;color:var(--g)}
+label{display:block;font-weight:600;margin:10px 0 3px;font-size:.9rem}
+input,select,textarea{width:100%;font:inherit;padding:10px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;color:var(--tx)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--g)}
+input[type=checkbox],input[type=radio]{width:auto;margin-right:6px}
+.chk{display:flex;align-items:flex-start;gap:6px;font-weight:500;margin:8px 0}
+.chk input{margin-top:4px}
+textarea{min-height:80px;resize:vertical}
+.alert{padding:10px 12px;border-radius:10px;margin:10px 0;font-size:.9rem}
+.alert.or{background:#FFF3E0;border:1px solid #FFB74D;color:#7a4300}
+.alert.rd{background:#FFEBEE;border:1px solid #EF9A9A;color:#8e1a1a}
+.alert.gr{background:var(--gl);border:1px solid #A5D6A7;color:var(--g2)}
+.alert.bl{background:#E3F2FD;border:1px solid #90CAF9;color:#0d47a1}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+.spin.big{width:34px;height:34px;border:4px solid var(--gl);border-top-color:var(--g)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:var(--mu);padding:30px 10px;background:#fff;border:2px dashed var(--bd);border-radius:14px}
+#toasts{position:fixed;left:0;right:0;bottom:14px;z-index:99;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.toast{background:#333;color:#fff;padding:10px 16px;border-radius:10px;max-width:92vw;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:auto}
+.toast.ok{background:var(--g2)}.toast.err{background:var(--rd)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:12px}
+.modal .box{background:#fff;border-radius:14px;max-width:560px;width:100%;padding:16px;margin:auto;position:relative}
+.modal .x{position:absolute;right:10px;top:8px;background:none;border:0;font-size:1.6rem;cursor:pointer;color:var(--mu)}
+.qr{display:inline-block;padding:8px;background:#fff;border:1px solid var(--bd);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical-align:top}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0}
+.tabs button{border:1.5px solid var(--g);background:#fff;color:var(--g);border-radius:20px;padding:6px 12px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+.tabs button.on{background:var(--g);color:#fff}
+.item{border:1px solid var(--bd);background:#fff;border-radius:12px;padding:10px;margin:8px 0}
+.item .hd{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:2px 8px;font-size:.88rem}
+.kv span:nth-child(odd){color:var(--mu)}
+.fl{display:flex;gap:8px;flex-wrap:wrap}.fl>*{flex:1;min-width:130px}
+#ftr{text-align:center;color:var(--mu);font-size:.78rem;padding:18px 10px 40px}
+#print-area{display:none}
+@media print{
+  body>*:not(#print-area){display:none!important}
+  #print-area{display:block!important;font-family:'Times New Roman',serif;color:#000;background:#fff;padding:10mm}
+  #print-area h2{color:#000;text-align:center}
+  #print-area table td,#print-area table th{border:1px solid #000;padding:5px}
+  .sig{display:flex;justify-content:space-around;margin-top:40px;text-align:center}
+}
+@media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}.pc .im{height:150px}h1{font-size:2rem}.hero h1{font-size:2.2rem}}
+</style>
+</head>
+<body>
+  <div id="banner"></div>
+  <header id="hdr"></header>
+  <nav id="nav"></nav>
+  <main id="app"><div class="center pad"><span class="spin big"></span><p>Đang tải…</p></div></main>
+  <footer id="ftr"></footer>
+  <div id="modal" class="modal hide"></div>
+  <div id="toasts"></div>
+  <div id="print-area"></div>
+  <script>
+    // =========================================================================
+    // CẤU HÌNH API BACKEND GOOGLE APPS SCRIPT (KHI TRIỂN KHAI TRÊN VERCEL)
+    // Sau khi Triển khai Web App trên Google Apps Script (Quyền: Bất kỳ ai / Anyone),
+    // hãy copy link Web App (kết thúc bằng /exec) và dán vào biến dưới đây:
+    // =========================================================================
+    window.GAS_API_URL = "https://script.google.com/macros/s/AKfycbzSwTorEJF0iqwhxQTXTd5vtc2Gxox3wvGKIs4I2Vexxzwr1ogBqDHQTdukb0GFiCqE/exec";
+
+    // Đọc mã sản phẩm từ tham số URL (?sp=RS123) nếu có
+    window.__INIT = (function() {
+      try {
+        var sp = new URLSearchParams(window.location.search).get("sp");
+        if (sp && /^RSd{3,6}$/i.test(sp)) return { sp: sp.toUpperCase() };
+      } catch (e) {}
+      return { sp: "" };
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>
+/* ===== RESCHOOL – CLIENT (công khai) ===== */
+const TT_SP={CHO_TIEP_NHAN:'Chờ tiếp nhận',CHO_KIEM_TRA:'Chờ kiểm tra',KHONG_DAT:'Không đạt',CHO_DUYET_GIA:'Chờ duyệt giá',SAN_SANG:'Sẵn sàng đăng bán',GIU_CHO:'Giữ chỗ',DA_BAN:'Đã bán',TRA_LAI:'Trả lại',LOAI_BO:'Loại bỏ'};
+const TT_DON={CHO_XAC_NHAN:'Chờ xác nhận',DA_XAC_NHAN:'Đã xác nhận',CHO_NHAN:'Chờ nhận',HOAN_TAT:'Hoàn tất',HUY:'Hủy'};
+const TT_TT={CHUA_THU:'Chưa thu tiền',DA_THU:'Đã thu tiền'};
+const TT_KG={MOI:'Mới gửi',DA_TIEP_NHAN:'Đã tiếp nhận',DA_THOA_THUAN:'Đã thỏa thuận',TU_CHOI:'Từ chối',HET_HAN:'Hết hạn',KET_THUC:'Kết thúc'};
+const TT_YC={MOI:'Mới gửi (chưa tiếp nhận)',DA_TIEP_NHAN:'Đã tiếp nhận',TU_CHOI:'Từ chối'};
+const LOAI_TC={DOANH_THU_TANG:'Doanh thu hàng tặng',PHI_KY_GUI:'Phí ký gửi',THU_HO:'Tiền thu hộ (không phải doanh thu)',TRA_CHU_HANG:'Trả chủ hàng',CHI_PHI:'Chi phí',DIEU_CHINH:'Điều chỉnh',CHI_PHAN_BO:'Chi từ quỹ phân bổ'};
+const TT_TC={CHO_DUYET:'Chờ duyệt',DA_XAC_NHAN:'Đã xác nhận',TU_CHOI:'Từ chối'};
+const CHECK_LBL={ve_sinh:'Vệ sinh sạch sẽ',hu_hong:'Không hư hỏng nặng',an_toan:'An toàn khi sử dụng',noi_dung:'Nội dung phù hợp lứa tuổi',ban_quyen:'Không vi phạm bản quyền (không sao chép trái phép)'};
+const VAI_LBL={HOC_SINH:'Thành viên học sinh',GIAO_VIEN:'Giáo viên giám sát',QUAN_TRI:'Quản trị viên'};
+
+const S={cfg:null,sp:null,cart:[],view:'home',param:null,me:null,f:{q:'',dm:'',min:'',max:'',tt:'',con:false,sort:'moi'},nhan:null};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const vnd=n=>Number(n||0).toLocaleString('vi-VN')+' đ';
+const bo=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
+const dm=ma=>(S.cfg.danh_muc.find(x=>x.ma===ma)||{ten:ma,icon:'📦'});
+const isDemo=()=>S.cfg&&S.cfg.che_do!=='THAT';
+const fmtT=t=>String(t||'').replace('T',' ').slice(0,16);
+
+let mem={};
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return mem[k]}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}}};
+
+function api(fn,...a){
+  if(typeof google!=='undefined'&&google.script&&google.script.run){
+    return new Promise((ok,no)=>{google.script.run.withSuccessHandler(r=>{if(r&&r.ok)ok(r.data);else no(new Error((r&&r.loi)||'Lỗi không xác định'))}).withFailureHandler(e=>no(new Error((e&&e.message)||'Mất kết nối máy chủ')))[fn](...a)});
+  }
+  const u=window.GAS_API_URL||'';
+  if(!u||u.includes('DAN_LINK_WEB_APP_VAO_DAY')){
+    return Promise.reject(new Error('Chưa cấu hình liên kết Google Apps Script API (GAS_API_URL)!'));
+  }
+  return fetch(u,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({fn:fn,args:a})
+  }).then(res=>res.json()).then(r=>{
+    if(r&&r.ok)return r.data;
+    throw new Error((r&&r.loi)||'Lỗi không xác định');
+  }).catch(e=>{
+    throw new Error(e.message||'Mất kết nối máy chủ');
+  });
+}
+function toast(m,t){const d=document.createElement('div');d.className='toast '+(t||'');d.textContent=m;$('#toasts').appendChild(d);setTimeout(()=>d.remove(),t==='err'?6000:3500)}
+async function busy(btn,fn){if(!btn||btn.disabled)return;const h=btn.innerHTML;btn.disabled=true;btn.innerHTML='<span class="spin"></span> Đang xử lý…';try{return await fn()}finally{btn.disabled=false;btn.innerHTML=h}}
+function openModal(title,html){const m=$('#modal');m.innerHTML='<div class="box"><button class="x" data-act="close" aria-label="Đóng">×</button><h2>'+esc(title)+'</h2>'+html+'</div>';m.classList.remove('hide')}
+function closeModal(){$('#modal').classList.add('hide');$('#modal').innerHTML=''}
+const loading=()=>'<div class="center pad"><span class="spin big"></span><p class="mu">Đang tải…</p></div>';
+const errBox=m=>'<div class="alert rd">⚠️ '+esc(m)+'</div>';
+function fd(form){const o={};form.querySelectorAll('[name]').forEach(e=>{if(e.type==='checkbox')o[e.name]=e.checked;else if(e.type==='radio'){if(e.checked)o[e.name]=e.value}else o[e.name]=e.value});return o}
+const opts=(arr,sel,ph)=>(ph!==undefined?'<option value="">'+esc(ph)+'</option>':'')+arr.map(x=>{const v=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return '<option value="'+esc(v)+'"'+(String(v)===String(sel)?' selected':'')+'>'+esc(l)+'</option>'}).join('');
+
+/* ---------- Khung trang ---------- */
+const NAV=[['home','Trang chủ'],['catalog','Sản phẩm'],['tang','Tặng đồ'],['kygui','Ký gửi'],['about','Giới thiệu & Phản hồi'],['track','Tra cứu đơn']];
+function renderShell(){
+  const c=S.cfg;
+  $('#banner').innerHTML=isDemo()?'<div class="demo">🧪 Chế độ demo, chưa mở giao dịch thực tế · <b>Dữ liệu minh họa</b></div>':'<div class="that">Đang vận hành theo văn bản chấp thuận của nhà trường</div>';
+  const n=S.cart.reduce((a,i)=>a+i.sl,0);
+  $('#hdr').innerHTML='<div class="in"><div class="brand" data-act="go" data-v="home"><b>♻️ ReSchool</b><span>'+esc(c.slogan)+'</span></div><button class="cartb" data-act="go" data-v="cart" aria-label="Giỏ hàng">🛒<i>'+n+'</i></button></div>';
+  let nav=NAV.map(x=>'<a data-act="go" data-v="'+x[0]+'" class="'+(S.view===x[0]?'on':'')+'">'+x[1]+'</a>').join('');
+  if(S.me)nav+='<a data-act="go" data-v="a_home" class="'+(S.view.startsWith('a_')?'on':'')+'">⚙️ Quản trị</a>';
+  else if(c.url_quan_tri)nav+='<a href="'+esc(c.url_quan_tri)+'" target="_top">🔐 Đăng nhập quản trị</a>';
+  $('#nav').innerHTML=nav;
+  $('#ftr').innerHTML='ReSchool · Dự án khởi nghiệp học sinh · Phiên bản '+esc(c.phien_ban)+(isDemo()?'<br>Bản demo: mọi biểu mẫu và đơn hàng chỉ mô phỏng.':'');
+}
+function go(v,p){S.view=v;S.param=p||null;closeModal();window.scrollTo(0,0);render()}
+function render(){
+  renderShell();
+  const v=S.view,app=$('#app');
+  if(v.startsWith('a_')){if(!S.me){app.innerHTML=errBox('Bạn chưa đăng nhập quản trị.');return}return renderAdmin(v)}
+  const V={home:vHome,catalog:vCatalog,product:vProduct,cart:vCart,track:vTrack,tang:()=>vForm('tang'),kygui:()=>vForm('kygui'),about:vAbout};
+  (V[v]||vHome)();
+}
+
+/* ---------- Dữ liệu sản phẩm ---------- */
+async function loadSp(force){if(S.sp&&!force)return S.sp;S.sp=await api('pub_danhSachSanPham');return S.sp}
+const stLbl=p=>p.trang_thai==='SAN_SANG'?(p.dat_duoc?'Còn hàng':'Tạm hết'):TT_SP[p.trang_thai];
+function stTag(p){const t=p.trang_thai;return '<span class="tag '+(t==='SAN_SANG'&&p.dat_duoc?'':t==='GIU_CHO'?'or':'gr')+'">'+esc(stLbl(p))+'</span>'}
+function imgBox(p){const c=dm(p.danh_muc);return '<div class="im">'+(isDemo()?'<span class="demo-tag">Dữ liệu minh họa</span>':'')+'<span>'+c.icon+'</span>'+(p.anh_id?'<img loading="lazy" alt="" src="https://drive.google.com/thumbnail?id='+encodeURIComponent(p.anh_id)+'&sz=w600" onerror="this.remove()">':'')+'</div>'}
+function pCard(p){return '<div class="card pc" data-act="go" data-v="product" data-p="'+esc(p.ma)+'">'+imgBox(p)+'<div class="bd"><div class="mu sm">'+esc(p.ma)+'</div><div class="nm">'+esc(p.ten)+'</div><div class="price">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span></div></div></div>'}
+
+/* ---------- Trang chủ ---------- */
+async function vHome(){
+  const c=S.cfg,t=c.tac_dong;
+  const stat=(n,l)=>'<div class="card stat"><div class="n">'+(n>0?n:'—')+'</div><div class="sm">'+l+(n>0?'':'<br><b>Chưa phát sinh</b>')+'</div></div>';
+  $('#app').innerHTML='<div class="wrap"><section class="hero"><h1>♻️ ReSchool</h1><p class="sl">“'+esc(c.slogan)+'”</p><p>Chợ đồ dùng học tập tuần hoàn của học sinh: nhận lại sách, dụng cụ, cặp ba lô còn dùng tốt từ các bạn, kiểm tra, định giá công khai rồi trao cho bạn khác cần dùng – tiết kiệm và nhân văn hơn.</p><div class="row" style="margin-top:12px"><button class="btn or" data-act="go" data-v="catalog">🔎 Khám phá sản phẩm</button><button class="btn out" data-act="go" data-v="tang">🎁 Tặng đồ dùng</button><button class="btn out" data-act="go" data-v="kygui">🤝 Đăng ký ký gửi</button></div></section>'
+  +(isDemo()?'<div class="alert or"><b>Bản demo.</b> Sản phẩm, giá, đơn hàng đều là dữ liệu minh họa. Hệ thống chưa nhận hàng, tiền hay thông tin cá nhân thật.</div>':'')
+  +'<h2>Danh mục</h2><div class="grid">'+c.danh_muc.map(d=>'<div class="card cat" data-act="cat" data-p="'+d.ma+'"><div class="ic">'+d.icon+'</div><b>'+esc(d.ten)+'</b></div>').join('')+'</div>'
+  +'<h2 style="margin-top:20px">Mô hình tuần hoàn · 5 bước</h2><div class="steps"><div class="step"><b>Tiếp nhận tự nguyện</b> – nhận đồ tặng hoặc ký gửi từ người có nhu cầu.</div><div class="step"><b>Kiểm tra</b> – vệ sinh, hư hỏng, an toàn, nội dung, bản quyền.</div><div class="step"><b>Định giá</b> – giáo viên giám sát duyệt giá.</div><div class="step"><b>Giới thiệu</b> – đăng công khai kèm tình trạng và lỗi đã ghi nhận.</div><div class="step"><b>Giao dịch</b> – đặt giữ chỗ, nhận và thanh toán tại điểm nhận có giáo viên giám sát.</div></div>'
+  +'<h2 style="margin-top:20px">Chỉ số tác động</h2>'+(t.co?'<div class="grid">'+stat(t.da_co_chu_moi,'Món đồ đã có chủ mới')+stat(t.da_tiep_nhan,'Món đồ đã tiếp nhận')+'</div><p class="sm mu">Chỉ tính từ giao dịch thật đã được giáo viên xác nhận.</p>':'<div class="empty">Chưa phát sinh<br><span class="sm">Chỉ số chỉ hiển thị khi có dữ liệu giao dịch thật đã xác nhận (không dùng dữ liệu minh họa).</span></div>')
+  +'</div>';
+}
+
+/* ---------- Danh mục ---------- */
+async function vCatalog(){
+  const f=S.f;
+  $('#app').innerHTML='<div class="wrap"><h2>Sản phẩm</h2><div class="card"><input id="fq" placeholder="🔎 Tìm theo tên hoặc mã (vd: RS001)" value="'+esc(f.q)+'"><div class="fl"><div><label>Danh mục</label><select id="fdm">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),f.dm,'Tất cả')+'</select></div><div><label>Tình trạng</label><select id="ftt">'+opts(S.cfg.tinh_trang,f.tt,'Tất cả')+'</select></div></div><div class="fl"><div><label>Giá từ (đ)</label><input id="fmin" type="number" min="0" value="'+esc(f.min)+'"></div><div><label>Đến (đ)</label><input id="fmax" type="number" min="0" value="'+esc(f.max)+'"></div><div><label>Sắp xếp</label><select id="fso">'+opts([['moi','Mới đăng nhất'],['cu','Cũ nhất'],['gia_tang','Giá thấp → cao'],['gia_giam','Giá cao → thấp']],f.sort)+'</select></div></div><label class="chk"><input type="checkbox" id="fcon"'+(f.con?' checked':'')+'> Chỉ hiện sản phẩm còn hàng</label></div><div id="grid">'+loading()+'</div></div>';
+  try{await loadSp(true)}catch(e){$('#grid').innerHTML=errBox(e.message);return}
+  applyFilters();
+}
+function applyFilters(){
+  const f=S.f;f.q=$('#fq').value;f.dm=$('#fdm').value;f.tt=$('#ftt').value;f.min=$('#fmin').value;f.max=$('#fmax').value;f.sort=$('#fso').value;f.con=$('#fcon').checked;
+  const q=bo(f.q.trim());
+  let l=S.sp.filter(p=>(!q||bo(p.ten).includes(q)||bo(p.ma).includes(q))&&(!f.dm||p.danh_muc===f.dm)&&(!f.tt||p.tinh_trang===f.tt)&&(f.min===''||p.gia>=+f.min)&&(f.max===''||p.gia<=+f.max)&&(!f.con||p.dat_duoc));
+  const s=f.sort;l.sort((a,b)=>s==='gia_tang'?a.gia-b.gia:s==='gia_giam'?b.gia-a.gia:s==='cu'?String(a.ngay_dang).localeCompare(b.ngay_dang):String(b.ngay_dang).localeCompare(a.ngay_dang));
+  $('#grid').innerHTML=l.length?'<p class="sm mu">'+l.length+' sản phẩm</p><div class="grid">'+l.map(pCard).join('')+'</div>':'<div class="empty">Không có sản phẩm phù hợp.<br><span class="sm">Chỉ hiển thị hàng đã kiểm tra và được giáo viên duyệt giá.</span></div>';
+}
+
+/* ---------- Chi tiết sản phẩm ---------- */
+function qrUrl(ma){const u=S.cfg.url_goc||'';return u+(u.indexOf('?')<0?'?':'&')+'sp='+encodeURIComponent(ma)}
+function drawQR(el,text,size){el.innerHTML='';if(window.QRCode){try{new QRCode(el,{text:text,width:size||150,height:size||150});return}catch(e){}}el.innerHTML='<span class="sm">'+esc(text)+'</span>'}
+async function vProduct(){
+  const ma=S.param;$('#app').innerHTML='<div class="wrap">'+loading()+'</div>';
+  try{
+    const p=await api('pub_chiTietSanPham',ma);
+    $('#app').innerHTML='<div class="wrap"><button class="btn out sm" data-act="go" data-v="catalog">← Sản phẩm</button><div class="card" style="margin-top:10px"><div class="pc" style="border-radius:12px;overflow:hidden">'+imgBox(p)+'</div><h2>'+esc(p.ten)+'</h2><div class="mu sm">Mã: <b>'+esc(p.ma)+'</b> · '+(p.nguon==='KY_GUI'?'Hàng ký gửi':'Hàng tặng')+'</div><div class="price" style="font-size:1.4rem;margin:6px 0">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span><span class="tag">✔ Đã kiểm tra</span><span class="tag">'+esc(dm(p.danh_muc).ten)+'</span></div>'+(isDemo()?'<div class="alert or">Dữ liệu minh họa – giá và hình ảnh chỉ để minh họa.</div>':'')+'<h3>Mô tả</h3><p>'+esc(p.mo_ta||'Chưa có mô tả.')+'</p><h3>Tình trạng và lỗi đã ghi nhận</h3><p>'+esc(p.loi_ghi_nhan||'Chưa ghi nhận lỗi nào.')+'</p>'
+    +(p.dat_duoc?'<div class="row" style="margin-top:10px;align-items:center"><select id="pq" style="width:90px">'+Array.from({length:Math.min(p.ton_kho,10)},(_,i)=>'<option>'+(i+1)+'</option>').join('')+'</select><button class="btn or" data-act="addcart" data-p="'+esc(p.ma)+'">🛒 Thêm vào giỏ</button></div><p class="sm mu">Còn '+p.ton_kho+' món. Nhận tại điểm nhận, thanh toán khi nhận.</p>':'<div class="alert gr">'+(p.trang_thai==='DA_BAN'?'Sản phẩm này đã bán.':p.trang_thai==='GIU_CHO'?'Sản phẩm đang được giữ chỗ cho người khác.':'Sản phẩm hiện không thể đặt.')+'</div>')
+    +'<h3>Mã QR của sản phẩm</h3><div class="qr" id="qr"></div><p class="sm mu">Quét để mở lại đúng trang sản phẩm này.</p></div></div>';
+    drawQR($('#qr'),qrUrl(p.ma));
+  }catch(e){$('#app').innerHTML='<div class="wrap">'+errBox(e.message)+'<button class="btn" data-act="go" data-v="catalog">Về danh sách</button></div>'}
+}
+
+/* ---------- Giỏ hàng & đặt hàng ---------- */
+function saveCart(){store.set('rs_cart',S.cart);renderShell()}
+async function vCart(){
+  const app=$('#app');app.innerHTML='<div class="wrap">'+loading()+'</div>';
+  try{await loadSp(true)}catch(e){app.innerHTML='<div class="wrap">'+errBox(e.message)+'</div>';return}
+  S.cart=S.cart.filter(i=>{const p=S.sp.find(x=>x.ma===i.ma);return p&&p.dat_duoc}).map(i=>{const p=S.sp.find(x=>x.ma===i.ma);i.sl=Math.min(i.sl,p.ton_kho,10);return i});saveCart();
+  if(!S.cart.length){app.innerHTML='<div class="wrap"><h2>Giỏ hàng</h2><div class="empty">Giỏ hàng đang trống.<br><br><button class="btn" data-act="go" data-v="catalog">Khám phá sản phẩm</button></div></div>';return}
+  const tong=S.cart.reduce((a,i)=>a+i.sl*S.sp.find(x=>x.ma===i.ma).gia,0),n=S.nhan||S.cfg.nhan;
+  app.innerHTML='<div class="wrap"><h2>Giỏ hàng</h2>'+S.cart.map(i=>{const p=S.sp.find(x=>x.ma===i.ma);return '<div class="item"><div class="hd"><div><b>'+esc(p.ten)+'</b><div class="mu sm">'+esc(p.ma)+' · '+vnd(p.gia)+'</div></div><div class="row" style="align-items:center"><button class="btn sm out" data-act="qty" data-p="'+p.ma+'" data-d="-1">−</button><b>'+i.sl+'</b><button class="btn sm out" data-act="qty" data-p="'+p.ma+'" data-d="1">+</button><button class="btn sm red" data-act="rm" data-p="'+p.ma+'">Xóa</button></div></div></div>'}).join('')
+  +'<div class="card"><div class="b">Tạm tính: <span class="price">'+vnd(tong)+'</span></div><p class="sm mu">Giá và tồn kho sẽ được máy chủ tính lại khi đặt hàng. Thanh toán khi nhận hàng, không thanh toán online.</p></div>'
+  +'<div class="card" style="margin-top:10px"><h3>Nhận hàng'+(n.minh_hoa?' <span class="tag or">minh họa</span>':'')+'</h3><div class="kv"><span>Điểm nhận</span><span>'+esc(n.diem_nhan)+'</span><span>Thời gian</span><span>'+esc(n.thoi_gian_nhan)+'</span><span>Liên hệ</span><span>'+esc(n.lien_he)+'</span><span>Giữ chỗ</span><span>'+esc(n.han_giu_cho_gio)+' giờ</span></div></div>'
+  +'<form class="card" style="margin-top:10px" data-submit="order"><h3>Thông tin đặt hàng</h3>'+(isDemo()?'<div class="alert or"><b>Chế độ demo:</b> đơn chỉ mô phỏng. Vui lòng KHÔNG nhập tên, số điện thoại thật.</div>':'')+'<label>Tên người nhận</label><input name="ten" required maxlength="60" placeholder="'+(isDemo()?'Ví dụ: Khách minh họa':'Tên (có thể dùng tên gọi)')+'"><label>Số điện thoại hoặc email</label><input name="lien_he" required maxlength="80" placeholder="'+(isDemo()?'Ví dụ: 0900000000':'')+'"><label>Ghi chú (không bắt buộc)</label><input name="ghi_chu" maxlength="200">'
+  +(isDemo()?'<label class="chk"><input type="checkbox" name="xac_nhan_demo"> Tôi hiểu đây là chế độ demo, đơn chỉ mô phỏng và tôi không nhập thông tin thật.</label>':'')
+  +'<label class="chk"><input type="checkbox" name="dong_y_chinh_sach"> Tôi đồng ý chính sách thông tin cá nhân: chỉ thu tên và liên hệ tối thiểu để giao nhận đơn, không công khai và không chia sẻ cho bên thứ ba.</label><button class="btn or" style="width:100%;margin-top:8px">Đặt giữ chỗ</button></form></div>';
+}
+function showOrderResult(r){
+  S.cart=[];saveCart();
+  $('#app').innerHTML='<div class="wrap"><div class="card"><h2>'+(r.che_do!=='THAT'?'🧪 Đơn MÔ PHỎNG đã được ghi':'✅ Đã ghi đơn giữ chỗ')+'</h2>'+(r.che_do!=='THAT'?'<div class="alert or">Đây là đơn demo: không có hàng thật, không thu tiền.</div>':'')+'<div class="kv"><span>Mã đơn</span><b>'+esc(r.ma_don)+'</b><span>Mã xác thực</span><b style="font-size:1.2rem;color:var(--or2)">'+esc(r.ma_xac_thuc)+'</b><span>Tổng tiền</span><b>'+vnd(r.tong)+'</b><span>Giữ chỗ đến</span><span>'+esc(fmtT(r.han_giu_cho))+'</span></div><div class="alert or"><b>Hãy lưu lại mã đơn và mã xác thực</b> – cần cả hai để tra cứu đơn; mã xác thực không hiển thị lại.</div><h3>Hướng dẫn nhận hàng</h3><ol><li>Chờ giáo viên xác nhận đơn (tra cứu bằng mã đơn + mã xác thực).</li><li>Đến <b>'+esc(r.nhan.diem_nhan)+'</b> vào <b>'+esc(r.nhan.thoi_gian_nhan)+'</b>, trước hạn giữ chỗ.</li><li>Kiểm tra hàng, thanh toán khi nhận. Quá hạn giữ chỗ đơn sẽ tự hủy.</li><li>Liên hệ: '+esc(r.nhan.lien_he)+'</li></ol><button class="btn" data-act="go" data-v="track">Tra cứu đơn</button> <button class="btn out" data-act="go" data-v="catalog">Tiếp tục xem hàng</button></div></div>';
+}
+
+/* ---------- Tra cứu đơn ---------- */
+function vTrack(){$('#app').innerHTML='<div class="wrap"><h2>Tra cứu đơn hàng</h2><form class="card" data-submit="track"><label>Mã đơn (vd: DH0001)</label><input name="ma" required maxlength="12"><label>Mã xác thực</label><input name="code" required maxlength="12"><button class="btn" style="margin-top:10px;width:100%">Tra cứu</button>'+(isDemo()?'<p class="sm mu">Demo: thử đơn <b>DH0001</b> với mã <b>DEMO01</b> (đơn minh họa).</p>':'')+'</form><div id="trk"></div></div>'}
+function trackView(d){
+  return '<div class="card" style="margin-top:10px"><h3>Đơn '+esc(d.ma_don)+(d.che_do!=='THAT'?' <span class="tag or">minh họa</span>':'')+'</h3><div>'+'<span class="tag '+(d.trang_thai==='HUY'?'rd':'')+'">'+esc(TT_DON[d.trang_thai])+'</span><span class="tag bl">'+esc(TT_TT[d.thanh_toan])+'</span></div><table style="margin-top:8px"><tr><th>Sản phẩm</th><th>SL</th><th>Thành tiền</th></tr>'+d.items.map(i=>'<tr><td>'+esc(i.ten_sp)+'</td><td>'+i.so_luong+'</td><td>'+vnd(i.thanh_tien)+'</td></tr>').join('')+'<tr><td colspan="2"><b>Tổng</b></td><td><b>'+vnd(d.tong_tien)+'</b></td></tr></table>'+(['CHO_XAC_NHAN','DA_XAC_NHAN','CHO_NHAN'].includes(d.trang_thai)?'<p>Giữ chỗ đến: <b>'+esc(fmtT(d.han_giu_cho))+'</b></p><div class="kv"><span>Điểm nhận</span><span>'+esc(d.nhan.diem_nhan)+'</span><span>Thời gian</span><span>'+esc(d.nhan.thoi_gian_nhan)+'</span><span>Liên hệ</span><span>'+esc(d.nhan.lien_he)+'</span></div>':'')+(d.ly_huy?'<p class="mu">Lý do hủy: '+esc(d.ly_huy)+'</p>':'')+'<h3>Lịch sử</h3>'+d.lich_su.map(l=>'<div class="sm">'+esc(fmtT(l.t))+' · '+esc(l.h)+(l.g?' – '+esc(l.g):'')+'</div>').join('')+'</div>';
+}
+
+/* ---------- Tặng đồ / Ký gửi ---------- */
+const KHONG_NHAN='<ul class="sm"><li>Hàng mất vệ sinh (ẩm mốc, bẩn nặng, có côn trùng).</li><li>Hàng hư hỏng nặng, không còn dùng được.</li><li>Hàng nguy hiểm (sắc nhọn hỏng, hóa chất, dễ cháy nổ…).</li><li>Tài liệu sao chép trái phép (vi phạm bản quyền).</li><li>Nội dung không phù hợp lứa tuổi học sinh.</li></ul>';
+function vForm(loai){
+  const tang=loai==='tang';
+  $('#app').innerHTML='<div class="wrap"><h2>'+(tang?'🎁 Tặng đồ dùng học tập':'🤝 Đăng ký ký gửi')+'</h2>'+(isDemo()?'<div class="alert or"><b>Chế độ demo:</b> biểu mẫu chỉ mô phỏng, hệ thống chưa nhận hàng. Không nhập thông tin cá nhân thật.</div>':'')
+  +'<div class="alert bl">'+(tang?'Gửi yêu cầu <b>không có nghĩa là đã được tiếp nhận</b>. Giáo viên sẽ kiểm tra và quyết định.':'Giá thống nhất, thời hạn, hoa hồng (nếu có) và cách trả hàng chưa bán chỉ được xác nhận ở bước duyệt. Mặc định không có hoa hồng; chưa có thỏa thuận thì chưa đăng bán.')+'</div><div class="card"><h3>Không nhận</h3>'+KHONG_NHAN+'</div>'
+  +'<form class="card" style="margin-top:10px" data-submit="'+loai+'"><label>Họ tên liên hệ</label><input name="ten_lien_he" required maxlength="60" placeholder="'+(isDemo()?'Ví dụ: Người gửi minh họa':'')+'"><label>Số điện thoại hoặc email</label><input name="lien_he" required maxlength="80">'
+  +(tang?'<label>Loại hàng</label><select name="loai_hang">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),'')+'</select>':'')
+  +'<label>Mô tả món đồ (tối thiểu 10 ký tự)</label><textarea name="mo_ta" required maxlength="1000"></textarea><label>Tình trạng</label><select name="tinh_trang">'+opts(S.cfg.tinh_trang,'')+'</select>'
+  +(tang?'':'<label>Giá mong muốn (đ)</label><input name="gia_mong_muon" type="number" min="1000" step="500" required>')
+  +'<label>Ảnh (JPG/PNG/WEBP, tối đa 2 MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="1"><input type="hidden" name="anh_token"><div id="photoSt" class="sm mu"></div>'
+  +'<label class="chk"><input type="checkbox" name="la_hoc_sinh"> Người gửi là học sinh</label><label class="chk hide" id="phh"><input type="checkbox" name="phu_huynh_dong_y"> Phụ huynh/người giám hộ đã đồng ý cho em gửi món đồ này. (bắt buộc với học sinh)</label>'
+  +(tang?'<label class="chk"><input type="checkbox" name="tu_nguyen"> Tôi xác nhận việc tặng là hoàn toàn tự nguyện.</label>':'')
+  +'<label class="chk"><input type="checkbox" name="khong_thuoc_loai_tu_choi"> Món đồ không thuộc nhóm không nhận ở trên.</label>'
+  +(isDemo()?'<label class="chk"><input type="checkbox" name="xac_nhan_demo"> Tôi hiểu đây là demo, chỉ mô phỏng và tôi không nhập thông tin thật.</label>':'')
+  +'<label class="chk"><input type="checkbox" name="dong_y_chinh_sach"> Tôi đồng ý <a data-act="policy">chính sách thông tin cá nhân</a>.</label><button class="btn or" style="width:100%;margin-top:8px">Gửi yêu cầu</button></form></div>';
+}
+function policy(){openModal('Chính sách thông tin cá nhân','<p>ReSchool chỉ thu thông tin tối thiểu (tên gọi, cách liên hệ) để xử lý đơn/yêu cầu của bạn.</p><ul><li>Không công khai thông tin người mua, người tặng, chủ ký gửi.</li><li>Không dùng tên, hình ảnh, số điện thoại học sinh để quảng bá.</li><li>Không công khai hoàn cảnh hay danh tính người được hỗ trợ.</li><li>Học sinh gửi đồ cần có sự đồng ý của phụ huynh hoặc người giám hộ.</li><li>Dữ liệu chỉ giáo viên và thành viên được phân quyền xem; bạn có thể đề nghị xóa thông tin qua liên hệ của dự án.</li></ul>')}
+function photoHandler(inp,admin){
+  const st=$('#photoSt'),f=inp.files[0],tk=inp.form.querySelector('[name=anh_token]');tk.value='';
+  if(!f){st.textContent='';return}
+  if(!['image/jpeg','image/png','image/webp'].includes(f.type)){st.textContent='❌ Chỉ nhận JPG, PNG, WEBP.';inp.value='';return}
+  if(f.size>2*1024*1024){st.textContent='❌ Ảnh vượt quá 2 MB.';inp.value='';return}
+  st.textContent='Đang tải ảnh lên…';
+  const r=new FileReader();r.onload=async()=>{try{const d=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:f.type,b64:String(r.result).split(',')[1]});tk.value=d.token;st.textContent='✅ Đã tải ảnh lên.'}catch(e){st.textContent='❌ '+e.message;inp.value=''}};r.readAsDataURL(f);
+}
+
+/* ---------- Giới thiệu & phản hồi (BM06) ---------- */
+function vAbout(){
+  $('#app').innerHTML='<div class="wrap"><h2>Giới thiệu ReSchool</h2><div class="card"><p>ReSchool là dự án khởi nghiệp của nhóm học sinh lớp 8 dưới sự hướng dẫn của giáo viên. Dự án đang ở giai đoạn ý tưởng.</p><h3>Nguyên tắc</h3><ul><li><b>Tự nguyện:</b> chỉ nhận đồ tặng hoặc ký gửi do chủ sở hữu tự nguyện đưa.</li><li><b>Kiểm tra chất lượng:</b> mọi món đều qua checklist vệ sinh – hư hỏng – an toàn – nội dung – bản quyền trước khi đăng.</li><li><b>Minh bạch thu chi:</b> sổ thu chi có chứng từ, giáo viên duyệt; tiền ký gửi tách khỏi doanh thu dự án.</li></ul><p class="sm mu">Chúng tôi không đăng lời chứng thực hay đánh giá khách hàng khi chưa có thật.</p></div><h2 style="margin-top:16px">Gửi phản hồi</h2><form class="card" data-submit="feedback">'+(isDemo()?'<div class="alert or">Demo: phản hồi chỉ mô phỏng, không nhập thông tin thật.</div>':'')+'<label>Nội dung góp ý</label><textarea name="noi_dung" required maxlength="1000"></textarea><label>Mức hài lòng (không bắt buộc)</label><select name="diem">'+opts([['1','1 – Chưa tốt'],['2','2'],['3','3'],['4','4'],['5','5 – Rất tốt']],'','Không đánh giá')+'</select><label>Liên hệ (không bắt buộc)</label><input name="lien_he" maxlength="80">'+(isDemo()?'<label class="chk"><input type="checkbox" name="xac_nhan_demo"> Tôi hiểu đây là demo.</label>':'')+'<button class="btn" style="width:100%;margin-top:8px">Gửi phản hồi</button></form></div>';
+}
+
+/* ---------- Sự kiện (ủy quyền) ---------- */
+const A={
+ go:el=>go(el.dataset.v,el.dataset.p),
+ cat:el=>{S.f={q:'',dm:el.dataset.p,min:'',max:'',tt:'',con:false,sort:'moi'};go('catalog')},
+ close:()=>closeModal(),
+ policy:()=>policy(),
+ addcart:el=>{const ma=el.dataset.p,sl=+($('#pq')||{value:1}).value,x=S.cart.find(i=>i.ma===ma);if(x)x.sl=Math.min(10,x.sl+sl);else S.cart.push({ma,sl});saveCart();toast('Đã thêm vào giỏ hàng','ok')},
+ qty:el=>{const i=S.cart.find(x=>x.ma===el.dataset.p),p=S.sp.find(x=>x.ma===i.ma);i.sl=Math.max(1,Math.min(i.sl+(+el.dataset.d),p.ton_kho,10));saveCart();vCart()},
+ rm:el=>{S.cart=S.cart.filter(i=>i.ma!==el.dataset.p);saveCart();vCart()}
+};
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;if(el.tagName==='A'||el.tagName==='BUTTON')e.preventDefault();const f=A[el.dataset.act];if(f)f(el,e)});
+document.addEventListener('change',e=>{
+  if(e.target.matches('[data-photo]'))photoHandler(e.target,e.target.dataset.photo==='admin');
+  if(e.target.name==='la_hoc_sinh'){const p=$('#phh');if(p)p.classList.toggle('hide',!e.target.checked)}
+  if(e.target.closest('#grid,#app')&&e.target.matches('#fdm,#ftt,#fso,#fcon'))applyFilters();
+  if(window.onAdminChange)window.onAdminChange(e);
+});
+document.addEventListener('input',e=>{if(e.target.matches('#fq,#fmin,#fmax'))applyFilters()});
+document.addEventListener('submit',async e=>{
+  const form=e.target.closest('form[data-submit]');if(!form)return;e.preventDefault();
+  const k=form.dataset.submit,btn=form.querySelector('button:not([type=button])'),o=fd(form);
+  const H={
+   order:async()=>{o.items=S.cart.map(i=>({ma:i.ma,sl:i.sl}));const r=await api('pub_datHang',o);S.nhan=r.nhan;showOrderResult(r);toast('Đơn đã được ghi vào hệ thống','ok')},
+   track:async()=>{const d=await api('pub_traCuuDon',o.ma,o.code);$('#trk').innerHTML=trackView(d)},
+   tang:async()=>{const r=await api('pub_guiTang',o);done(r,'Yêu cầu tặng đồ')},
+   kygui:async()=>{const r=await api('pub_guiKyGui',o);done(r,'Yêu cầu ký gửi')},
+   feedback:async()=>{const r=await api('pub_guiPhanHoi',o);form.reset();toast('Đã ghi phản hồi '+r.ma+(r.che_do!=='THAT'?' (mô phỏng)':''),'ok')}
+  };
+  function done(r,ten){$('#app').innerHTML='<div class="wrap"><div class="card"><h2>'+(r.che_do!=='THAT'?'🧪 ':'✅ ')+'Đã ghi '+ten.toLowerCase()+' '+esc(r.ma)+'</h2>'+(r.che_do!=='THAT'?'<div class="alert or">Chế độ demo: chỉ mô phỏng, không có hàng thật được nhận.</div>':'')+'<div class="alert bl"><b>Lưu ý:</b> gửi yêu cầu chưa có nghĩa là đã được tiếp nhận. Giáo viên sẽ kiểm tra và liên hệ nếu chấp nhận.</div><button class="btn" data-act="go" data-v="home">Về trang chủ</button></div></div>'}
+  if(H[k]&&window[k+'Pre'])window[k+'Pre'](o);
+  if(!H[k]){if(window.onAdminSubmit)return window.onAdminSubmit(k,form,o,btn);return}
+  await busy(btn,async()=>{try{await H[k]()}catch(err){toast(err.message,'err')}});
+});
+
+/* ---------- Khởi động ---------- */
+(async function init(){
+  S.cart=store.get('rs_cart')||[];
+  try{
+    S.cfg=await api('pub_khoiTao');
+    try{const m=await api('adm_toi');if(m.dang_nhap)S.me=m}catch(e){}
+    renderShell();
+    if(window.__INIT&&window.__INIT.sp){go('product',window.__INIT.sp)}else go('home');
+  }catch(e){
+    $('#app').innerHTML='<div class="wrap">'+errBox('Không tải được hệ thống: '+e.message+' (nếu mới cài đặt, hãy chạy khoiTao() trong Apps Script).')+'</div>';
+  }
+})();
+</script>
+  <script>
+/* ===== RESCHOOL – CLIENT QUẢN TRỊ (mọi thao tác đều được máy chủ kiểm tra lại vai trò) ===== */
+const RANK={HOC_SINH:1,GIAO_VIEN:2,QUAN_TRI:3};
+const isGV=()=>S.me&&RANK[S.me.vai_tro]>=2, isQT=()=>S.me&&S.me.vai_tro==='QUAN_TRI';
+S.a={cd:'',spf:'',donf:''};S.d={};
+const aloc=()=>S.a.cd?{che_do:S.a.cd}:{};
+const ATABS=[['a_home','Tổng quan',1],['a_sp','Sản phẩm',1],['a_yc','Yêu cầu tặng',1],['a_kg','Ký gửi',2],['a_don','Đơn hàng',1],['a_tc','Thu chi',1],['a_bc','Báo cáo & biểu mẫu',1],['a_log','Nhật ký',2],['a_sys','Hệ thống',3]];
+const cdTag=c=>'<span class="tag '+(c==='THAT'?'':'or')+'">'+(c==='THAT'?'THẬT':'DEMO')+'</span>';
+const ttSpTag=t=>'<span class="tag '+(['SAN_SANG'].includes(t)?'':['KHONG_DAT','TRA_LAI','LOAI_BO'].includes(t)?'rd':'bl')+'">'+esc(TT_SP[t]||t)+'</span>';
+const val=(o,k)=>esc(o&&o[k]!=null?o[k]:'');
+
+function renderAdmin(v){
+  const cur=S.cfg.che_do;
+  const tabs=ATABS.filter(t=>RANK[S.me.vai_tro]>=t[2]).map(t=>'<button data-act="go" data-v="'+t[0]+'" class="'+(v===t[0]?'on':'')+'">'+t[1]+'</button>').join('');
+  $('#app').innerHTML='<div class="wrap"><div class="card"><div class="row" style="justify-content:space-between;align-items:center"><div><b>⚙️ Quản trị</b> · '+esc(S.me.ho_ten||S.me.email)+'<div class="sm mu">'+esc(VAI_LBL[S.me.vai_tro])+' · '+esc(S.me.email)+'</div></div><div><label class="sm" style="margin:0">Xem dữ liệu</label><select id="acd" style="width:auto">'+opts([['','Chế độ hiện tại ('+(cur==='THAT'?'THẬT':'DEMO')+')'],['DEMO','Chỉ DEMO'],['THAT','Chỉ THẬT'],['TAT_CA','Tất cả']],S.a.cd)+'</select></div></div></div><div class="tabs">'+tabs+'</div><div id="acont">'+loading()+'</div></div>';
+  const F={a_home:aHome,a_sp:aSp,a_yc:aYc,a_kg:aKg,a_don:aDon,a_tc:aTc,a_bc:aBc,a_log:aLog,a_sys:aSys};
+  const t=ATABS.find(x=>x[0]===v);
+  if(!t||RANK[S.me.vai_tro]<t[2]){$('#acont').innerHTML=errBox('Bạn không có quyền xem mục này.');return}
+  F[v]().catch(e=>{$('#acont').innerHTML=errBox(e.message)});
+}
+window.onAdminChange=e=>{if(e.target.id==='acd'){S.a.cd=e.target.value;render()}};
+const AC=h=>{$('#acont').innerHTML=h};
+const note=()=>S.cfg.che_do!=='THAT'?'<div class="alert or">Đang ở <b>chế độ DEMO</b>: các thao tác chỉ tạo bản ghi DEMO; báo cáo thật không đọc dữ liệu này.</div>':'';
+
+/* ---- Tổng quan ---- */
+async function aHome(){
+  const t=await api('adm_tongQuan');
+  const c=(n,l,v)=>'<div class="card stat" data-act="go" data-v="'+v+'" style="cursor:pointer"><div class="n">'+n+'</div><div class="sm">'+l+'</div></div>';
+  AC(note()+'<div class="grid">'+c(t.cho_tiep_nhan,'Chờ tiếp nhận','a_sp')+c(t.cho_kiem_tra,'Chờ kiểm tra','a_sp')+c(t.cho_duyet_gia,'Chờ duyệt giá','a_sp')+c(t.dang_ban,'Đang đăng bán','a_sp')+c(t.don_cho_xac_nhan,'Đơn chờ xác nhận','a_don')+c(t.don_dang_xu_ly,'Đơn đang xử lý','a_don')+c(t.yc_tang_moi,'Yêu cầu tặng mới','a_yc')+c(t.kg_moi,'Ký gửi mới',isGV()?'a_kg':'a_home')+c(t.thu_chi_cho_duyet,'Khoản chi chờ duyệt','a_tc')+'</div><div class="card" style="margin-top:12px"><h3>Quy trình sản phẩm</h3><p class="sm">Chờ tiếp nhận → Chờ kiểm tra (BM04) → Đạt/Không đạt → Chờ duyệt giá → Sẵn sàng đăng bán → Giữ chỗ → Đã bán. Có thể Trả lại / Loại bỏ kèm lý do.</p><p class="sm"><b>Phân quyền:</b> học sinh nhập liệu và chuẩn bị hồ sơ; giáo viên duyệt hàng, giá, đơn, thu chi; quản trị viên quản lý tài khoản và cấu hình. Máy chủ từ chối thao tác vượt quyền.</p></div>');
+}
+
+/* ---- Sản phẩm ---- */
+async function aSp(){
+  const l=S.d.sp=await api('adm_dsSanPham',aloc()),f=S.a.spf;
+  const ds=l.filter(p=>!f||p.trang_thai===f).reverse();
+  const chips=[['','Tất cả']].concat(Object.keys(TT_SP).map(k=>[k,TT_SP[k]]));
+  AC(note()+'<div class="row"><button class="btn" data-act="a_sp_new">➕ Thêm sản phẩm</button></div><div class="tabs">'+chips.map(c=>'<button data-act="a_spf" data-p="'+c[0]+'" class="'+(f===c[0]?'on':'')+'">'+c[1]+'</button>').join('')+'</div>'
+   +(ds.length?ds.map(spItem).join(''):'<div class="empty">Chưa có sản phẩm.</div>'));
+}
+function spItem(p){
+  const t=p.trang_thai,gv=isGV(),b=[];
+  const B=(a,txt,cls)=>b.push('<button class="btn sm '+(cls||'')+'" data-act="a_sp_do" data-id="'+p.ma+'" data-h="'+a+'">'+txt+'</button>');
+  if(t==='CHO_TIEP_NHAN'&&gv)B('tiep_nhan','Tiếp nhận');
+  if(t==='CHO_KIEM_TRA')b.push('<button class="btn sm or" data-act="a_kt" data-id="'+p.ma+'">📋 Phiếu kiểm tra BM04</button>');
+  if(t==='KHONG_DAT'&&gv)B('kiem_tra_lai','Kiểm tra lại','out');
+  if((t==='CHO_DUYET_GIA'||t==='SAN_SANG'||t==='GIU_CHO')&&gv)B('duyet_gia',t==='CHO_DUYET_GIA'?'Duyệt giá':'Đổi giá','or');
+  if(gv&&!['TRA_LAI','LOAI_BO'].includes(t)){B('tra_lai','Trả lại','gray');B('loai_bo','Loại bỏ','red')}
+  if(gv||['CHO_TIEP_NHAN','CHO_KIEM_TRA'].includes(t))B('luu_tru',p.luu_tru===true||p.luu_tru==='TRUE'?'Bỏ lưu trữ':'Lưu trữ','out');
+  b.push('<button class="btn sm out" data-act="a_sp_edit" data-id="'+p.ma+'">Sửa</button>');
+  if(p.anh_rieng_id)b.push('<button class="btn sm out" data-act="a_img" data-id="'+esc(p.anh_rieng_id)+'">🖼 Ảnh</button>');
+  if(['SAN_SANG','GIU_CHO','DA_BAN'].includes(t))b.push('<button class="btn sm out" data-act="a_qr" data-id="'+p.ma+'">QR</button>');
+  if(p.kiem_tra)b.push('<button class="btn sm out" data-act="a_print" data-k="bm04" data-id="'+p.ma+'">In BM04</button>');
+  return '<div class="item"><div class="hd"><div><b>'+esc(p.ma)+' · '+esc(p.ten)+'</b><div>'+ttSpTag(t)+cdTag(p.che_do)+'<span class="tag gr">'+(p.nguon==='KY_GUI'?'Ký gửi':'Tặng')+'</span>'+(p.luu_tru===true||p.luu_tru==='TRUE'?'<span class="tag gr">Lưu trữ</span>':'')+'</div></div><div class="sm">'+(p.gia?'<b class="price">'+vnd(p.gia)+'</b>':'Giá đề xuất: '+(p.gia_de_xuat!==''?vnd(p.gia_de_xuat):'—'))+'</div></div><div class="sm mu">Tồn '+p.ton_kho+' · Giữ '+p.dang_giu+' · Bán '+p.da_ban+' · Tổng nhập '+p.tong_nhap+(p.ly_do?' · Lý do: '+esc(p.ly_do):'')+'</div><div class="row" style="margin-top:6px">'+b.join('')+'</div></div>';
+}
+function spForm(p){
+  p=p||{};const nw=!p.ma,pub=['SAN_SANG','GIU_CHO','DA_BAN'].includes(p.trang_thai);
+  openModal(nw?'Thêm sản phẩm':'Sửa '+p.ma,'<form data-submit="a_sp_save"><input type="hidden" name="ma" value="'+val(p,'ma')+'"><label>Tên sản phẩm</label><input name="ten" required maxlength="100" value="'+val(p,'ten')+'"><label>Danh mục</label><select name="danh_muc">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),p.danh_muc)+'</select><label>Tình trạng</label><select name="tinh_trang">'+opts(S.cfg.tinh_trang,p.tinh_trang)+'</select><label>Mô tả</label><textarea name="mo_ta" maxlength="1000">'+val(p,'mo_ta')+'</textarea><label>Lỗi đã ghi nhận</label><input name="loi_ghi_nhan" maxlength="300" value="'+val(p,'loi_ghi_nhan')+'"><div class="fl"><div><label>Giá đề xuất (đ)</label><input name="gia_de_xuat" type="number" min="0" value="'+val(p,'gia_de_xuat')+'"></div>'+(pub?'':'<div><label>Số lượng</label><input name="tong_nhap" type="number" min="1" max="100" value="'+esc(p.tong_nhap||1)+'"></div>')+'</div>'
+  +(nw?'<div class="fl"><div><label>Nguồn</label><select name="nguon">'+opts([['TANG','Hàng tặng'],['KY_GUI','Ký gửi']],'TANG')+'</select></div><div><label>Mã nguồn (YTxxx / KGxxx)</label><input name="ma_nguon" maxlength="20"></div></div><p class="sm mu">Hàng ký gửi cần mã KGxxx đã có trong mục Ký gửi.</p>':'')
+  +'<label>Ảnh (JPG/PNG/WEBP ≤ 2 MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" data-photo="admin"><input type="hidden" name="anh_token"><div id="photoSt" class="sm mu"></div><button class="btn" style="width:100%;margin-top:10px">Lưu</button></form>');
+}
+function kiemTraModal(p){
+  let kt={};try{kt=JSON.parse(p.kiem_tra||'{}')}catch(e){}
+  openModal('Phiếu kiểm tra BM04 – '+p.ma,'<p class="sm mu">'+esc(p.ten)+'</p><form data-submit="a_kt_save"><input type="hidden" name="ma" value="'+p.ma+'">'+Object.keys(CHECK_LBL).map(k=>'<div class="item"><b>'+CHECK_LBL[k]+'</b><div class="row"><label class="chk"><input type="radio" name="'+k+'" value="DAT"'+(kt[k]==='DAT'?' checked':'')+' required> Đạt</label><label class="chk"><input type="radio" name="'+k+'" value="KHONG_DAT"'+(kt[k]==='KHONG_DAT'?' checked':'')+'> Không đạt</label></div></div>').join('')+'<label>Ghi chú</label><input name="ghi_chu" maxlength="300" value="'+val(kt,'ghi_chu')+'"><button class="btn" style="width:100%;margin-top:8px">Lưu phiếu kiểm tra</button></form>'
+   +(isGV()?'<hr><p class="sm"><b>Giáo viên duyệt kết quả</b> (dựa trên phiếu đã lưu):</p><div class="row"><button class="btn" data-act="a_kt_ok" data-id="'+p.ma+'">✔ Duyệt ĐẠT</button><button class="btn red" data-act="a_kt_no" data-id="'+p.ma+'">✖ KHÔNG ĐẠT</button></div>':'<p class="sm mu">Giáo viên sẽ duyệt kết quả sau khi bạn lưu phiếu.</p>'));
+}
+/* hộp hỏi nhanh */
+function ask(title,html,cb){S.askCb=cb;openModal(title,'<form data-submit="a_ask">'+html+'<button class="btn" style="width:100%;margin-top:10px">Xác nhận</button></form>')}
+const askLy=(title,cb)=>ask(title,'<label>Lý do (bắt buộc)</label><textarea name="ly_do" required maxlength="300"></textarea>',cb);
+async function runAdm(btn,fn,okMsg,after){await busy(btn,async()=>{try{const r=await fn();toast(okMsg||'Đã lưu vào hệ thống','ok');closeModal();if(after)await after(r);else render()}catch(e){toast(e.message,'err')}})}
+const find=(k,id,f)=>(S.d[k]||[]).find(x=>x[f||'ma']===id);
+
+/* ---- Yêu cầu tặng ---- */
+async function aYc(){
+  const r=await api('adm_dsYeuCau',aloc());S.d.yc=r.tang;S.d.sp=S.d.sp||[];
+  AC(note()+(isGV()?'':'<div class="alert bl">Thông tin liên hệ được che với tài khoản học sinh.</div>')+(r.tang.length?r.tang.slice().reverse().map(y=>'<div class="item"><div class="hd"><div><b>'+y.ma+' · '+esc(dm(y.loai_hang).ten)+'</b><div><span class="tag '+(y.trang_thai==='MOI'?'or':y.trang_thai==='TU_CHOI'?'rd':'')+'">'+TT_YC[y.trang_thai]+'</span>'+cdTag(y.che_do)+(y.la_hoc_sinh==true||y.la_hoc_sinh==='TRUE'?'<span class="tag bl">Học sinh · PH đồng ý: '+((y.phu_huynh_dong_y==true||y.phu_huynh_dong_y==='TRUE')?'có':'KHÔNG')+'</span>':'')+'</div></div><div class="sm mu">'+esc(fmtT(y.ngay_gui))+'</div></div><div class="kv"><span>Người gửi</span><span>'+esc(y.ten_lien_he)+' · '+esc(y.lien_he)+'</span><span>Mô tả</span><span>'+esc(y.mo_ta)+'</span><span>Tình trạng</span><span>'+esc(y.tinh_trang)+'</span>'+(y.ma_san_pham?'<span>Sản phẩm</span><span>'+y.ma_san_pham+'</span>':'')+(y.ly_do?'<span>Lý do</span><span>'+esc(y.ly_do)+'</span>':'')+'</div><div class="row" style="margin-top:6px">'+(y.anh_rieng_id?'<button class="btn sm out" data-act="a_img" data-id="'+esc(y.anh_rieng_id)+'">🖼 Ảnh</button>':'')+(isGV()&&y.trang_thai==='MOI'?'<button class="btn sm" data-act="a_yc_ok" data-id="'+y.ma+'">Tiếp nhận</button><button class="btn sm red" data-act="a_yc_no" data-id="'+y.ma+'">Từ chối</button>':'')+(isGV()&&y.trang_thai==='DA_TIEP_NHAN'?'<button class="btn sm out" data-act="a_print" data-k="bm02" data-id="'+y.ma+'">In BM02</button>':'')+'</div></div>').join(''):'<div class="empty">Chưa có yêu cầu tặng.</div>'));
+}
+
+/* ---- Ký gửi ---- */
+async function aKg(){
+  const r=await api('adm_dsYeuCau',aloc());S.d.kg=r.ky_gui;
+  AC(note()+'<div class="alert bl">Khu riêng tư: thông tin chủ hàng chỉ giáo viên/quản trị xem. <b>Tiền bán hàng ký gửi KHÔNG phải doanh thu dự án</b>; chỉ phí ký gửi đã thu mới tính.</div>'+(r.ky_gui.length?r.ky_gui.slice().reverse().map(k=>{
+   const hs=k.la_hoc_sinh==true||k.la_hoc_sinh==='TRUE',b=[];
+   if(k.trang_thai==='MOI')b.push('<button class="btn sm" data-act="a_kg_ok" data-id="'+k.ma+'">Tiếp nhận</button><button class="btn sm red" data-act="a_kg_no" data-id="'+k.ma+'">Từ chối</button>');
+   if(['DA_TIEP_NHAN','DA_THOA_THUAN'].includes(k.trang_thai))b.push('<button class="btn sm or" data-act="a_kg_tt" data-id="'+k.ma+'">Ghi thỏa thuận BM03</button>');
+   if(k.trang_thai==='DA_THOA_THUAN'){b.push('<button class="btn sm out" data-act="a_print" data-k="bm03" data-id="'+k.ma+'">In BM03</button>');if(k.phai_tra>0)b.push('<button class="btn sm out" data-act="a_kg_tra" data-id="'+k.ma+'">Trả tiền chủ hàng</button>')}
+   if(['DA_TIEP_NHAN','DA_THOA_THUAN','HET_HAN'].includes(k.trang_thai))b.push('<button class="btn sm gray" data-act="a_kg_kt" data-id="'+k.ma+'">Kết thúc / trả hàng</button>');
+   if(k.anh_rieng_id)b.push('<button class="btn sm out" data-act="a_img" data-id="'+esc(k.anh_rieng_id)+'">🖼 Ảnh</button>');
+   const het=k.thoi_han&&String(k.thoi_han)<new Date().toISOString().slice(0,10)&&k.trang_thai==='DA_THOA_THUAN';
+   return '<div class="item"><div class="hd"><div><b>'+k.ma+'</b> <span class="tag '+(k.trang_thai==='MOI'?'or':'')+'">'+TT_KG[k.trang_thai]+'</span>'+cdTag(k.che_do)+(hs?'<span class="tag bl">Học sinh · PH đồng ý: '+((k.phu_huynh_dong_y==true||k.phu_huynh_dong_y==='TRUE')?'có':'KHÔNG')+'</span>':'')+(het?'<span class="tag rd">Quá hạn – cần trả hàng</span>':'')+'</div></div><div class="kv"><span>Chủ hàng</span><span>'+esc(k.ten_lien_he)+' · '+esc(k.lien_he)+'</span><span>Mô tả</span><span>'+esc(k.mo_ta)+'</span><span>Giá mong muốn</span><span>'+vnd(k.gia_mong_muon)+'</span>'+(k.gia_thong_nhat!==''?'<span>Giá thống nhất</span><b>'+vnd(k.gia_thong_nhat)+'</b><span>Thời hạn</span><span>'+esc(k.thoi_han)+'</span><span>Hoa hồng</span><span>'+(k.hoa_hong_pct===''?'Không có':esc(k.hoa_hong_pct)+'%')+'</span><span>Trả hàng chưa bán</span><span>'+esc(k.cach_tra_hang)+'</span>':'')+(k.ma_san_pham?'<span>Sản phẩm</span><span>'+k.ma_san_pham+'</span>':'')+'<span>Tiền thu hộ</span><span>'+vnd(k.thu_ho)+'</span><span>Phí được hưởng</span><span>'+vnd(k.phi)+'</span><span>Đã trả chủ hàng</span><span>'+vnd(k.da_tra)+'</span><span>Còn phải trả</span><b>'+vnd(k.phai_tra)+'</b></div><div class="row" style="margin-top:6px">'+b.join('')+'</div></div>'}).join(''):'<div class="empty">Chưa có ký gửi.</div>'));
+}
+
+/* ---- Đơn hàng ---- */
+async function aDon(){
+  const l=S.d.don=await api('adm_dsDonHang',aloc()),f=S.a.donf;
+  const chips=[['','Tất cả']].concat(Object.keys(TT_DON).map(k=>[k,TT_DON[k]]));
+  const ds=l.filter(d=>!f||d.trang_thai===f);
+  AC(note()+'<div class="tabs">'+chips.map(c=>'<button data-act="a_donf" data-p="'+c[0]+'" class="'+(f===c[0]?'on':'')+'">'+c[1]+'</button>').join('')+'</div>'+(ds.length?ds.map(d=>'<div class="item" data-act="a_don_ct" data-id="'+d.ma_don+'" style="cursor:pointer"><div class="hd"><div><b>'+d.ma_don+'</b> · '+esc(d.ten_khach)+' · '+esc(d.lien_he)+'<div><span class="tag '+(d.trang_thai==='HUY'?'rd':'')+'">'+TT_DON[d.trang_thai]+'</span><span class="tag bl">'+TT_TT[d.thanh_toan]+'</span>'+cdTag(d.che_do)+'</div></div><div><b class="price">'+vnd(d.tong_tien)+'</b><div class="sm mu">'+d.so_mon+' món</div></div></div><div class="sm mu">Tạo '+esc(fmtT(d.ngay_tao))+(['CHO_XAC_NHAN','DA_XAC_NHAN','CHO_NHAN'].includes(d.trang_thai)?' · giữ đến '+esc(fmtT(d.han_giu_cho)):'')+'</div></div>').join(''):'<div class="empty">Chưa có đơn.</div>'));
+}
+async function donModal(ma){
+  const d=await api('adm_chiTietDon',ma);S.d.cur=d;const gv=isGV(),t=d.trang_thai,fin=['HOAN_TAT','HUY'].includes(t),b=[];
+  const B=(h,txt,c)=>b.push('<button class="btn sm '+(c||'')+'" data-act="a_don_do" data-id="'+d.ma_don+'" data-h="'+h+'">'+txt+'</button>');
+  if(gv&&!fin){if(t==='CHO_XAC_NHAN')B('xac_nhan','Xác nhận đơn');if(t==='DA_XAC_NHAN')B('cho_nhan','Chuyển “Chờ nhận”');if(d.thanh_toan!=='DA_THU'&&t!=='CHO_XAC_NHAN')B('thu_tien','Xác nhận ĐÃ THU TIỀN','or');if(d.thanh_toan==='DA_THU'&&t!=='CHO_XAC_NHAN')B('hoan_tat','Hoàn tất đơn','or');B('gia_han','Gia hạn giữ chỗ','out');if(d.thanh_toan!=='DA_THU')B('huy','Hủy đơn','red')}
+  openModal('Đơn '+d.ma_don,'<div>'+'<span class="tag">'+TT_DON[t]+'</span><span class="tag bl">'+TT_TT[d.thanh_toan]+'</span>'+cdTag(d.che_do)+'</div><div class="kv" style="margin-top:6px"><span>Khách</span><span>'+esc(d.ten_khach)+'</span><span>Liên hệ</span><span>'+esc(d.lien_he)+'</span><span>Ghi chú</span><span>'+esc(d.ghi_chu)+'</span><span>Giữ chỗ đến</span><span>'+esc(fmtT(d.han_giu_cho))+'</span>'+(d.ly_huy?'<span>Lý do hủy</span><span>'+esc(d.ly_huy)+'</span>':'')+'</div><table style="margin-top:8px"><tr><th>SP</th><th>Nguồn</th><th>SL</th><th>Tiền</th></tr>'+d.items.map(i=>'<tr><td>'+esc(i.ma_sp)+' '+esc(i.ten_sp)+'</td><td>'+(i.nguon==='KY_GUI'?'Ký gửi':'Tặng')+'</td><td>'+i.so_luong+'</td><td>'+vnd(i.thanh_tien)+'</td></tr>').join('')+'<tr><td colspan="3"><b>Tổng</b></td><td><b>'+vnd(d.tong_tien)+'</b></td></tr></table><p class="sm mu">Doanh thu chỉ được ghi sổ khi đơn HOÀN TẤT và đã thu tiền. Hủy/hết hạn giữ chỗ sẽ hoàn tồn kho.</p><div class="row">'+b.join('')+'</div><h3>Lịch sử xử lý</h3>'+d.lich_su.map(l=>'<div class="sm">'+esc(fmtT(l.t))+' · '+esc(l.n)+' · '+esc(l.h)+(l.g?' – '+esc(l.g):'')+'</div>').join(''));
+}
+
+/* ---- Thu chi ---- */
+async function aTc(){
+  const cdS=['DEMO','THAT'].includes(S.a.cd)?S.a.cd:S.cfg.che_do;
+  const [l,dc]=await Promise.all([api('adm_dsThuChi',aloc()),isGV()?api('adm_doiChieu',{che_do:cdS}):Promise.resolve(null)]);
+  S.d.tc=l;S.d.dc=dc;const t=dc&&dc.tai_chinh;
+  AC(note()+(dc?'<div class="card"><h3>Tổng hợp '+cdTag(cdS)+' (chỉ khoản đã xác nhận)</h3><div class="kv"><span>Doanh thu hàng tặng</span><span>'+vnd(t.DOANH_THU_TANG)+'</span><span>Phí ký gửi đã thu</span><span>'+vnd(t.PHI_KY_GUI)+'</span><span><b>Doanh thu dự án</b></span><b>'+vnd(t.doanh_thu_du_an)+'</b><span>Chi phí hợp lệ có chứng từ</span><span>'+vnd(t.CHI_PHI_HOP_LE)+'</span><span><b>Lợi nhuận</b></span><b>'+vnd(t.loi_nhuan)+'</b><span>Tiền thu hộ ký gửi</span><span>'+vnd(t.THU_HO)+' (không phải doanh thu)</span><span>Phải trả chủ hàng</span><span>'+vnd(t.nghia_vu_ky_gui)+'</span><span>Tiền mặt dự kiến</span><span>'+vnd(t.tien_mat_du_kien)+'</span></div><p class="sm mu">Lợi nhuận = doanh thu hàng tặng đã thu + phí ký gửi đã thu − chi phí hợp lệ có chứng từ.</p><button class="btn or" data-act="a_dc">🔍 Đối chiếu tiền – đơn hàng – tồn kho</button></div>':'<div class="alert bl">Học sinh chỉ xem sổ và đề xuất khoản chi; việc duyệt do giáo viên.</div>')
+  +'<div class="row" style="margin-top:10px"><button class="btn" data-act="a_tc_new">➕ Đề xuất khoản chi</button></div><h3>Sổ thu chi</h3>'+(l.length?l.map(r=>'<div class="item"><div class="hd"><div><b>'+r.ma+'</b> · '+esc(r.noi_dung)+'<div><span class="tag '+(r.trang_thai==='TU_CHOI'?'rd':r.trang_thai==='CHO_DUYET'?'or':'')+'">'+TT_TC[r.trang_thai]+'</span><span class="tag bl">'+esc(LOAI_TC[r.loai]||r.loai)+'</span>'+cdTag(r.che_do)+(r.loai==='CHI_PHI'&&r.trang_thai==='DA_XAC_NHAN'?'<span class="tag '+((r.chung_tu_hop_le==true||r.chung_tu_hop_le==='TRUE')?'':'rd')+'">'+((r.chung_tu_hop_le==true||r.chung_tu_hop_le==='TRUE')?'Chứng từ hợp lệ':'Không tính vào chi phí hợp lệ')+'</span>':'')+'</div></div><b class="price">'+vnd(r.so_tien)+'</b></div><div class="sm mu">'+esc(r.ngay)+' · Chứng từ: '+esc(r.chung_tu||'—')+' · Nhập: '+esc(r.nguoi_nhap)+(r.nguoi_duyet?' · Duyệt: '+esc(r.nguoi_duyet):'')+(r.ly_do?' · '+esc(r.ly_do):'')+'</div>'+(isGV()&&r.trang_thai==='CHO_DUYET'?'<div class="row" style="margin-top:6px"><button class="btn sm" data-act="a_tc_ok" data-id="'+r.ma+'">Xác nhận</button><button class="btn sm red" data-act="a_tc_no" data-id="'+r.ma+'">Từ chối</button></div>':'')+(isGV()&&r.trang_thai==='DA_XAC_NHAN'&&r.loai!=='DIEU_CHINH'?'<div class="row" style="margin-top:6px"><button class="btn sm out" data-act="a_tc_dc" data-id="'+r.ma+'">Điều chỉnh (bản ghi mới)</button></div>':'')+'</div>').join(''):'<div class="empty">Chưa có bản ghi thu chi.</div>'));
+}
+function dcView(dc){
+  const L=(a,t)=>a.length?'<div class="alert rd"><b>'+t+'</b><ul>'+a.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'<div class="alert gr">✔ '+t+': khớp.</div>';
+  return '<p>Chế độ: '+cdTag(dc.che_do)+'</p>'+L(dc.loi_tien,'Đối chiếu tiền')+L(dc.loi_don,'Đối chiếu đơn hàng')+L(dc.loi_kho,'Đối chiếu tồn kho')+(dc.chenh_lech!==undefined?'<div class="alert '+(dc.chenh_lech===0?'gr':'rd')+'">Tiền mặt thực tế '+vnd(dc.tien_mat_thuc_te)+' − dự kiến '+vnd(dc.tai_chinh.tien_mat_du_kien)+' = <b>'+vnd(dc.chenh_lech)+'</b></div>':'');
+}
+
+/* ---- Báo cáo & biểu mẫu ---- */
+async function aBc(){
+  const [r,bm1,ph]=await Promise.all([api('adm_baoCao'),api('adm_dsPhieu','BM01',{che_do:'THAT'}),isGV()?api('adm_dsPhanHoi',{che_do:'THAT'}):Promise.resolve([])]);
+  const c=(n,l)=>'<div class="card stat"><div class="n">'+(n===null||n===undefined?'—':n)+'</div><div class="sm">'+l+'</div></div>';
+  const pb=r.phan_bo,dx=pb.de_xuat;
+  AC('<div class="alert bl">Báo cáo <b>chỉ đọc bản ghi THẬT</b>; dữ liệu DEMO không bao giờ được tính.</div>'+(!r.co_du_lieu?'<div class="empty">Chưa phát sinh dữ liệu thật.</div>':'')
+  +'<h3>Hàng hóa</h3><div class="grid">'+c(r.hang.tiep_nhan,'Đã tiếp nhận')+c(r.hang.con_ton,'Còn tồn')+c(r.hang.da_ban,'Đã bán')+c(r.hang.tu_choi_tra_lai,'Bị từ chối/trả lại')+'</div>'
+  +'<h3>Đơn hàng & tiền thực thu</h3><div class="grid">'+c(r.don.tong,'Tổng đơn')+c(vnd(r.don.tien_thuc_thu),'Tiền thực thu (gồm cả tiền thu hộ)')+'</div><p class="sm mu">'+Object.keys(r.don.theo_trang_thai).map(k=>TT_DON[k]+': '+r.don.theo_trang_thai[k]).join(' · ')+'</p>'
+  +'<h3>Tài chính</h3><div class="card"><div class="kv"><span>Doanh thu hàng tặng</span><span>'+vnd(r.tai_chinh.doanh_thu_hang_tang)+'</span><span>Phí ký gửi đã thu</span><span>'+vnd(r.tai_chinh.phi_ky_gui)+'</span><span><b>Doanh thu dự án</b></span><b>'+vnd(r.tai_chinh.doanh_thu_du_an)+'</b><span>Chi phí hợp lệ</span><span>'+vnd(r.tai_chinh.chi_phi_hop_le)+'</span><span>Chi phí chưa hợp lệ</span><span>'+vnd(r.tai_chinh.chi_phi_khong_hop_le)+' (không tính vào lợi nhuận)</span><span>Nghĩa vụ ký gửi còn phải trả</span><span>'+vnd(r.tai_chinh.nghia_vu_ky_gui)+'</span><span><b>Lợi nhuận</b></span><b>'+vnd(r.tai_chinh.loi_nhuan)+'</b></div></div>'
+  +(r.tai_chinh.loi_nhuan>0&&dx?'<div class="card" style="margin-top:8px"><h3>Phương án phân bổ ĐỀ XUẤT</h3><div class="alert or">Đây chỉ là <b>tỷ lệ đề xuất</b> ('+dx.ty_le.HO_TRO+'% hỗ trợ học sinh khó khăn · '+dx.ty_le.TAI_DAU_TU+'% tái đầu tư · '+dx.ty_le.DU_PHONG+'% dự phòng). Không tự động chi. Chỉ phân bổ sau khi người có thẩm quyền phê duyệt.</div><div class="kv"><span>Hỗ trợ</span><span>'+vnd(dx.so_tien.HO_TRO)+'</span><span>Tái đầu tư</span><span>'+vnd(dx.so_tien.TAI_DAU_TU)+'</span><span>Dự phòng</span><span>'+vnd(dx.so_tien.DU_PHONG)+'</span><span>Lợi nhuận còn chưa phê duyệt</span><b>'+vnd(pb.loi_nhuan_con_lai)+'</b></div>'+(isGV()&&pb.loi_nhuan_con_lai>0?'<button class="btn or" style="margin-top:8px" data-act="a_pb" data-p="'+pb.loi_nhuan_con_lai+'">Ghi nhận phê duyệt phân bổ</button>':'')+'</div>':'')
+  +'<h3>Hỗ trợ cộng đồng (đã duyệt / đã thực hiện)</h3><div class="card"><div class="kv"><span>Đã duyệt – hỗ trợ</span><span>'+vnd(pb.da_phe_duyet.tong.HO_TRO)+'</span><span>Đã thực hiện – hỗ trợ</span><span>'+vnd(pb.da_chi.HO_TRO)+'</span><span>Đã duyệt – tái đầu tư</span><span>'+vnd(pb.da_phe_duyet.tong.TAI_DAU_TU)+'</span><span>Đã thực hiện – tái đầu tư</span><span>'+vnd(pb.da_chi.TAI_DAU_TU)+'</span><span>Đã duyệt – dự phòng</span><span>'+vnd(pb.da_phe_duyet.tong.DU_PHONG)+'</span><span>Đã thực hiện – dự phòng</span><span>'+vnd(pb.da_chi.DU_PHONG)+'</span></div>'+(isGV()&&pb.da_phe_duyet.tong.tong>0?'<button class="btn sm out" style="margin-top:8px" data-act="a_chipb">Ghi khoản chi từ quỹ phân bổ</button>':'')+'<p class="sm mu">Không ghi danh tính hay hoàn cảnh người nhận hỗ trợ.</p></div>'
+  +'<h3>Học sinh tham gia (nhập tay)</h3><div class="card"><div class="kv"><span>Số học sinh</span><span>'+esc(r.hs.so_hs||'Chưa nhập')+'</span><span>Nhiệm vụ</span><span>'+esc(r.hs.nhiem_vu||'Chưa nhập')+'</span></div>'+(isGV()?'<button class="btn sm out" style="margin-top:8px" data-act="a_hs">Cập nhật</button>':'')+'</div>'
+  +'<h3>Phản hồi (BM06)</h3><div class="card"><div class="kv"><span>Số phản hồi</span><span>'+r.phan_hoi.so_luong+'</span><span>Điểm trung bình</span><span>'+(r.phan_hoi.diem_tb===null?'Chưa phát sinh':r.phan_hoi.diem_tb+' ('+r.phan_hoi.so_co_diem+' lượt chấm)')+'</span></div>'+ph.slice(0,10).map(x=>'<div class="item sm">'+esc(x.noi_dung)+'<div class="mu">'+esc(fmtT(x.ngay_gui))+(x.trang_thai==='MOI'?' <button class="btn sm out" data-act="a_ph_doc" data-id="'+x.ma+'">Đã đọc</button>':' · đã đọc')+'</div></div>').join('')+'</div>'
+  +'<h3>Khảo sát nhu cầu (BM01)</h3><div class="card"><p class="sm">Đã lưu (THẬT): <b>'+bm1.length+'</b> phiếu</p><button class="btn sm" data-act="a_bm1">➕ Nhập phiếu BM01</button><p class="sm mu">Không ghi tên/số điện thoại học sinh vào khảo sát.</p></div>'
+  +'<h3>Biểu mẫu in</h3><p class="sm mu">BM02 in ở mục Yêu cầu tặng · BM03 ở mục Ký gửi · BM04 ở mục Sản phẩm · BM05 in sau khi đối chiếu tại mục Thu chi.</p>');
+}
+
+async function aLog(){const l=await api('adm_nhatKy');AC('<table><tr><th>Thời gian</th><th>Người</th><th>Hành động</th><th>Đối tượng</th></tr>'+l.map(x=>'<tr><td>'+esc(fmtT(x.thoi_gian))+'</td><td>'+esc(x.email)+'</td><td>'+esc(x.hanh_dong)+'</td><td>'+esc(x.doi_tuong)+' '+esc(String(x.chi_tiet).slice(0,60))+'</td></tr>').join('')+'</table>')}
+
+/* ---- Hệ thống (quản trị viên) ---- */
+async function aSys(){
+  const [c,us]=await Promise.all([api('adm_layCauHinh'),api('adm_dsNguoiDung')]);S.d.us=us;
+  const th=c.che_do_van_hanh==='THAT',fld=(k,l,t)=>'<label>'+l+'</label><input name="'+k+'" '+(t==='date'?'type="date"':t==='num'?'type="number" min="1" max="720"':'')+' value="'+esc(c[k]||'')+'" maxlength="300">';
+  AC('<div class="card"><h3>Chế độ vận hành: '+(th?'<span class="tag">THẬT</span>':'<span class="tag or">DEMO</span>')+'</h3>'+(th?'<p class="sm">Bật ngày '+esc(c.ngay_bat_van_hanh)+' bởi '+esc(c.nguoi_bat_van_hanh)+'. Văn bản chấp thuận: '+esc(c.so_van_ban)+' ('+esc(c.ngay_van_ban)+'), người xác nhận: '+esc(c.nguoi_xac_nhan)+'.</p><button class="btn red" data-act="a_off">Quay lại chế độ DEMO</button>':'<div class="alert or">Chỉ bật được khi nhập ĐỦ 7 mục dưới đây (không dùng giá trị “minh họa”). Thiếu một mục máy chủ sẽ từ chối.</div><form data-submit="a_on">'+fld('so_van_ban','Số văn bản chấp thuận của nhà trường')+fld('ngay_van_ban','Ngày văn bản','date')+fld('nguoi_xac_nhan','Người xác nhận')+fld('diem_nhan','Điểm nhận hàng')+fld('thoi_gian_nhan','Thời gian nhận hàng')+fld('lien_he','Liên hệ hỗ trợ')+fld('han_giu_cho_gio','Thời hạn giữ chỗ (giờ)','num')+'<label class="chk"><input type="checkbox" name="xac_nhan"> Tôi xác nhận đã có văn bản chấp thuận và chịu trách nhiệm về thông tin trên.</label><button class="btn or" style="width:100%">Bật chế độ vận hành</button></form>')+'</div>'
+  +'<div class="card" style="margin-top:10px"><h3>Cấu hình</h3><form data-submit="a_cfg">'+fld('url_goc','URL bản CÔNG KHAI (cho mã QR)')+fld('url_quan_tri','URL bản QUẢN TRỊ')+'<div class="fl"><div>'+fld('tl_ho_tro','% đề xuất hỗ trợ')+'</div><div>'+fld('tl_tai_dau_tu','% đề xuất tái đầu tư')+'</div><div>'+fld('tl_du_phong','% đề xuất dự phòng')+'</div></div>'+(th?'<p class="sm mu">Các mục vận hành chỉnh tại đây khi đang chạy THẬT:</p>'+['so_van_ban','ngay_van_ban','nguoi_xac_nhan','diem_nhan','thoi_gian_nhan','lien_he','han_giu_cho_gio'].map(k=>fld(k,k)).join(''):'')+'<button class="btn" style="width:100%;margin-top:8px">Lưu cấu hình</button></form></div>'
+  +'<div class="card" style="margin-top:10px"><h3>Tài khoản & vai trò</h3>'+us.map(u=>'<div class="item sm"><b>'+esc(u.ho_ten)+'</b> · '+esc(u.email)+'<div><span class="tag bl">'+VAI_LBL[u.vai_tro]+'</span>'+((u.hoat_dong==true||u.hoat_dong==='TRUE')?'':'<span class="tag rd">Đã khóa</span>')+' <button class="btn sm out" data-act="a_us" data-id="'+esc(u.email)+'">Sửa</button></div></div>').join('')+'<button class="btn sm" data-act="a_us">➕ Thêm tài khoản</button><p class="sm mu">Tài khoản phải là tài khoản Google và cần được chia sẻ Sheet (nút Đồng bộ quyền, do chủ script chạy).</p><button class="btn sm out" data-act="a_sync">Đồng bộ quyền Sheet/Drive</button></div>'
+  +'<div class="card" style="margin-top:10px"><h3>Dữ liệu DEMO</h3><p class="sm">Xóa toàn bộ bản ghi DEMO (không đụng bản ghi THẬT). Nên làm trước khi bật vận hành. Không thể hoàn tác.</p><button class="btn red sm" data-act="a_xoademo">Xóa dữ liệu DEMO</button></div>');
+}
+
+/* ---- Biểu mẫu in ---- */
+function inPhieu(maPhieu,ten,body){
+  const hd='<div style="text-align:center"><b>TRƯỜNG THCS ……………………</b><br>DỰ ÁN KHỞI NGHIỆP RESCHOOL</div><h2>'+esc(ten)+'</h2><p style="text-align:center">Mẫu '+maPhieu+(S.cfg.che_do!=='THAT'?' – <b>BẢN MINH HỌA (DEMO)</b>':'')+'</p>';
+  const sig=n=>'<div class="sig">'+n.map(x=>'<div><b>'+x+'</b><br><i>(ký, ghi rõ họ tên)</i></div>').join('')+'</div>';
+  return {hd,sig};
+}
+function doPrint(html){$('#print-area').innerHTML=html;setTimeout(()=>window.print(),100)}
+function printForm(k,id){
+  if(k==='bm04'){const p=find('sp',id);let kt={};try{kt=JSON.parse(p.kiem_tra||'{}')}catch(e){}const x=inPhieu('BM04','PHIẾU KIỂM TRA CHẤT LƯỢNG HÀNG HÓA');
+    doPrint(x.hd+'<p>Mã sản phẩm: <b>'+esc(p.ma)+'</b> – '+esc(p.ten)+'</p><p>Tình trạng: '+esc(p.tinh_trang)+' · Lỗi ghi nhận: '+esc(p.loi_ghi_nhan||'Không')+'</p><table><tr><th>Nội dung kiểm tra</th><th>Đạt</th><th>Không đạt</th></tr>'+Object.keys(CHECK_LBL).map(c=>'<tr><td>'+CHECK_LBL[c]+'</td><td align="center">'+(kt[c]==='DAT'?'☑':'☐')+'</td><td align="center">'+(kt[c]==='KHONG_DAT'?'☑':'☐')+'</td></tr>').join('')+'</table><p>Ghi chú: '+esc(kt.ghi_chu||'')+'</p><p>Kết luận: '+(p.da_kiem_tra===true||p.da_kiem_tra==='TRUE'?'ĐẠT':'…………')+'</p>'+x.sig(['Người kiểm tra','Giáo viên giám sát']))}
+  if(k==='bm02'){const y=find('yc',id);const x=inPhieu('BM02','PHIẾU TIẾP NHẬN HÀNG TẶNG');
+    doPrint(x.hd+'<p>Mã yêu cầu: <b>'+esc(y.ma)+'</b> · Mã sản phẩm: '+esc(y.ma_san_pham)+'</p><p>Người tặng: '+esc(y.ten_lien_he)+' · Liên hệ: '+esc(y.lien_he)+'</p><p>Mô tả: '+esc(y.mo_ta)+' · Tình trạng: '+esc(y.tinh_trang)+'</p><p>☑ Người tặng xác nhận tặng tự nguyện.'+(y.la_hoc_sinh==true||y.la_hoc_sinh==='TRUE'?' ☑ Phụ huynh/người giám hộ đồng ý.':'')+'</p>'+x.sig(['Người tặng','Người tiếp nhận','Giáo viên giám sát']))}
+  if(k==='bm03'){const g=find('kg',id);const x=inPhieu('BM03','THỎA THUẬN KÝ GỬI');
+    doPrint(x.hd+'<p>Mã ký gửi: <b>'+esc(g.ma)+'</b> · Sản phẩm: '+esc(g.ma_san_pham)+'</p><p>Chủ hàng: '+esc(g.ten_lien_he)+' · '+esc(g.lien_he)+'</p><p>Mô tả: '+esc(g.mo_ta)+'</p><table><tr><td>Giá thống nhất</td><td>'+vnd(g.gia_thong_nhat)+'</td></tr><tr><td>Thời hạn ký gửi</td><td>'+esc(g.thoi_han)+'</td></tr><tr><td>Hoa hồng</td><td>'+(g.hoa_hong_pct===''?'Không có':esc(g.hoa_hong_pct)+'%')+'</td></tr><tr><td>Cách trả hàng chưa bán</td><td>'+esc(g.cach_tra_hang)+'</td></tr></table><p>Tiền bán hàng ký gửi được thu hộ và trả lại chủ hàng sau khi trừ phí (nếu có); không tính là doanh thu dự án.</p>'+x.sig(['Chủ hàng','Đại diện nhóm','Giáo viên giám sát']))}
+}
+function printBM05(dc){const x=inPhieu('BM05','BIÊN BẢN ĐỐI CHIẾU THU CHI – ĐƠN HÀNG – TỒN KHO'),t=dc.tai_chinh;
+  doPrint(x.hd+'<p>Ngày lập: '+new Date().toLocaleString('vi-VN')+' · Dữ liệu: '+dc.che_do+'</p><table><tr><td>Doanh thu hàng tặng</td><td>'+vnd(t.DOANH_THU_TANG)+'</td></tr><tr><td>Phí ký gửi đã thu</td><td>'+vnd(t.PHI_KY_GUI)+'</td></tr><tr><td>Chi phí hợp lệ có chứng từ</td><td>'+vnd(t.CHI_PHI_HOP_LE)+'</td></tr><tr><td><b>Lợi nhuận</b></td><td><b>'+vnd(t.loi_nhuan)+'</b></td></tr><tr><td>Tiền thu hộ ký gửi (không phải doanh thu)</td><td>'+vnd(t.THU_HO)+'</td></tr><tr><td>Còn phải trả chủ hàng</td><td>'+vnd(t.nghia_vu_ky_gui)+'</td></tr><tr><td>Tiền mặt dự kiến</td><td>'+vnd(t.tien_mat_du_kien)+'</td></tr>'+(dc.chenh_lech!==undefined?'<tr><td>Tiền mặt thực tế / chênh lệch</td><td>'+vnd(dc.tien_mat_thuc_te)+' / '+vnd(dc.chenh_lech)+'</td></tr>':'')+'</table><p>Sai lệch tiền: '+(dc.loi_tien.length||'không')+' · đơn hàng: '+(dc.loi_don.length||'không')+' · tồn kho: '+(dc.loi_kho.length||'không')+'</p>'+x.sig(['Người lập','Giáo viên giám sát','Người có thẩm quyền']))}
+
+/* ---- Hành động quản trị (ủy quyền sự kiện) ---- */
+const sp_=id=>find('sp',id);
+Object.assign(A,{
+ a_spf:el=>{S.a.spf=el.dataset.p;aSp()},
+ a_donf:el=>{S.a.donf=el.dataset.p;aDon()},
+ a_sp_new:()=>spForm(),
+ a_sp_edit:el=>spForm(sp_(el.dataset.id)),
+ a_kt:el=>kiemTraModal(sp_(el.dataset.id)),
+ a_img:async el=>{openModal('Ảnh (khu riêng tư)',loading());try{const u=await api('adm_layAnhRieng',el.dataset.id);$('#modal .box').insertAdjacentHTML('beforeend','<img style="max-width:100%;border-radius:10px" src="'+u+'">');$('#modal .box .spin').parentNode.remove()}catch(e){$('#modal .box').insertAdjacentHTML('beforeend',errBox(e.message))}},
+ a_qr:el=>{const ma=el.dataset.id;openModal('QR '+ma,'<div class="center"><div class="qr" id="qrm"></div><p class="sm">'+esc(qrUrl(ma))+'</p>'+(S.cfg.url_goc?'':'<div class="alert or">Chưa cấu hình URL công khai (url_goc) – QR đang dùng URL hiện tại.</div>')+'<button class="btn" data-act="a_qrprint">In QR</button></div>');drawQR($('#qrm'),qrUrl(ma),200)},
+ a_qrprint:()=>doPrint('<div style="text-align:center">'+$('#qrm').innerHTML+'</div>'),
+ a_print:el=>printForm(el.dataset.k,el.dataset.id),
+ a_sp_do:el=>{const id=el.dataset.id,h=el.dataset.h,call=(d,msg)=>runAdm(el,()=>api('adm_hanhDongSanPham',id,h,d),msg);
+   if(['tiep_nhan','kiem_tra_lai'].includes(h))return call({});
+   if(h==='luu_tru'){const p=sp_(id);return call({bat:!(p.luu_tru===true||p.luu_tru==='TRUE')})}
+   if(h==='duyet_gia'){const p=sp_(id);if(p.nguon==='KY_GUI')return call({gia:0});return ask('Giá duyệt – '+id,'<label>Giá duyệt (đ)</label><input name="gia" type="number" min="1000" step="500" required value="'+esc(p.gia||p.gia_de_xuat||'')+'">',(o,b)=>runAdm(b,()=>api('adm_hanhDongSanPham',id,h,{gia:o.gia}),'Đã duyệt giá'))}
+   askLy(h==='tra_lai'?'Trả lại – lý do':'Loại bỏ – lý do',(o,b)=>runAdm(b,()=>api('adm_hanhDongSanPham',id,h,{ly_do:o.ly_do}),'Đã cập nhật'))},
+ a_kt_ok:el=>runAdm(el,()=>api('adm_hanhDongSanPham',el.dataset.id,'duyet_kiem_tra',{ket_qua:'DAT'}),'Đã duyệt ĐẠT → chờ duyệt giá'),
+ a_kt_no:el=>{const id=el.dataset.id;askLy('Không đạt – lý do',(o,b)=>runAdm(b,()=>api('adm_hanhDongSanPham',id,'duyet_kiem_tra',{ket_qua:'KHONG_DAT',ly_do:o.ly_do}),'Đã ghi KHÔNG ĐẠT'))},
+ a_yc_ok:el=>{const id=el.dataset.id,y=find('yc',id);ask('Tiếp nhận '+id,'<label>Tên sản phẩm</label><input name="ten" required maxlength="100" value="'+esc(dm(y.loai_hang).ten)+'"><label>Số lượng</label><input name="so_luong" type="number" min="1" max="100" value="1">',(o,b)=>runAdm(b,()=>api('adm_xuLyYeuCauTang',id,'tiep_nhan',o),'Đã tiếp nhận và tạo sản phẩm chờ kiểm tra'))},
+ a_yc_no:el=>{const id=el.dataset.id;askLy('Từ chối yêu cầu',(o,b)=>runAdm(b,()=>api('adm_xuLyYeuCauTang',id,'tu_choi',o),'Đã từ chối'))},
+ a_kg_ok:el=>{const id=el.dataset.id;ask('Tiếp nhận ký gửi '+id,'<label>Tên sản phẩm</label><input name="ten" required maxlength="100"><label>Danh mục</label><select name="danh_muc">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),'')+'</select><label>Số lượng</label><input name="so_luong" type="number" min="1" max="100" value="1">',(o,b)=>runAdm(b,()=>api('adm_xuLyKyGui',id,'tiep_nhan',o),'Đã tiếp nhận ký gửi'))},
+ a_kg_no:el=>{const id=el.dataset.id;askLy('Từ chối ký gửi',(o,b)=>runAdm(b,()=>api('adm_xuLyKyGui',id,'tu_choi',o),'Đã từ chối'))},
+ a_kg_tt:el=>{const id=el.dataset.id,k=find('kg',id);ask('Thỏa thuận ký gửi BM03 – '+id,'<label>Giá thống nhất (đ)</label><input name="gia_thong_nhat" type="number" min="1000" required value="'+esc(k.gia_thong_nhat||k.gia_mong_muon)+'"><label>Thời hạn ký gửi (ngày)</label><input name="thoi_han" type="date" required value="'+esc(k.thoi_han)+'"><label>Hoa hồng % (để TRỐNG nếu không có)</label><input name="hoa_hong_pct" type="number" min="0" max="100" value="'+esc(k.hoa_hong_pct)+'"><label>Cách trả hàng chưa bán</label><input name="cach_tra_hang" required maxlength="300" value="'+esc(k.cach_tra_hang)+'"><label>Ghi chú</label><input name="ghi_chu" maxlength="300" value="'+esc(k.ghi_chu)+'">',(o,b)=>runAdm(b,()=>api('adm_xuLyKyGui',id,'thoa_thuan',o),'Đã ghi thỏa thuận'))},
+ a_kg_kt:el=>{const id=el.dataset.id;askLy('Kết thúc ký gửi / trả hàng chưa bán',(o,b)=>runAdm(b,()=>api('adm_xuLyKyGui',id,'ket_thuc',o),'Đã kết thúc ký gửi'))},
+ a_kg_tra:el=>{const id=el.dataset.id,k=find('kg',id);ask('Trả tiền chủ hàng '+id,'<p class="sm">Còn phải trả: <b>'+vnd(k.phai_tra)+'</b></p><label>Số tiền (đ)</label><input name="so_tien" type="number" min="1" max="'+k.phai_tra+'" required><label>Chứng từ (biên nhận số…)</label><input name="chung_tu" required maxlength="300">',(o,b)=>runAdm(b,()=>api('adm_traChuHang',id,o.so_tien,o.chung_tu),'Đã ghi khoản trả chủ hàng'))},
+ a_don_ct:async el=>{try{await donModal(el.dataset.id)}catch(e){toast(e.message,'err')}},
+ a_don_do:el=>{const id=el.dataset.id,h=el.dataset.h,call=(d,msg,b)=>runAdm(b||el,()=>api('adm_xuLyDon',id,h,d),msg);
+   if(h==='huy')return askLy('Hủy đơn (hoàn tồn kho)',(o,b)=>call({ly_do:o.ly_do},'Đã hủy đơn và hoàn tồn kho',b));
+   if(h==='gia_han')return ask('Gia hạn giữ chỗ','<label>Số giờ tính từ bây giờ</label><input name="gio" type="number" min="1" max="168" value="24">',(o,b)=>call({gio:o.gio},'Đã gia hạn',b));
+   if(h==='thu_tien'||h==='hoan_tat')return ask(h==='thu_tien'?'Xác nhận ĐÃ THU TIỀN':'Hoàn tất đơn','<p>'+(h==='thu_tien'?'Xác nhận bạn đã nhận đủ tiền mặt tại điểm nhận.':'Xác nhận khách đã nhận hàng. Doanh thu sẽ được ghi sổ.')+'</p>',(o,b)=>call({},'Đã cập nhật',b));
+   call({},'Đã cập nhật')},
+ a_tc_new:()=>ask('Đề xuất khoản chi','<label>Ngày</label><input name="ngay" type="date" value="'+new Date().toISOString().slice(0,10)+'"><label>Nội dung</label><input name="noi_dung" required maxlength="200"><label>Số tiền (đ)</label><input name="so_tien" type="number" min="1" required><label>Chứng từ (số hóa đơn/biên nhận)</label><input name="chung_tu" maxlength="300"><p class="sm mu">Khoản chi chỉ tính vào chi phí hợp lệ khi giáo viên xác nhận chứng từ.</p>',(o,b)=>{o.loai='CHI_PHI';return runAdm(b,()=>api('adm_nhapThuChi',o),'Đã gửi đề xuất, chờ giáo viên duyệt')}),
+ a_tc_ok:el=>{const id=el.dataset.id,r=find('tc',id);ask('Xác nhận '+id,'<p>'+esc(r.noi_dung)+' – <b>'+vnd(r.so_tien)+'</b><br>Chứng từ: '+esc(r.chung_tu||'(chưa có)')+'</p><label class="chk"><input type="checkbox" name="chung_tu_hop_le"> Tôi đã kiểm tra chứng từ hợp lệ</label><p class="sm mu">Sau khi xác nhận bản ghi không sửa/xóa được.</p>',(o,b)=>runAdm(b,()=>api('adm_duyetThuChi',id,'XAC_NHAN',{chung_tu_hop_le:o.chung_tu_hop_le}),'Đã xác nhận'))},
+ a_tc_no:el=>{const id=el.dataset.id;askLy('Từ chối khoản',(o,b)=>runAdm(b,()=>api('adm_duyetThuChi',id,'TU_CHOI',{ly_do:o.ly_do}),'Đã từ chối'))},
+ a_tc_dc:el=>{const id=el.dataset.id;ask('Điều chỉnh '+id+' (tạo bản ghi mới)','<label>Số tiền điều chỉnh (âm = giảm)</label><input name="so_tien" type="number" required><label>Nội dung</label><input name="noi_dung" required maxlength="200"><label>Chứng từ</label><input name="chung_tu" maxlength="300"><label>Lý do (bắt buộc)</label><textarea name="ly_do" required maxlength="300"></textarea>',(o,b)=>{o.ma_goc=id;return runAdm(b,()=>api('adm_dieuChinhThuChi',o),'Đã ghi bản ghi điều chỉnh')})},
+ a_dc:()=>ask('Đối chiếu','<label>Tiền mặt thực tế kiểm đếm (đ) – tùy chọn</label><input name="tien" type="number">',async(o,b)=>{await busy(b,async()=>{try{const cdS=['DEMO','THAT'].includes(S.a.cd)?S.a.cd:S.cfg.che_do;const dc=await api('adm_doiChieu',{che_do:cdS,tien_mat_thuc_te:o.tien});S.d.dc=dc;openModal('Kết quả đối chiếu',dcView(dc)+'<div class="row"><button class="btn" data-act="a_dc_save">Lưu BM05</button><button class="btn out" data-act="a_dc_print">In BM05</button></div>')}catch(e){toast(e.message,'err')}})}),
+ a_dc_save:el=>runAdm(el,()=>api('adm_luuPhieu',{loai:'BM05',tham_chieu:S.d.dc.che_do,du_lieu:S.d.dc}),'Đã lưu BM05',()=>{}),
+ a_dc_print:()=>printBM05(S.d.dc),
+ a_pb:el=>{const con=+el.dataset.p;ask('Ghi nhận phê duyệt phân bổ','<div class="alert or">Chỉ ghi nhận quyết định của người có thẩm quyền. Hệ thống không tự chi tiền. Tối đa '+vnd(con)+'.</div><label>Số văn bản phê duyệt</label><input name="so_van_ban" required maxlength="100"><label>Người phê duyệt</label><input name="nguoi_phe_duyet" required maxlength="100"><label>Ngày phê duyệt</label><input name="ngay" type="date" required><div class="fl"><div><label>Hỗ trợ (đ)</label><input name="HO_TRO" type="number" min="0" value="0"></div><div><label>Tái đầu tư (đ)</label><input name="TAI_DAU_TU" type="number" min="0" value="0"></div><div><label>Dự phòng (đ)</label><input name="DU_PHONG" type="number" min="0" value="0"></div></div>',(o,b)=>runAdm(b,()=>api('adm_pheDuyetPhanBo',o),'Đã ghi nhận phê duyệt'))},
+ a_chipb:()=>ask('Ghi khoản chi từ quỹ phân bổ','<label>Mục</label><select name="muc">'+opts([['HO_TRO','Hỗ trợ'],['TAI_DAU_TU','Tái đầu tư'],['DU_PHONG','Dự phòng']],'')+'</select><label>Nội dung (KHÔNG ghi danh tính/hoàn cảnh người nhận)</label><input name="noi_dung" required maxlength="200"><label>Số tiền (đ)</label><input name="so_tien" type="number" min="1" required><label>Chứng từ</label><input name="chung_tu" required maxlength="300">',(o,b)=>runAdm(b,()=>api('adm_ghiChiPhanBo',o),'Đã ghi khoản chi')),
+ a_hs:()=>ask('Học sinh tham gia (nhập tay)','<label>Số học sinh</label><input name="so_hs" type="number" min="0" max="500"><label>Nhiệm vụ</label><textarea name="nhiem_vu" maxlength="500"></textarea>',(o,b)=>runAdm(b,()=>api('adm_luuNhapTay',o),'Đã lưu')),
+ a_ph_doc:el=>runAdm(el,()=>api('adm_docPhanHoi',el.dataset.id),'Đã đánh dấu'),
+ a_bm1:()=>ask('Phiếu khảo sát nhu cầu BM01 (ẩn danh)','<label>Nhóm đối tượng</label><select name="nhom">'+opts(['Học sinh lớp 6','Học sinh lớp 7','Học sinh lớp 8','Học sinh lớp 9','Phụ huynh','Giáo viên'],'')+'</select><label>Loại đồ dùng cần</label><input name="nhu_cau" required maxlength="200"><label>Mức giá sẵn sàng chi (đ)</label><input name="muc_gia" type="number" min="0"><label>Ghi chú</label><input name="ghi_chu" maxlength="300">',(o,b)=>runAdm(b,()=>api('adm_luuPhieu',{loai:'BM01',tham_chieu:'',du_lieu:o}),'Đã lưu BM01')),
+ a_on:()=>{},
+ a_off:el=>runAdm(el,()=>api('adm_tatVanHanh'),'Đã quay lại DEMO',async()=>{S.cfg=await api('pub_khoiTao');render()}),
+ a_us:el=>{const u=el.dataset.id?find('us',el.dataset.id,'email'):{};ask(u.email?'Sửa tài khoản':'Thêm tài khoản','<label>Email Google</label><input name="email" type="email" required value="'+esc(u.email||'')+'" '+(u.email?'readonly':'')+'><label>Họ tên</label><input name="ho_ten" required maxlength="60" value="'+esc(u.ho_ten||'')+'"><label>Vai trò</label><select name="vai_tro">'+opts(Object.keys(VAI_LBL).map(k=>[k,VAI_LBL[k]]),u.vai_tro||'HOC_SINH')+'</select><label class="chk"><input type="checkbox" name="hoat_dong" '+(u.email&&!(u.hoat_dong==true||u.hoat_dong==='TRUE')?'':'checked')+'> Đang hoạt động</label>',(o,b)=>runAdm(b,()=>api('adm_luuNguoiDung',o),'Đã lưu tài khoản'))},
+ a_sync:el=>runAdm(el,async()=>{const r=await api('adm_dongBoQuyen');alert(r);return r},'Đã chạy đồng bộ',()=>{}),
+ a_xoademo:()=>ask('Xóa dữ liệu DEMO','<div class="alert rd">Xóa toàn bộ bản ghi DEMO. Không thể hoàn tác.</div><label>Gõ XOA DEMO để xác nhận</label><input name="xac_nhan" required>',(o,b)=>runAdm(b,()=>api('adm_xoaDuLieuDemo',o),'Đã xóa dữ liệu DEMO'))
+});
+
+/* ---- Gửi biểu mẫu quản trị ---- */
+window.onAdminSubmit=async(k,form,o,btn)=>{
+  if(k==='a_ask'){const cb=S.askCb;if(cb)await cb(o,btn);return}
+  if(k==='a_sp_save'){const num=['gia_de_xuat'];num.forEach(x=>{if(o[x]==='')o[x]=''});return runAdm(btn,()=>api('adm_luuSanPham',o),'Đã lưu sản phẩm')}
+  if(k==='a_kt_save'){return runAdm(btn,()=>api('adm_hanhDongSanPham',o.ma,'luu_kiem_tra',o),'Đã lưu phiếu kiểm tra')}
+  if(k==='a_on'){return runAdm(btn,()=>api('adm_batVanHanh',Object.assign({},o,{xac_nhan:o.xac_nhan===true})),'Đã bật chế độ vận hành THẬT',async()=>{S.cfg=await api('pub_khoiTao');S.sp=null;render()})}
+  if(k==='a_cfg'){return runAdm(btn,()=>api('adm_luuCauHinh',o),'Đã lưu cấu hình',async()=>{S.cfg=await api('pub_khoiTao');render()})}
+};
+</script>
+</body>
+</html>
