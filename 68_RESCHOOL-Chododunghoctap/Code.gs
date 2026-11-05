@@ -15,6 +15,12 @@ var TEN_DU_AN = 'ReSchool – Chợ đồ dùng học tập tuần hoàn';
 var SLOGAN = 'Trao một món đồ cũ – Mở thêm một cơ hội mới';
 var TZ = 'Asia/Ho_Chi_Minh';
 
+/** Hàm hỗ trợ ép Google hiện hộp thoại cấp quyền Google Drive nếu bị thiếu */
+function capQuyenDrive() {
+  var root = DriveApp.getRootFolder();
+  console.log('Đã cấp quyền Google Drive thành công! Thư mục gốc: ' + root.getName());
+}
+
 /* ===================== SCHEMA (11 sheet) ===================== */
 var SCHEMA = {
   // Cấu hình dạng khóa-giá trị. che_do_van_hanh = DEMO | THAT
