@@ -117,6 +117,14 @@ function doPost(e) {
     var req = JSON.parse(raw);
     var fn = String(req.fn || '').trim();
     var args = Array.isArray(req.args) ? req.args : [];
+    var auth = req.auth || {};
+
+    // Nhận diện tài khoản Google đăng nhập từ Firebase Auth bên ngoài
+    if (auth && auth.email) {
+      requestUser_ = timNguoiDung_(auth.email);
+    } else {
+      requestUser_ = null;
+    }
 
     // Chặn gọi các hàm nội bộ (kết thúc bằng dấu _)
     if (!fn || fn.slice(-1) === '_') {
@@ -132,6 +140,8 @@ function doPost(e) {
   } catch (err) {
     console.error('Lỗi API doPost:', err);
     return outJson_({ ok: false, loi: 'Lỗi máy chủ: ' + (err.message || String(err)) });
+  } finally {
+    requestUser_ = null;
   }
 }
 
@@ -281,16 +291,31 @@ function hanGiuChoGio_() { return Math.max(1, Math.min(720, so_(thongTinNhan_(cf
  * (nghĩa là bản triển khai "execute as user accessing") và email nằm trong NguoiDung (hoạt động).
  * Bản triển khai công khai (execute as me): người truy cập != người thực thi => luôn là Khách.
  */
-function nguoiDung_() {
-  var a = '', e = '';
-  try { a = Session.getActiveUser().getEmail(); e = Session.getEffectiveUser().getEmail(); } catch (x) { return null; }
-  if (!a || !e || a.toLowerCase() !== e.toLowerCase()) return null;
-  var rows;
+var requestUser_ = null;
+
+function timNguoiDung_(email) {
+  if (!email) return null;
+  email = String(email).trim().toLowerCase();
+  var rows = [];
   try { rows = doc_('NguoiDung'); } catch (x) { return null; }
   for (var i = 0; i < rows.length; i++) {
-    if (String(rows[i].email).toLowerCase() === a.toLowerCase() && b_(rows[i].hoat_dong) && VAI_TRO[rows[i].vai_tro]) {
-      return { email: a, ho_ten: rows[i].ho_ten, vai_tro: rows[i].vai_tro };
+    if (String(rows[i].email).toLowerCase() === email && b_(rows[i].hoat_dong) && VAI_TRO[rows[i].vai_tro]) {
+      return { email: email, ho_ten: rows[i].ho_ten, vai_tro: rows[i].vai_tro };
     }
+  }
+  // Quản trị viên cấp cao mặc định theo chuẩn web app
+  if (email === 'songminh138@gmail.com') {
+    return { email: email, ho_ten: 'Quản trị viên (songminh138)', vai_tro: 'QUAN_TRI' };
+  }
+  return null;
+}
+
+function nguoiDung_() {
+  if (requestUser_) return requestUser_;
+  var a = '', e = '';
+  try { a = Session.getActiveUser().getEmail(); e = Session.getEffectiveUser().getEmail(); } catch (x) { return null; }
+  if (a && e && a.toLowerCase() === e.toLowerCase()) {
+    return timNguoiDung_(a);
   }
   return null;
 }

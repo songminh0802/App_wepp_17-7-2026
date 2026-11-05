@@ -197,7 +197,7 @@ function renderShell(){
   $('#hdr').innerHTML='<div class="in"><div class="brand" data-act="go" data-v="home"><b>♻️ ReSchool</b><span>'+esc(c.slogan)+'</span></div><button class="cartb" data-act="go" data-v="cart" aria-label="Giỏ hàng">🛒<i>'+n+'</i></button></div>';
   let nav=NAV.map(x=>'<a data-act="go" data-v="'+x[0]+'" class="'+(S.view===x[0]?'on':'')+'">'+x[1]+'</a>').join('');
   if(S.me)nav+='<a data-act="go" data-v="a_home" class="'+(S.view.startsWith('a_')?'on':'')+'">⚙️ Quản trị</a>';
-  else if(c.url_quan_tri)nav+='<a href="'+esc(c.url_quan_tri)+'" target="_top">🔐 Đăng nhập quản trị</a>';
+  else nav+='<a href="/admin.html" class="nav-admin">🔐 Đăng nhập quản trị</a>';
   $('#nav').innerHTML=nav;
   $('#ftr').innerHTML='ReSchool · Dự án khởi nghiệp học sinh · Phiên bản '+esc(c.phien_ban)+(isDemo()?'<br>Bản demo: mọi biểu mẫu và đơn hàng chỉ mô phỏng.':'');
 }
