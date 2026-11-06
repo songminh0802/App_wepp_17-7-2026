@@ -699,7 +699,7 @@ Object.assign(A,{
  a_sp_do:el=>{const id=el.dataset.id,h=el.dataset.h,call=(d,msg)=>runAdm(el,()=>api('adm_hanhDongSanPham',id,h,d),msg);
    if(['tiep_nhan','kiem_tra_lai'].includes(h))return call({});
    if(h==='luu_tru'){const p=sp_(id);return call({bat:!(p.luu_tru===true||p.luu_tru==='TRUE')})}
-   if(h==='duyet_gia'){const p=sp_(id);if(p.nguon==='KY_GUI')return call({gia:0});return ask('Giá duyệt – '+id,'<label>Giá duyệt (đ)</label><input name="gia" type="number" min="1000" step="500" required value="'+esc(p.gia||p.gia_de_xuat||'')+'">',(o,b)=>runAdm(b,()=>api('adm_hanhDongSanPham',id,h,{gia:o.gia}),'Đã duyệt giá'))}
+   if(h==='duyet_gia'){const p=sp_(id);if(p.nguon==='KY_GUI')return call({gia:Number(p.gia||p.gia_de_xuat||0)},'Đã duyệt đăng bán theo giá BM03');return ask('Giá duyệt – '+id,'<label>Giá duyệt (đ)</label><input name="gia" type="number" min="1000" step="500" required value="'+esc(p.gia||p.gia_de_xuat||'')+'">',(o,b)=>runAdm(b,()=>api('adm_hanhDongSanPham',id,h,{gia:o.gia}),'Đã duyệt giá'))}
    askLy(h==='tra_lai'?'Trả lại – lý do':'Loại bỏ – lý do',(o,b)=>runAdm(b,()=>api('adm_hanhDongSanPham',id,h,{ly_do:o.ly_do}),'Đã cập nhật'))},
  a_kt_ok:el=>runAdm(el,()=>api('adm_hanhDongSanPham',el.dataset.id,'duyet_kiem_tra',{ket_qua:'DAT'}),'Đã duyệt ĐẠT → chờ duyệt giá'),
  a_kt_no:el=>{const id=el.dataset.id;askLy('Không đạt – lý do',(o,b)=>runAdm(b,()=>api('adm_hanhDongSanPham',id,'duyet_kiem_tra',{ket_qua:'KHONG_DAT',ly_do:o.ly_do}),'Đã ghi KHÔNG ĐẠT'))},

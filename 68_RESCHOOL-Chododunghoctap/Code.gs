@@ -1081,12 +1081,15 @@ function adm_hanhDongSanPham(ma, hanhDong, d) {
         case 'duyet_gia':
           if (['CHO_DUYET_GIA', 'SAN_SANG', 'GIU_CHO'].indexOf(s.trang_thai) < 0) throw loi_('Sản phẩm không ở bước duyệt giá.');
           if (!b_(s.da_kiem_tra)) throw loi_('Chưa đạt kiểm tra nên không thể duyệt giá.');
-          var gia = soNguyen_(d.gia, 1000, 100000000, 'Giá duyệt');
+          var gia;
           if (s.nguon === 'KY_GUI') {
-            var kgs = doc_('KyGui').filter(function (k) { return k.ma_san_pham === s.ma; })[0];
+            var kgs = doc_('KyGui').filter(function (k) { return k.ma_san_pham === s.ma || (s.ma_nguon && k.ma === s.ma_nguon); })[0];
             if (!kgs || kgs.trang_thai !== 'DA_THOA_THUAN') throw loi_('Hàng ký gửi chưa có thỏa thuận (BM03) nên chưa được đăng bán.');
             if (String(kgs.thoi_han) < homNay_()) throw loi_('Thỏa thuận ký gửi đã hết hạn.');
-            gia = so_(kgs.gia_thong_nhat);
+            var gKg = (d && Number(d.gia) > 0) ? Number(d.gia) : (kgs.gia_thong_nhat || s.gia_de_xuat);
+            gia = soNguyen_(gKg, 1000, 100000000, 'Giá thống nhất ký gửi');
+          } else {
+            gia = soNguyen_(d.gia, 1000, 100000000, 'Giá duyệt');
           }
           var dau = s.trang_thai === 'CHO_DUYET_GIA';
           s.gia = gia; s.nguoi_duyet_gia = u.email; s.ngay_duyet_gia = bayGio_();
