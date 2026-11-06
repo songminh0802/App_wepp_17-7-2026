@@ -15,15 +15,17 @@ var TEN_DU_AN = 'ReSchool – Chợ đồ dùng học tập tuần hoàn';
 var SLOGAN = 'Trao một món đồ cũ – Mở thêm một cơ hội mới';
 var TZ = 'Asia/Ho_Chi_Minh';
 
-/** Hàm hỗ trợ ép Google hiện hộp thoại cấp quyền Google Drive và tạo sẵn 2 thư mục lưu ảnh */
+/** Hàm hỗ trợ ép Google hiện hộp thoại cấp quyền Google Drive, UrlFetchApp và tạo sẵn 2 thư mục lưu ảnh */
 function capQuyenDrive() {
   var root = DriveApp.getRootFolder();
   var f1 = thuMuc_('FOLDER_CONG_KHAI');
   var f2 = thuMuc_('FOLDER_RIENG');
-  console.log('Đã cấp quyền Google Drive thành công! Thư mục gốc: ' + root.getName());
+  // Kích hoạt nhận diện quyền UrlFetchApp cho xác thực bảo mật token Firebase
+  try { UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup', { muteHttpExceptions: true }); } catch (e) {}
+  console.log('Đã cấp quyền Google Drive & UrlFetchApp thành công! Thư mục gốc: ' + root.getName());
   console.log('Thư mục ảnh công khai: ' + f1.getName() + ' (' + f1.getId() + ')');
   console.log('Thư mục ảnh riêng: ' + f2.getName() + ' (' + f2.getId() + ')');
-  return 'Thành công! Đã cấp quyền Drive và tạo sẵn thư mục lưu ảnh.';
+  return 'Thành công! Đã cấp quyền Drive và quyền xác thực token bảo mật.';
 }
 
 /* ===================== SCHEMA (11 sheet) ===================== */
@@ -101,6 +103,44 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+/**
+ * Xác thực Firebase ID Token qua Google Identity Toolkit API.
+ * Trả về email thực tế nếu token hợp lệ; trả về null nếu token giả mạo/hết hạn.
+ * Sử dụng CacheService 20 phút để phản hồi siêu tốc (<1ms) cho các lượt gọi tiếp theo.
+ */
+function xacThucFirebaseToken_(idToken) {
+  if (!idToken || typeof idToken !== 'string') return null;
+  var hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, idToken));
+  var cacheKey = 'fb_tok_' + hash;
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get(cacheKey);
+  if (cached) return cached;
+
+  var apiKey = PropertiesService.getScriptProperties().getProperty('FIREBASE_API_KEY') || 'AIzaSyBVueYYokJdqm_uCMqBL24d6YCtMTamCM8';
+  var url = 'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + apiKey;
+  try {
+    var resp = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ idToken: idToken }),
+      muteHttpExceptions: true
+    });
+    if (resp.getResponseCode() === 200) {
+      var data = JSON.parse(resp.getContentText());
+      if (data && data.users && data.users[0] && data.users[0].email) {
+        var email = String(data.users[0].email).trim().toLowerCase();
+        cache.put(cacheKey, email, 1200); // Lưu cache 20 phút
+        return email;
+      }
+    } else {
+      console.warn('Xác thực token thất bại, mã HTTP:', resp.getResponseCode());
+    }
+  } catch (err) {
+    console.error('Lỗi kiểm tra Firebase Token:', err);
+  }
+  return null;
+}
+
 function doPost(e) {
   try {
     var raw = (e && e.postData && e.postData.contents) || '{}';
@@ -109,9 +149,14 @@ function doPost(e) {
     var args = Array.isArray(req.args) ? req.args : [];
     var auth = req.auth || {};
 
-    // Nhận diện tài khoản Google đăng nhập từ Firebase Auth bên ngoài
-    if (auth && auth.email) {
-      requestUser_ = timNguoiDung_(auth.email);
+    // BẢO MẬT: Bắt buộc xác thực mật mã qua Firebase ID Token (chống giả mạo email quản trị)
+    if (auth && auth.idToken) {
+      var emailXacThuc = xacThucFirebaseToken_(auth.idToken);
+      if (emailXacThuc) {
+        requestUser_ = timNguoiDung_(emailXacThuc);
+      } else {
+        requestUser_ = null;
+      }
     } else {
       requestUser_ = null;
     }

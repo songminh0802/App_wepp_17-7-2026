@@ -208,17 +208,25 @@ th{color:var(--mu);font-weight:600;font-size:.82rem;text-transform:uppercase;let
     function fd(form){const o={};form.querySelectorAll('[name]').forEach(e=>{if(e.type==='checkbox')o[e.name]=e.checked;else if(e.type==='radio'){if(e.checked)o[e.name]=e.value}else o[e.name]=e.value});return o}
     const opts=(arr,sel,ph)=>(ph!==undefined?'<option value="">'+esc(ph)+'</option>':'')+arr.map(x=>{const v=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return '<option value="'+esc(v)+'"'+(String(v)===String(sel)?' selected':'')+'>'+esc(l)+'</option>'}).join('');
 
-    // Hàm gọi API kèm thông tin xác thực Google Firebase Auth
+    // Hàm gọi API kèm thông tin xác thực Google Firebase Auth (Bảo mật bằng ID Token)
     async function api(fn, ...a) {
       const u = window.GAS_API_URL;
       try {
+        let idToken = null;
+        if (currentUser) {
+          try {
+            idToken = await currentUser.getIdToken();
+          } catch (tokErr) {
+            console.error('Lỗi lấy idToken Firebase:', tokErr);
+          }
+        }
         const res = await fetch(u, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
             fn: fn,
             args: a,
-            auth: currentUser ? { email: currentUser.email } : {}
+            auth: idToken ? { idToken: idToken } : {}
           })
         });
         const r = await res.json();
