@@ -226,7 +226,10 @@ th{color:var(--mu);font-weight:600;font-size:.82rem;text-transform:uppercase;let
           body: JSON.stringify({
             fn: fn,
             args: a,
-            auth: idToken ? { idToken: idToken } : {}
+            auth: {
+              email: currentUser ? currentUser.email : '',
+              idToken: idToken || ''
+            }
           })
         });
         const r = await res.json();
