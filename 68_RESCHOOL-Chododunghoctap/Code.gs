@@ -517,7 +517,7 @@ function luuAnh_(p) {
   var bytes;
   try { bytes = Utilities.base64Decode(String(p.b64).replace(/^data:[^,]+,/, '')); } catch (e) { throw loi_('Tệp ảnh không hợp lệ.'); }
   if (!bytes || bytes.length === 0) throw loi_('Tệp ảnh rỗng.');
-  if (bytes.length > 2 * 1024 * 1024) throw loi_('Ảnh vượt quá 2 MB.');
+  if (bytes.length > 5 * 1024 * 1024) throw loi_('Ảnh vượt quá 5 MB.');
   if (bytes.length < 12) throw loi_('Tệp ảnh không hợp lệ.');
 
   // Kiểm tra magic bytes an toàn trực tiếp trên Byte[] của GAS mà không gọi .map (tránh lỗi 'bytes.map is not a function')

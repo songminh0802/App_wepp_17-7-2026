@@ -445,7 +445,7 @@ function spForm(p){
   const hasImg = curImgs.length > 0;
   openModal(nw?'Thêm sản phẩm':'Sửa '+p.ma,'<form data-submit="a_sp_save"><input type="hidden" name="ma" value="'+val(p,'ma')+'"><label>Tên sản phẩm <b style="color:var(--rd)">*</b></label><input name="ten" required maxlength="100" value="'+val(p,'ten')+'"><label>Danh mục <b style="color:var(--rd)">*</b></label><select name="danh_muc">'+opts(S.cfg.danh_muc.map(d=>[d.ma,d.ten]),p.danh_muc)+'</select><label>Tình trạng <b style="color:var(--rd)">*</b></label><select name="tinh_trang">'+opts(S.cfg.tinh_trang,p.tinh_trang)+'</select><label>Mô tả</label><textarea name="mo_ta" maxlength="1000">'+val(p,'mo_ta')+'</textarea><label>Lỗi đã ghi nhận</label><input name="loi_ghi_nhan" maxlength="300" value="'+val(p,'loi_ghi_nhan')+'"><div class="fl"><div><label>Giá đề xuất (đ)</label><input name="gia_de_xuat" type="number" min="0" value="'+val(p,'gia_de_xuat')+'"></div>'+(pub?'':'<div><label>Số lượng</label><input name="tong_nhap" type="number" min="1" max="100" value="'+esc(p.tong_nhap||1)+'"></div>')+'</div>'
   +(nw?'<div class="fl"><div><label>Nguồn</label><select name="nguon">'+opts([['TANG','Hàng tặng'],['KY_GUI','Ký gửi']],'TANG')+'</select></div><div><label>Mã nguồn (YTxxx / KGxxx)</label><input name="ma_nguon" maxlength="20"></div></div><p class="sm mu">Hàng ký gửi cần mã KGxxx đã có trong mục Ký gửi.</p>':'')
-  +'<label>Ảnh sản phẩm (Tối đa 5 ảnh JPG/PNG/WEBP ≤ 2 MB) <b style="color:var(--rd)">* Bắt buộc</b></label>'
+  +'<label>Ảnh sản phẩm (Tối đa 5 ảnh JPG/PNG/WEBP ≤ 10 MB · Tự động tối ưu nét) <b style="color:var(--rd)">* Bắt buộc</b></label>'
   +(hasImg?'<div class="sm mu" style="margin-bottom:6px">✔ Đã có '+curImgs.length+' ảnh trên hệ thống. Chọn tệp mới bên dưới nếu muốn thay đổi ảnh (tối đa 5 ảnh):</div>':'')
   +'<input type="file" accept="image/jpeg,image/png,image/webp" data-photo="admin" multiple'+(!hasImg?' required':'')+'>'
   +'<input type="hidden" name="anh_token">'
@@ -564,6 +564,39 @@ function printBM05(dc){const x=inPhieu('BM05','BIÊN BẢN ĐỐI CHIẾU THU CH
 /* ---- Tiện ích mã QR & Tải ảnh quản trị ---- */
 function qrUrl(ma){const u=S.cfg.url_goc||'';return u+(u.indexOf('?')<0?'?':'&')+'sp='+encodeURIComponent(ma)}
 function drawQR(el,text,size){el.innerHTML='';if(window.QRCode){try{new QRCode(el,{text:text,width:size||150,height:size||150});return}catch(e){}}el.innerHTML='<span class="sm">'+esc(text)+'</span>'}
+function nenAnh(file,maxDim,quality){
+  maxDim=maxDim||1920;quality=quality||0.82;
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error('Không thể đọc tệp '+file.name));
+    reader.onload=e=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error('Hình ảnh '+file.name+' không hợp lệ hoặc bị lỗi.'));
+      img.onload=()=>{
+        try{
+          let w=img.width,h=img.height;
+          if(w>maxDim||h>maxDim){
+            if(w>h){h=Math.round((h*maxDim)/w);w=maxDim}
+            else{w=Math.round((w*maxDim)/h);h=maxDim}
+          }
+          const canvas=document.createElement('canvas');
+          canvas.width=w;canvas.height=h;
+          const ctx=canvas.getContext('2d');
+          ctx.fillStyle='#ffffff';
+          ctx.fillRect(0,0,w,h);
+          ctx.drawImage(img,0,0,w,h);
+          const dataUrl=canvas.toDataURL('image/jpeg',quality);
+          const b64=dataUrl.split(',')[1];
+          resolve({dataUrl:dataUrl,b64:b64,mime:'image/jpeg'});
+        }catch(err){
+          reject(new Error('Lỗi tối ưu ảnh: '+(err.message||err)));
+        }
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 function photoHandler(inp,admin){
   const form=inp.form||inp.closest('form');
   const st=form?form.querySelector('#photoSt'):$('#photoSt');
@@ -583,34 +616,29 @@ function photoHandler(inp,admin){
       if(st)st.innerHTML='<span style="color:var(--rd,#d32f2f);font-weight:600">❌ Tệp "'+esc(f.name)+'" không đúng định dạng. Chỉ nhận JPG, PNG, WEBP.</span>';
       inp.value='';return;
     }
-    if(f.size>2*1024*1024){
-      if(st)st.innerHTML='<span style="color:var(--rd,#d32f2f);font-weight:600">❌ Tệp "'+esc(f.name)+'" vượt quá dung lượng 2 MB.</span>';
+    if(f.size>10*1024*1024){
+      if(st)st.innerHTML='<span style="color:var(--rd,#d32f2f);font-weight:600">❌ Tệp "'+esc(f.name)+'" vượt quá dung lượng cho phép (10 MB).</span>';
       inp.value='';return;
     }
   }
   if(btn)btn.disabled=true;
-  if(st)st.innerHTML='<span class="spin"></span> Đang tải ảnh (0/'+files.length+') lên Google Drive…';
+  if(st)st.innerHTML='<span class="spin"></span> Đang xử lý ảnh…';
   (async()=>{
     const tokens=[];
     const previews=[];
     try{
       for(let i=0;i<files.length;i++){
         const f=files[i];
+        if(st)st.innerHTML='<span class="spin"></span> Đang tối ưu & nén nét ảnh '+(i+1)+'/'+files.length+'…';
+        const opt=await nenAnh(f);
         if(st)st.innerHTML='<span class="spin"></span> Đang tải ảnh '+(i+1)+'/'+files.length+' lên Google Drive…';
-        const dataUrl=await new Promise((resolve,reject)=>{
-          const r=new FileReader();
-          r.onload=()=>resolve(r.result);
-          r.onerror=()=>reject(new Error('Không đọc được tệp '+f.name));
-          r.readAsDataURL(f);
-        });
-        const b64=String(dataUrl).split(',')[1];
-        const res=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:f.type,b64:b64});
+        const res=await api(admin?'adm_taiAnh':'pub_taiAnh',{mime:opt.mime,b64:opt.b64});
         tokens.push(res.token);
-        previews.push(dataUrl);
+        previews.push(opt.dataUrl);
       }
       if(tk)tk.value=tokens.join(',');
       if(st){
-        st.innerHTML='<div style="color:#2e7d32;font-weight:600;margin-bottom:6px">✅ Đã tải lên '+tokens.length+' ảnh thành công!</div>'
+        st.innerHTML='<div style="color:#2e7d32;font-weight:600;margin-bottom:6px">✅ Đã tối ưu & tải lên '+tokens.length+' ảnh thành công!</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'
           +previews.map((src,idx)=>'<div style="position:relative;border:1px solid #cbd5e1;border-radius:8px;overflow:hidden;width:68px;height:68px;background:#f8fafc"><img src="'+src+'" style="width:100%;height:100%;object-fit:cover">'+(idx===0?'<span style="position:absolute;bottom:0;left:0;right:0;background:rgba(46,125,50,0.85);color:#fff;font-size:9px;text-align:center;padding:1px 0;line-height:1.2;font-weight:600">Ảnh chính</span>':'')+'</div>').join('')
           +'</div>';

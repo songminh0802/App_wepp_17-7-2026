@@ -157,7 +157,7 @@ Khi chạy hàm `khoiTao()`, hệ thống sẽ tự động tạo đủ 11 sheet
 
 ### 2. Giới hạn kỹ thuật của nền tảng Google Apps Script (Cần lưu ý)
 1. **Hạn mức thời gian chạy (Execution Timeout):** Mỗi lần gọi hàm GAS tối đa 6 phút. Hệ thống đã tối ưu xử lý theo batch và mảng 2 chiều để mỗi thao tác chỉ mất 0.5 – 1.5 giây.
-2. **Dung lượng ảnh tải lên:** Giới hạn 2 MB/ảnh và tối đa 150 ảnh/ngày để bảo đảm bộ nhớ tạm (Blob memory) của GAS không bị tràn và Drive không bị đầy đột ngột.
+2. **Dung lượng ảnh tải lên:** Hỗ trợ chọn ảnh gốc tới 10 MB/ảnh (trình duyệt tự động nén nét 1920px ~ 400–800 KB chuẩn sàn TMĐT bằng Canvas trước khi gửi) và tối đa 300 ảnh/ngày để bảo đảm bộ nhớ tạm (Blob memory) của GAS không bị tràn và Drive không bị đầy đột ngột.
 3. **Độ trễ phản hồi:** Do chạy trên máy chủ dùng chung của Google, lượt truy cập đầu tiên sau khi không dùng có thể mất 2–3 giây để "khởi động ấm" (cold start).
 4. **Không hỗ trợ WebSockets:** Trạng thái đơn và tồn kho được cập nhật tức thời ở server mỗi khi có giao dịch và kiểm tra khóa tại thời điểm bấm đặt.
 
