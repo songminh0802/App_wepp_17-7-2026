@@ -98,6 +98,18 @@ th,td{border-bottom:1px solid var(--bd);padding:6px 4px;text-align:left;vertical
 .kv span:nth-child(odd){color:var(--mu)}
 .fl{display:flex;gap:8px;flex-wrap:wrap}.fl>*{flex:1;min-width:130px}
 #ftr{text-align:center;color:var(--mu);font-size:.78rem;padding:18px 10px 40px}
+.product-bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid rgba(0,0,0,.08);box-shadow:0 -4px 16px rgba(0,0,0,.08);z-index:45;padding:8px 12px}
+.pbb-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:8px}
+.pbb-btn-icon{display:flex;flex-direction:column;align-items:center;justify-content:center;background:none;border:none;color:#4b5563;font-size:1.15rem;line-height:1;padding:4px 8px;cursor:pointer;min-width:44px}
+.pbb-btn-icon small{font-size:.68rem;margin-top:3px;font-weight:500;color:#6b7280}
+.pbb-cart-badge{position:absolute;top:-6px;right:-8px;background:var(--or,#ff9800);color:#fff;border-radius:10px;padding:1px 5px;font-size:10px;font-style:normal;font-weight:700}
+.pbb-btn-addcart{flex:1;background:#fff;color:var(--g,#2e7d32);border:1.5px solid var(--g,#2e7d32);border-radius:10px;padding:8px 12px;font-weight:600;font-size:.92rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;transition:background .15s}
+.pbb-btn-addcart:hover{background:var(--gl,#e8f5e9)}
+.pbb-btn-buynow{flex:1.3;background:linear-gradient(135deg,#ff5722 0%,#e64a19 100%);color:#fff;border:none;border-radius:10px;padding:6px 12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:42px;box-shadow:0 2px 8px rgba(230,74,25,.35);transition:opacity .15s}
+.pbb-btn-buynow:hover{opacity:.92}
+.pbb-bn-main{font-size:.95rem;line-height:1.1}
+.pbb-bn-sub{font-size:.75rem;font-weight:500;opacity:.95;margin-top:1px}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #print-area{display:none}
 @media print{
   body>*:not(#print-area){display:none!important}
@@ -275,13 +287,81 @@ function applyFilters(){
 /* ---------- Chi tiết sản phẩm ---------- */
 function qrUrl(ma){const u=S.cfg.url_goc||'';return u+(u.indexOf('?')<0?'?':'&')+'sp='+encodeURIComponent(ma)}
 function drawQR(el,text,size){el.innerHTML='';if(window.QRCode){try{new QRCode(el,{text:text,width:size||150,height:size||150});return}catch(e){}}el.innerHTML='<span class="sm">'+esc(text)+'</span>'}
+
+function bottomBar(p){
+  const cartCount=S.cart.reduce((a,i)=>a+i.sl,0);
+  if(!p.dat_duoc){
+    return '<div class="product-bottom-bar"><div class="pbb-inner">'
+      +'<button type="button" class="pbb-btn-icon" data-act="go" data-v="home" title="Trang chủ"><span>🏠</span><small>Trang chủ</small></button>'
+      +'<button type="button" class="pbb-btn-icon" data-act="go" data-v="cart" title="Giỏ hàng"><span style="position:relative">🛒<i class="pbb-cart-badge">'+cartCount+'</i></span><small>Giỏ hàng</small></button>'
+      +'<div style="flex:1;text-align:center;font-weight:600;color:var(--mu);font-size:.88rem">'+(p.trang_thai==='DA_BAN'?'❌ Đã bán':p.trang_thai==='GIU_CHO'?'⏳ Đang giữ chỗ':'Tạm hết hàng')+'</div>'
+      +'<button type="button" class="btn sm out" data-act="go" data-v="catalog">Xem món khác</button>'
+      +'</div></div>';
+  }
+  return '<div class="product-bottom-bar"><div class="pbb-inner">'
+    +'<button type="button" class="pbb-btn-icon" data-act="go" data-v="home" title="Trang chủ"><span>🏠</span><small>Trang chủ</small></button>'
+    +'<button type="button" class="pbb-btn-icon" data-act="go" data-v="cart" title="Giỏ hàng"><span style="position:relative">🛒<i class="pbb-cart-badge">'+cartCount+'</i></span><small>Giỏ hàng</small></button>'
+    +'<button type="button" class="pbb-btn-addcart" data-act="addcart" data-p="'+esc(p.ma)+'"><span>🛒</span> Thêm giỏ</button>'
+    +'<button type="button" class="pbb-btn-buynow" data-act="buynow" data-p="'+esc(p.ma)+'"><div class="pbb-bn-main">⚡ Mua ngay</div><div class="pbb-bn-sub">'+vnd(p.gia)+'</div></button>'
+    +'</div></div>';
+}
+
+function quickBuyModal(p,sl){
+  sl=Math.max(1,Math.min(sl||1,p.ton_kho,10));
+  const ids=String(p.anh_id||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const firstId=ids[0]||'';
+  const imgUrl=firstId?'https://drive.google.com/thumbnail?id='+encodeURIComponent(firstId)+'&sz=w300':'';
+  const n=S.nhan||S.cfg.nhan;
+  const html='<div class="qb-box" style="margin-top:6px">'
+    +'<div style="display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--bd)">'
+    +'<div style="width:72px;height:72px;border-radius:10px;overflow:hidden;background:var(--gl);flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center">'
+    +(imgUrl?'<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">':'<span style="font-size:2rem">'+dm(p.danh_muc).icon+'</span>')
+    +'</div>'
+    +'<div style="flex:1;min-width:0">'
+    +'<div style="font-weight:700;font-size:1rem;line-height:1.3" class="truncate">'+esc(p.ten)+'</div>'
+    +'<div class="mu sm">Mã: <b>'+esc(p.ma)+'</b> · Còn: <b>'+p.ton_kho+'</b> món</div>'
+    +'<div class="price" id="qbPrice" style="font-size:1.2rem;margin-top:2px">'+vnd(p.gia*sl)+'</div>'
+    +'</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1px solid var(--bd)">'
+    +'<span style="font-weight:600;font-size:.92rem">Số lượng mua:</span>'
+    +'<div style="display:flex;align-items:center;gap:8px">'
+    +'<button type="button" class="btn sm out" data-act="qb_qty" data-d="-1" style="width:34px;padding:0;min-height:34px;font-size:1.2rem;font-weight:700">−</button>'
+    +'<input type="number" id="qbSl" value="'+sl+'" min="1" max="'+Math.min(p.ton_kho,10)+'" readonly style="width:48px;text-align:center;font-weight:700;padding:4px;border-radius:8px">'
+    +'<button type="button" class="btn sm out" data-act="qb_qty" data-d="1" style="width:34px;padding:0;min-height:34px;font-size:1.2rem;font-weight:700">+</button>'
+    +'</div>'
+    +'</div>'
+    +'<div style="background:var(--gl);padding:8px 12px;border-radius:10px;margin-bottom:12px;font-size:.84rem;color:var(--g2);line-height:1.4">'
+    +'📍 <b>Điểm nhận:</b> '+esc(n.diem_nhan)+'<br>⏱ <b>Giữ chỗ:</b> '+esc(n.han_giu_cho_gio)+'h · Thanh toán trực tiếp khi nhận hàng'
+    +'</div>'
+    +'<form data-submit="quick_order">'
+    +'<input type="hidden" name="ma" value="'+esc(p.ma)+'">'
+    +'<input type="hidden" name="sl" id="qbSlInput" value="'+sl+'">'
+    +'<label style="margin-top:0">Tên người nhận <b style="color:var(--rd)">*</b></label>'
+    +'<input name="ten" required maxlength="60" placeholder="'+(isDemo()?'Ví dụ: Khách mua minh họa':'Họ tên hoặc tên gọi của bạn')+'">'
+    +'<label>Số điện thoại hoặc email <b style="color:var(--rd)">*</b></label>'
+    +'<input name="lien_he" required maxlength="80" placeholder="'+(isDemo()?'Ví dụ: 0900000000':'Số điện thoại hoặc email liên hệ')+'">'
+    +'<label>Ghi chú (không bắt buộc)</label>'
+    +'<input name="ghi_chu" maxlength="200" placeholder="Giờ nhận mong muốn, lời nhắn...">'
+    +(isDemo()?'<label class="chk"><input type="checkbox" name="xac_nhan_demo"> Tôi hiểu đây là demo mô phỏng, không có hàng thật.</label>':'')
+    +'<label class="chk"><input type="checkbox" name="dong_y_chinh_sach"> Tôi đồng ý chính sách thông tin cá nhân và nhận hàng tại trường.</label>'
+    +'<button class="btn or" style="width:100%;margin-top:10px;font-size:1.05rem;min-height:46px;background:linear-gradient(135deg,#ff5722 0%,#e64a19 100%);box-shadow:0 3px 10px rgba(230,74,25,.35)">'
+    +'⚡ Xác nhận đặt giữ chỗ ngay'
+    +'</button>'
+    +'</form></div>';
+  openModal('⚡ Mua ngay & Giữ chỗ',html);
+  S.activeQuickProduct=p;
+}
+
 async function vProduct(){
   const ma=S.param;$('#app').innerHTML='<div class="wrap">'+loading()+'</div>';
   try{
     const p=await api('pub_chiTietSanPham',ma);
-    $('#app').innerHTML='<div class="wrap"><button class="btn out sm" data-act="go" data-v="catalog">← Sản phẩm</button><div class="card" style="margin-top:10px">'+renderGallery(p)+'<h2>'+esc(p.ten)+'</h2><div class="mu sm">Mã: <b>'+esc(p.ma)+'</b> · '+(p.nguon==='KY_GUI'?'Hàng ký gửi':'Hàng tặng')+'</div><div class="price" style="font-size:1.4rem;margin:6px 0">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span><span class="tag">✔ Đã kiểm tra</span><span class="tag">'+esc(dm(p.danh_muc).ten)+'</span></div>'+(isDemo()?'<div class="alert or">Dữ liệu minh họa – giá và hình ảnh chỉ để minh họa.</div>':'')+'<h3>Mô tả</h3><p>'+esc(p.mo_ta||'Chưa có mô tả.')+'</p><h3>Tình trạng và lỗi đã ghi nhận</h3><p>'+esc(p.loi_ghi_nhan||'Chưa ghi nhận lỗi nào.')+'</p>'
-    +(p.dat_duoc?'<div class="row" style="margin-top:10px;align-items:center"><select id="pq" style="width:90px">'+Array.from({length:Math.min(p.ton_kho,10)},(_,i)=>'<option>'+(i+1)+'</option>').join('')+'</select><button class="btn or" data-act="addcart" data-p="'+esc(p.ma)+'">🛒 Thêm vào giỏ</button></div><p class="sm mu">Còn '+p.ton_kho+' món. Nhận tại điểm nhận, thanh toán khi nhận.</p>':'<div class="alert gr">'+(p.trang_thai==='DA_BAN'?'Sản phẩm này đã bán.':p.trang_thai==='GIU_CHO'?'Sản phẩm đang được giữ chỗ cho người khác.':'Sản phẩm hiện không thể đặt.')+'</div>')
-    +'<h3>Mã QR của sản phẩm</h3><div class="qr" id="qr"></div><p class="sm mu">Quét để mở lại đúng trang sản phẩm này.</p></div></div>';
+    S.activeProduct=p;
+    $('#app').innerHTML='<div class="wrap" style="padding-bottom:80px"><button class="btn out sm" data-act="go" data-v="catalog">← Sản phẩm</button><div class="card" style="margin-top:10px">'+renderGallery(p)+'<h2>'+esc(p.ten)+'</h2><div class="mu sm">Mã: <b>'+esc(p.ma)+'</b> · '+(p.nguon==='KY_GUI'?'Hàng ký gửi':'Hàng tặng')+'</div><div class="price" style="font-size:1.4rem;margin:6px 0">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span><span class="tag">✔ Đã kiểm tra</span><span class="tag">'+esc(dm(p.danh_muc).ten)+'</span></div>'+(isDemo()?'<div class="alert or">Dữ liệu minh họa – giá và hình ảnh chỉ để minh họa.</div>':'')+'<h3>Mô tả</h3><p>'+esc(p.mo_ta||'Chưa có mô tả.')+'</p><h3>Tình trạng và lỗi đã ghi nhận</h3><p>'+esc(p.loi_ghi_nhan||'Chưa ghi nhận lỗi nào.')+'</p>'
+    +(p.dat_duoc?'<div class="row" style="margin-top:12px;align-items:center;gap:8px"><select id="pq" style="width:75px">'+Array.from({length:Math.min(p.ton_kho,10)},(_,i)=>'<option>'+(i+1)+'</option>').join('')+'</select><button class="btn out" data-act="addcart" data-p="'+esc(p.ma)+'">🛒 Thêm vào giỏ</button><button class="btn or" data-act="buynow" data-p="'+esc(p.ma)+'" style="background:linear-gradient(135deg,#ff5722 0%,#e64a19 100%);box-shadow:0 2px 8px rgba(230,74,25,.3)">⚡ Mua ngay</button></div><p class="sm mu">Còn '+p.ton_kho+' món. Nhận tại điểm nhận, thanh toán khi nhận.</p>':'<div class="alert gr">'+(p.trang_thai==='DA_BAN'?'Sản phẩm này đã bán.':p.trang_thai==='GIU_CHO'?'Sản phẩm đang được giữ chỗ cho người khác.':'Sản phẩm hiện không thể đặt.')+'</div>')
+    +'<h3>Mã QR của sản phẩm</h3><div class="qr" id="qr"></div><p class="sm mu">Quét để mở lại đúng trang sản phẩm này.</p></div></div>'
+    +bottomBar(p);
     drawQR($('#qr'),qrUrl(p.ma));
   }catch(e){$('#app').innerHTML='<div class="wrap">'+errBox(e.message)+'<button class="btn" data-act="go" data-v="catalog">Về danh sách</button></div>'}
 }
@@ -301,8 +381,13 @@ async function vCart(){
   +(isDemo()?'<label class="chk"><input type="checkbox" name="xac_nhan_demo"> Tôi hiểu đây là chế độ demo, đơn chỉ mô phỏng và tôi không nhập thông tin thật.</label>':'')
   +'<label class="chk"><input type="checkbox" name="dong_y_chinh_sach"> Tôi đồng ý chính sách thông tin cá nhân: chỉ thu tên và liên hệ tối thiểu để giao nhận đơn, không công khai và không chia sẻ cho bên thứ ba.</label><button class="btn or" style="width:100%;margin-top:8px">Đặt giữ chỗ</button></form></div>';
 }
-function showOrderResult(r){
-  S.cart=[];saveCart();
+function showOrderResult(r,fromQuickBuy,maSp){
+  if(fromQuickBuy&&maSp){
+    S.cart=S.cart.filter(i=>i.ma!==maSp);
+  }else{
+    S.cart=[];
+  }
+  saveCart();
   $('#app').innerHTML='<div class="wrap"><div class="card"><h2>'+(r.che_do!=='THAT'?'🧪 Đơn MÔ PHỎNG đã được ghi':'✅ Đã ghi đơn giữ chỗ')+'</h2>'+(r.che_do!=='THAT'?'<div class="alert or">Đây là đơn demo: không có hàng thật, không thu tiền.</div>':'')+'<div class="kv"><span>Mã đơn</span><b>'+esc(r.ma_don)+'</b><span>Mã xác thực</span><b style="font-size:1.2rem;color:var(--or2)">'+esc(r.ma_xac_thuc)+'</b><span>Tổng tiền</span><b>'+vnd(r.tong)+'</b><span>Giữ chỗ đến</span><span>'+esc(fmtT(r.han_giu_cho))+'</span></div><div class="alert or"><b>Hãy lưu lại mã đơn và mã xác thực</b> – cần cả hai để tra cứu đơn; mã xác thực không hiển thị lại.</div><h3>Hướng dẫn nhận hàng</h3><ol><li>Chờ giáo viên xác nhận đơn (tra cứu bằng mã đơn + mã xác thực).</li><li>Đến <b>'+esc(r.nhan.diem_nhan)+'</b> vào <b>'+esc(r.nhan.thoi_gian_nhan)+'</b>, trước hạn giữ chỗ.</li><li>Kiểm tra hàng, thanh toán khi nhận. Quá hạn giữ chỗ đơn sẽ tự hủy.</li><li>Liên hệ: '+esc(r.nhan.lien_he)+'</li></ol><button class="btn" data-act="go" data-v="track">Tra cứu đơn</button> <button class="btn out" data-act="go" data-v="catalog">Tiếp tục xem hàng</button></div></div>';
 }
 
@@ -408,7 +493,32 @@ const A={
    $$('.gallery-thumb-btn').forEach(b=>b.style.borderColor='#e2e8f0');
    el.style.borderColor='var(--pr,#2e7d32)';
  },
- addcart:el=>{const ma=el.dataset.p,sl=+($('#pq')||{value:1}).value,x=S.cart.find(i=>i.ma===ma);if(x)x.sl=Math.min(10,x.sl+sl);else S.cart.push({ma,sl});saveCart();toast('Đã thêm vào giỏ hàng','ok')},
+ addcart:el=>{
+   const ma=el.dataset.p,sl=+($('#pq')||{value:1}).value,x=S.cart.find(i=>i.ma===ma);
+   if(x)x.sl=Math.min(10,x.sl+sl);else S.cart.push({ma,sl});
+   saveCart();
+   const b=$('.pbb-cart-badge');
+   if(b)b.textContent=S.cart.reduce((a,i)=>a+i.sl,0);
+   toast('Đã thêm vào giỏ hàng','ok');
+ },
+ buynow:el=>{
+   const ma=el.dataset.p;
+   const sl=+($('#pq')||{value:1}).value||1;
+   const p=S.activeProduct||(S.sp&&S.sp.find(x=>x.ma===ma));
+   if(!p)return;
+   quickBuyModal(p,sl);
+ },
+ qb_qty:el=>{
+   const p=S.activeQuickProduct;if(!p)return;
+   const d=+el.dataset.d;
+   const slEl=$('#qbSl'),slInp=$('#qbSlInput'),prEl=$('#qbPrice');
+   if(!slEl)return;
+   let cur=+slEl.value||1;
+   cur=Math.max(1,Math.min(cur+d,p.ton_kho,10));
+   slEl.value=cur;
+   if(slInp)slInp.value=cur;
+   if(prEl)prEl.textContent=vnd(p.gia*cur);
+ },
  qty:el=>{const i=S.cart.find(x=>x.ma===el.dataset.p),p=S.sp.find(x=>x.ma===i.ma);i.sl=Math.max(1,Math.min(i.sl+(+el.dataset.d),p.ton_kho,10));saveCart();vCart()},
  rm:el=>{S.cart=S.cart.filter(i=>i.ma!==el.dataset.p);saveCart();vCart()}
 };
@@ -425,6 +535,16 @@ document.addEventListener('submit',async e=>{
   const k=form.dataset.submit,btn=form.querySelector('button:not([type=button])'),o=fd(form);
   const H={
    order:async()=>{o.items=S.cart.map(i=>({ma:i.ma,sl:i.sl}));const r=await api('pub_datHang',o);S.nhan=r.nhan;showOrderResult(r);toast('Đơn đã được ghi vào hệ thống','ok')},
+   quick_order:async()=>{
+     const p=S.activeQuickProduct;
+     const sl=+($('#qbSlInput')||{value:1}).value||1;
+     o.items=[{ma:p?p.ma:o.ma,sl:sl}];
+     const r=await api('pub_datHang',o);
+     S.nhan=r.nhan;
+     closeModal();
+     showOrderResult(r,true,p?p.ma:o.ma);
+     toast('Đã ghi đơn đặt giữ chỗ thành công!','ok');
+   },
    track:async()=>{const d=await api('pub_traCuuDon',o.ma,o.code);$('#trk').innerHTML=trackView(d)},
    tang:async()=>{if(!o.anh_token){toast('Vui lòng chọn và tải ảnh món đồ lên trước khi gửi (Bắt buộc)!','err');return};const r=await api('pub_guiTang',o);done(r,'Yêu cầu tặng đồ')},
    kygui:async()=>{if(!o.anh_token){toast('Vui lòng chọn và tải ảnh món đồ lên trước khi gửi (Bắt buộc)!','err');return};const r=await api('pub_guiKyGui',o);done(r,'Yêu cầu ký gửi')},
