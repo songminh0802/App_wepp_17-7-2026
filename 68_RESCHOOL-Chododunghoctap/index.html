@@ -360,9 +360,8 @@ async function vProduct(){
     S.activeProduct=p;
     $('#app').innerHTML='<div class="wrap" style="padding-bottom:80px"><button class="btn out sm" data-act="go" data-v="catalog">← Sản phẩm</button><div class="card" style="margin-top:10px">'+renderGallery(p)+'<h2>'+esc(p.ten)+'</h2><div class="mu sm">Mã: <b>'+esc(p.ma)+'</b> · '+(p.nguon==='KY_GUI'?'Hàng ký gửi':'Hàng tặng')+'</div><div class="price" style="font-size:1.4rem;margin:6px 0">'+vnd(p.gia)+'</div><div>'+stTag(p)+'<span class="tag bl">'+esc(p.tinh_trang)+'</span><span class="tag">✔ Đã kiểm tra</span><span class="tag">'+esc(dm(p.danh_muc).ten)+'</span></div>'+(isDemo()?'<div class="alert or">Dữ liệu minh họa – giá và hình ảnh chỉ để minh họa.</div>':'')+'<h3>Mô tả</h3><p>'+esc(p.mo_ta||'Chưa có mô tả.')+'</p><h3>Tình trạng và lỗi đã ghi nhận</h3><p>'+esc(p.loi_ghi_nhan||'Chưa ghi nhận lỗi nào.')+'</p>'
     +(p.dat_duoc?'<div class="row" style="margin-top:12px;align-items:center;gap:8px"><select id="pq" style="width:75px">'+Array.from({length:Math.min(p.ton_kho,10)},(_,i)=>'<option>'+(i+1)+'</option>').join('')+'</select><button class="btn out" data-act="addcart" data-p="'+esc(p.ma)+'">🛒 Thêm vào giỏ</button><button class="btn or" data-act="buynow" data-p="'+esc(p.ma)+'" style="background:linear-gradient(135deg,#ff5722 0%,#e64a19 100%);box-shadow:0 2px 8px rgba(230,74,25,.3)">⚡ Mua ngay</button></div><p class="sm mu">Còn '+p.ton_kho+' món. Nhận tại điểm nhận, thanh toán khi nhận.</p>':'<div class="alert gr">'+(p.trang_thai==='DA_BAN'?'Sản phẩm này đã bán.':p.trang_thai==='GIU_CHO'?'Sản phẩm đang được giữ chỗ cho người khác.':'Sản phẩm hiện không thể đặt.')+'</div>')
-    +'<h3>Mã QR của sản phẩm</h3><div class="qr" id="qr"></div><p class="sm mu">Quét để mở lại đúng trang sản phẩm này.</p></div></div>'
+    +'</div></div>'
     +bottomBar(p);
-    drawQR($('#qr'),qrUrl(p.ma));
   }catch(e){$('#app').innerHTML='<div class="wrap">'+errBox(e.message)+'<button class="btn" data-act="go" data-v="catalog">Về danh sách</button></div>'}
 }
 
