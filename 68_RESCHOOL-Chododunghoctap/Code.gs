@@ -647,7 +647,10 @@ function pub_datHang(p) {
     var ten = chuoi_(p.ten, 2, 60, 'Tên người nhận');
     var lh = String(p.lien_he || '').trim();
     if (!sdtHopLe_(lh)) throw loi_('Liên hệ phải là số điện thoại hoặc email hợp lệ.');
-    var ghiChu = chuoi_(p.ghi_chu || '', 0, 200, 'Ghi chú');
+    var ghiChuGoc = chuoi_(p.ghi_chu || '', 0, 200, 'Ghi chú');
+    var hinhThucTT = (p.hinh_thuc_tt === 'CHUYEN_KHOAN' || p.hinh_thuc_tt === 'Chuyển khoản') ? 'Chuyển khoản' : 'Thanh toán khi nhận hàng';
+    var diaChiNhan = chuoi_(p.dia_chi_nhan || 'Tại Trường', 2, 120, 'Địa chỉ nhận hàng');
+    var ghiChu = '[Nhận: ' + diaChiNhan + '] [TT: ' + hinhThucTT + ']' + (ghiChuGoc ? ' ' + ghiChuGoc : '');
     if (cd !== 'THAT' && p.xac_nhan_demo !== true) throw loi_('Hãy xác nhận bạn hiểu đây là chế độ demo (không nhập thông tin thật).');
     if (!p.dong_y_chinh_sach) throw loi_('Cần đồng ý chính sách thông tin cá nhân.');
     var items = {};
@@ -684,7 +687,7 @@ function pub_datHang(p) {
         tong_tien: tong, trang_thai: 'CHO_XAC_NHAN', thanh_toan: 'CHUA_THU', han_giu_cho: han, ly_huy: '',
         da_ghi_so: false, lich_su: '', nguoi_xu_ly: '', ngay_tao: bayGio_(), ngay_cap_nhat: bayGio_(), che_do: cd
       };
-      ghiLichSu_(don, 'TAO_DON', 'Khách đặt giữ chỗ', null);
+      ghiLichSu_(don, 'TAO_DON', 'Khách đặt giữ chỗ (' + hinhThucTT + ')', null);
       them_('DonHang', don);
       dong.forEach(function (d) {
         them_('ChiTietDon', {
@@ -698,6 +701,8 @@ function pub_datHang(p) {
     kq.ma_xac_thuc = maXacThuc;
     kq.nhan = thongTinNhan_(c, cd);
     kq.che_do = cd;
+    kq.hinh_thuc_tt = hinhThucTT;
+    kq.dia_chi_nhan = diaChiNhan;
     return kq;
   });
 }
@@ -722,6 +727,7 @@ function pub_traCuuDon(maDon, ma) {
     return {
       ma_don: d.ma_don, trang_thai: d.trang_thai, thanh_toan: d.thanh_toan, tong_tien: so_(d.tong_tien),
       han_giu_cho: String(d.han_giu_cho), ngay_tao: String(d.ngay_tao), ly_huy: d.ly_huy, items: cts, lich_su: ls,
+      ghi_chu: d.ghi_chu,
       nhan: thongTinNhan_(cfgAll_(), d.che_do), che_do: d.che_do
     };
   });
